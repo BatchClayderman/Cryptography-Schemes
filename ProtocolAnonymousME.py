@@ -78,15 +78,13 @@ class ProtocolAnonymousME:
 			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		
 		# Unpack #
-		k = len(ID_k)
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
 		g2ToThePowerOfAlpha, b1, b2 = self.__msk
+		k = len(ID_k)
 		
 		# Protocol #
 		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
-		HI = h[0] ** ID_k[0] # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
-		for i in range(1, k):
-			HI *= h[i] ** ID_k[i]
+		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 		sk_ID_k = ( # $\textit{sk}_\textit{ID}_k \gets (
 			(
 				g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r, # g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r, 
@@ -107,7 +105,7 @@ class ProtocolAnonymousME:
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l # boundary check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
 			ID_k = IDk
 			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(IDk) + 1) << 2) + 5: # check the length of $\textit{sk}_\textit{ID}_k$
 				sk_ID_kMinus1 = skIDkMinus1
@@ -122,10 +120,10 @@ class ProtocolAnonymousME:
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
+		k = len(ID_k)
 		a0, a1, b, f0, f1 = sk_ID_kMinus1[0], sk_ID_kMinus1[1], sk_ID_kMinus1[2], sk_ID_kMinus1[-2], sk_ID_kMinus1[-1] # first 3 and last 2
 		lengthPerToken = self.__l - k + 1
 		c0, c1, d0, d1 = sk_ID_kMinus1[3:3 + lengthPerToken], sk_ID_kMinus1[3 + lengthPerToken:3 + (lengthPerToken << 1)], sk_ID_kMinus1[-2 - (lengthPerToken << 1):-2 - lengthPerToken], sk_ID_kMinus1[-2 - lengthPerToken:-2]
-		k = len(ID_k)
 		
 		# Protocol #
 		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
@@ -144,15 +142,6 @@ class ProtocolAnonymousME:
 		
 		# Return #
 		return sk_ID_k
-	def randomElement(self:object, elementField:int = GT) -> object:
-		if not self.__flag:
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the random element generation subsequently. ")
-			self.Setup()
-		if elementField in (G1, G2, GT, ZR):
-			return self.__group.random(elementField)
-		else:
-			print("The element field is invalid. It is defaulted to $\\mathbb{G}_T$. ")
-			return self.__group.random(GT)
 	def Enc(self:object, IDk:tuple, message:Element) -> object: # Enc(ID_k, M) -> CT
 		# Check #
 		if not self.__flag:
@@ -175,14 +164,11 @@ class ProtocolAnonymousME:
 		
 		# Protocol #
 		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
-		theLastElementOfCT = g3
-		for i in range(k):
-			theLastElementOfCT *= h[i] ** ID_k[i]
 		CT = ( # $\textit{CT} \gets (
 			pair(g1, g2) ** (s1 + s2) * M, # e(g_1, g_2)^{s_1 + s_2} \cdot M, 
 			gBar ** s1, # \bar{g}^{s_1}, 
 			gTilde ** s2, # \tilde{g}^{s_2}, 
-			theLastElementOfCT ** (s1 + s2) # (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
+			(g3 * self.__product(tuple(h[i] ** ID_k[i] for i in range(k)))) ** (s1 + s2) # (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
 		) # )$
 		
 		# Return #
@@ -192,13 +178,13 @@ class ProtocolAnonymousME:
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= 5 + ((self.__l - 1) << 2):
+		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= 5 + ((self.__l - 1) << 2): # boundary check
 			sk_ID_k = skIDk
 			if isinstance(cipher, tuple) and 4 == len(cipher):
 				CT = cipher
 			else:
 				CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
-				print("The variable $\\textit{CT}$ is invalid, which has been computed again with $M \in \mathbb{G}_T$ generated randomly. ")
+				print("The variable $\\textit{CT}$ is invalid, which has been computed again with $M \\in \\mathbb{G}_T$ generated randomly. ")
 		else:
 			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
 			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[9, {0}]$. It has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
@@ -222,13 +208,16 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 		try:
 			group = PairingGroup(curveType)
 		except:
-			return [curveType, l, k, False, False] + [-1] * 13
+			print("Is the system valid? No")
+			return [curveType, l, k, False, False, False] + [-1] * 13
 	else:
-		return [curveType, l, k, False, False] + [-1] * 13
+		print("Is system valid? No")
+		return [curveType, l, k, False, False, False] + [-1] * 13
 	process = Process(os.getpid())
 	print("Type =", curveType)
 	print("l =", l)
 	print("k =", k)
+	print("Is the system valid? Yes")
 	
 	# Initialization #
 	protocolAnonymousME = ProtocolAnonymousME(group)
@@ -251,8 +240,8 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 	
 	# DerivedKGen #
 	startTime = time()
-	sk_ID_kMinus1 = protocolAnonymousME.KGen(mpk, msk, ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = protocolAnonymousME.DerivedKGen(mpk, sk_ID_kMinus1, ID_k)
+	sk_ID_kMinus1 = protocolAnonymousME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
+	sk_ID_kDerived = protocolAnonymousME.DerivedKGen(sk_ID_kMinus1, ID_k)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -268,6 +257,7 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 	# Dec #
 	startTime = time()
 	M = protocolAnonymousME.Dec(CT, sk_ID_k)
+	MDerived = protocolAnonymousME.Dec(CT, sk_ID_kDerived)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -275,14 +265,13 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 	# End #
 	sizeRecords = [getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del protocolAnonymousME
-	print("message =", message)
-	print("M =", M)
-	print("Is message == M? {0}".format("Yes" if message == M else "No"))
+	print("Is the derver passed (message == M')? {0}".format("Yes" if message == MDerived else "No"))
+	print("Is the protocol correct (message == M)? {0}".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)
 	print("Size:", sizeRecords)
 	print()
-	return [curveType, l, k, True, message == M] + timeRecords + memoryRecords + sizeRecords
+	return [curveType, l, k, True, message == MDerived, message == M] + timeRecords + memoryRecords + sizeRecords
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -304,7 +293,7 @@ def main() -> int:
 			for k in range(5, l, 5):
 				results.append(Protocol(curveType, k, l))
 	if results:
-		columns = ["Curve", "l", "k", "isValid", "isPassed", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", "EK (B)", "EK' (B)", "CT"]
+		columns = ["Curve", "l", "k", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", "SK (B)", "SK' (B)", "CT"]
 		if handleFolder(os.path.split(filePath)[0]):
 			try:
 				df = __import__("pandas").DataFrame(results, columns = columns)
@@ -313,13 +302,14 @@ def main() -> int:
 				else:
 					df.to_excel(filePath, index = False)
 				print("\nSuccessfully saved the results to \"{0}\" in the three-line table form. ".format(filePath))
-			except:
+			except BaseException as e:
+				print("\nFailed to save the results to \"{0}\" in the three-line table form since {1}. \nThe Program will try to use the plain text form. ".format(filePath, e))
 				try:
 					with open(filePath, "w", encoding = "utf-8") as f:
 						f.write(str(columns) + "\n" + str(results))
 					print("\nSuccessfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
-				except BaseException as e:
-					print("\nResults: \n{0}\n\nFailed to save the results to \"{1}\" since {2}. \nPlease press the enter key to exit ({3}). ".format(results, filePath, e, EOF))
+				except BaseException as ee:
+					print("\nResults: \n{0}\n\nFailed to save the results to \"{1}\" since {2}. \nPlease press the enter key to exit ({3}). ".format(results, filePath, ee, EOF))
 					input()
 					return EOF
 		else:
@@ -330,7 +320,7 @@ def main() -> int:
 		print("The results are empty. Please press the enter key to exit ({0}). ".format(EOF))
 		input()
 		return EOF
-	iRet = EXIT_SUCCESS if all([result[1] for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if all([all(result[3:6]) for result in results]) else EXIT_FAILURE
 	print("Please press the enter key to exit ({0}). ".format(iRet))
 	input()
 	return iRet
