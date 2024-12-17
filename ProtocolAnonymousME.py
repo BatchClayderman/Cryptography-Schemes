@@ -1,5 +1,5 @@
 import os
-from sys import exit
+from sys import exit, getsizeof
 from time import time
 try:
 	from psutil import Process
@@ -30,9 +30,20 @@ class ProtocolAnonymousME:
 	def __init__(self, group:None|PairingGroup = None) -> None:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		self.__l = 30
-		self.__flag = [False] * 5 # to control the procedures
+		self.__mpk = None
+		self.__msk = None
+		self.__flag = False # to indicate whether it has already set up
+	def __product(self:object, vec:tuple|list|set) -> Element:
+		if isinstance(vec, (tuple, list, set)) and vec:
+			element = vec[0]
+			for ele in vec[1:]:
+				element *= ele
+			return element
+		else:
+			return self.__group.init(ZR, 1)
 	def Setup(self:object, l:int = 30) -> tuple: # Setup(l) -> (mpk, msk)
 		# Check #
+		self.__flag = False
 		if isinstance(l, int) and l >= 3: # $l$ must be not smaller than $3$ to complete all the tasks
 			self.__l = l
 		else:
@@ -49,32 +60,27 @@ class ProtocolAnonymousME:
 		gTilde = g ** b2 # $\tilde{g} \gets g^{b_2}$
 		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\cfrac{1}{b_1}}$
 		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\cfrac{1}{b_2}}$
-		mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l)$
-		msk = (g2 ** alpha, b1, b2) # $\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
+		self.__mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l)$
+		self.__msk = (g2 ** alpha, b1, b2) # $\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
 		
 		# Flag #
-		self.__flag[0] = True
-		return (mpk, msk)
-	def KGen(self:object, _mpk:tuple, _msk:tuple, IDk:tuple) -> tuple: # KGen(mpk, msk, ID_k) -> sk_ID_k
+		self.__flag = True
+		return (self.__mpk, self.__msk)
+	def KGen(self:object, IDk:tuple) -> tuple: # KGen(ID_k) -> sk_ID_k
 		# Check #
-		if not self.__flag[0]:
-			mpk, msk = self.Setup()
+		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
-		elif len(_mpk) == 8 + self.__l and len(_msk) == 3:
-			mpk, msk = _mpk, _msk
-		else:
-			mpk, msk = self.Setup(l = self.__l)
-			print("The mpk or the msk passed do not match the variable $l = {0}$. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ".format(self.__l))
+			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, l)$. It has been generated randomly with a length of ${0} - 1 = {1}$. ".format(self.__l, self.__l - 1))
+			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		
 		# Unpack #
 		k = len(ID_k)
-		g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde, h = mpk[0], mpk[1], mpk[2], mpk[3], mpk[4], mpk[5], mpk[6], mpk[7], mpk[8:]
-		g2ToThePowerOfAlpha, b1, b2 = msk
+		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
+		g2ToThePowerOfAlpha, b1, b2 = self.__msk
 		
 		# Protocol #
 		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
@@ -94,34 +100,32 @@ class ProtocolAnonymousME:
 			+ (HI ** (b1 ** (-1)), HI ** (b2 ** (-1))) # \textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
 		) # )$
 		
-		# Flag #
-		self.__flag[1] = True
+		# Return #
 		return sk_ID_k
-	def DerivedKGen(self:object, _mpk:tuple, skIDkMinus1:tuple, IDk:tuple) -> tuple: # DerivedKGen(mpk, sk_ID_kMinus1, ID_k) -> sk_ID_k
+	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # DerivedKGen(sk_ID_kMinus1, ID_k) -> sk_ID_k
 		# Check #
-		if (
-			self.__flag[0] and  isinstance(_mpk, tuple) and len(_mpk) == 8 + self.__l
-			and isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l # boundary check
-			and isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(IDk) + 1) << 2) + 5 # check the length of $\textit{sk}_\textit{ID}_k$
-		):
-			mpk, ID_k, sk_ID_kMinus1 = _mpk, IDk, skIDkMinus1
-		else:
-			if self.__flag[0]:
-				mpk, msk = self.Setup(l = self.__l)
-				print("At least one of the parameters passed does not match the variable $l = {0}$. The program will call the ``Setup``, ``KGen``, and ``DerivedKGen`` with all the necessary variables generated randomly in sequence. ".format(self.__l))
+		if not self.__flag:
+			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
+			self.Setup()
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l # boundary check
+			ID_k = IDk
+			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(IDk) + 1) << 2) + 5: # check the length of $\textit{sk}_\textit{ID}_k$
+				sk_ID_kMinus1 = skIDkMinus1
 			else:
-				mpk, msk = self.Setup()
-				print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup``, ``KGen``, and ``DerivedKGen`` with all the necessary variables generated randomly in sequence. ")
+				sk_ID_kMinus1 = self.KGen(ID_k[:-1])
+				print("The variable $\\textit{sk}_\\textit{ID}_{k - 1}$ is invalid, which has been computed again. ")
+		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			sk_ID_kMinus1 = self.KGen(mpk, msk, ID_k[:-1])
-			del msk
+			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
+			sk_ID_kMinus1 = self.KGen(ID_k[:-1])
+			print("The variable $\\textit{sk}_\\textit{ID}_{k - 1}$ is generated correspondingly. ")
 		
 		# Unpack #
-		g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde, h = mpk[0], mpk[1], mpk[2], mpk[3], mpk[4], mpk[5], mpk[6], mpk[7], mpk[8:]
+		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
 		a0, a1, b, f0, f1 = sk_ID_kMinus1[0], sk_ID_kMinus1[1], sk_ID_kMinus1[2], sk_ID_kMinus1[-2], sk_ID_kMinus1[-1] # first 3 and last 2
-		k = len(ID_k)
 		lengthPerToken = self.__l - k + 1
 		c0, c1, d0, d1 = sk_ID_kMinus1[3:3 + lengthPerToken], sk_ID_kMinus1[3 + lengthPerToken:3 + (lengthPerToken << 1)], sk_ID_kMinus1[-2 - (lengthPerToken << 1):-2 - lengthPerToken], sk_ID_kMinus1[-2 - lengthPerToken:-2]
+		k = len(ID_k)
 		
 		# Protocol #
 		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
@@ -138,42 +142,36 @@ class ProtocolAnonymousME:
 			+ (f0 * c0[0] ** ID_k[k - 1], f1 * c1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^I_k, f_1 \cdot c_{1, k}^I_k
 		) # )$
 		
-		# Flag #
-		self.__flag[2] = True
+		# Return #
 		return sk_ID_k
 	def randomElement(self:object, elementField:int = GT) -> object:
-		if not self.__flag[0]:
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
+		if not self.__flag:
+			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the random element generation subsequently. ")
 			self.Setup()
 		if elementField in (G1, G2, GT, ZR):
 			return self.__group.random(elementField)
 		else:
 			print("The element field is invalid. It is defaulted to $\\mathbb{G}_T$. ")
 			return self.__group.random(GT)
-	def Enc(self:object, _mpk:tuple, IDk:tuple, message:Element) -> object: # Enc(mpk, ID_k, M) -> CT
+	def Enc(self:object, IDk:tuple, message:Element) -> object: # Enc(ID_k, M) -> CT
 		# Check #
-		if not self.__flag[0]:
-			mpk, msk = self.Setup()
+		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
-		elif len(_mpk) == 8 + self.__l:
-			mpk = _mpk
-		else:
-			mpk, msk = self.Setup(l = self.__l)
-			print("The msk and the msk passed do not match the variable $l = {0}$. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ".format(self.__l))
+			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, l)$. It has been generated randomly with a length of ${0} - 1 = {1}$. ".format(self.__l, self.__l - 1))
+			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		if isinstance(message, Element):
 			M = message
 		else:
-			M = self.randomElement()
+			M = self.__group.random(GT)
 			print("The message passed should be a $\\mathbb{G}_T$ element but it is not. It will be generated randomly. ")
 		
 		# Unpack #
+		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
 		k = len(ID_k)
-		g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde, h = mpk[0], mpk[1], mpk[2], mpk[3], mpk[4], mpk[5], mpk[6], mpk[7], mpk[8:]
 		
 		# Protocol #
 		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
@@ -187,28 +185,25 @@ class ProtocolAnonymousME:
 			theLastElementOfCT ** (s1 + s2) # (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
 		) # )$
 		
-		# Flag #
-		self.__flag[3] = True
+		# Return #
 		return CT
 	def Dec(self:object, cipher:tuple, skIDk:tuple) -> bytes: # Dec(CT, sk_ID_k) -> M
 		# Check #
-		if self.__flag[0]:
-			if isinstance(skIDk, tuple) and len(skIDk) >= 9 and isinstance(cipher, tuple) and 4 == len(cipher):
-				CT, sk_ID_k = cipher, skIDk
+		if not self.__flag:
+			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
+			self.Setup()
+		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= 5 + ((self.__l - 1) << 2):
+			sk_ID_k = skIDk
+			if isinstance(cipher, tuple) and 4 == len(cipher):
+				CT = cipher
 			else:
-				mpk, msk = self.Setup(l = self.__l)
-				ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-				M = self.randomElement()
-				sk_ID_k = self.KGen(mpk, msk, ID_k)
-				CT = self.Enc(mpk, ID_k, M)
-				print("At least one of the variables $\\textit{CT}$ and $\\textit{sk}_\\textit{ID}_k$ is invalid. The program will call the ``Setup``, ``KGen``, ``Enc``, and ``Dec`` with all the necessary variables generated randomly in sequence. ")
+				CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
+				print("The variable $\\textit{CT}$ is invalid, which has been computed again with $M \in \mathbb{G}_T$ generated randomly. ")
 		else:
-			mpk, msk = self.Setup()
-			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			M = self.randomElement()
-			sk_ID_k = self.KGen(mpk, msk, ID_k)
-			CT = self.Enc(mpk, ID_k, M)
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup``, ``KGen``, ``Enc``, and ``Dec`` with all the necessary variables generated randomly in sequence. ")
+			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
+			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[9, {0}]$. It has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
+			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
+			print("The variable $\\textit{CT}$ has been generated accordingly. ")
 		
 		# Unpack #
 		A, B, C, D = CT
@@ -217,8 +212,7 @@ class ProtocolAnonymousME:
 		# Protocol #
 		M = pair(b, D) * A / (pair(B, a0) * pair(C, a1)) # $M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
 		
-		# Flag #
-		self.__flag[4] = True
+		# Return #
 		return M
 
 
@@ -228,9 +222,9 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 		try:
 			group = PairingGroup(curveType)
 		except:
-			return [curveType, l, k, False, False] + [-1] * 10
+			return [curveType, l, k, False, False] + [-1] * 13
 	else:
-		return [curveType, l, k, False, False] + [-1] * 10
+		return [curveType, l, k, False, False] + [-1] * 13
 	process = Process(os.getpid())
 	print("Type =", curveType)
 	print("l =", l)
@@ -248,25 +242,25 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# KGen #
-	ID_k = tuple(group.random(ZR) for i in range(k))
 	startTime = time()
-	sk_ID_k = protocolAnonymousME.KGen(mpk, msk, ID_k)
+	ID_k = tuple(group.random(ZR) for i in range(k))
+	sk_ID_k = protocolAnonymousME.KGen(ID_k)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# DerivedKGen #
-	sk_ID_kMinus1 = protocolAnonymousME.KGen(mpk, msk, ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
 	startTime = time()
+	sk_ID_kMinus1 = protocolAnonymousME.KGen(mpk, msk, ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
 	sk_ID_kDerived = protocolAnonymousME.DerivedKGen(mpk, sk_ID_kMinus1, ID_k)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
-	message = protocolAnonymousME.randomElement(GT)
 	startTime = time()
-	CT = protocolAnonymousME.Enc(mpk, ID_k, message)
+	message = group.random(GT)
+	CT = protocolAnonymousME.Enc(ID_k, message)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -279,14 +273,16 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
+	sizeRecords = [getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del protocolAnonymousME
 	print("message =", message)
 	print("M =", M)
 	print("Is message == M? {0}".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)
+	print("Size:", sizeRecords)
 	print()
-	return [curveType, l, k, True, message == M] + timeRecords + memoryRecords
+	return [curveType, l, k, True, message == M] + timeRecords + memoryRecords + sizeRecords
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -308,7 +304,7 @@ def main() -> int:
 			for k in range(5, l, 5):
 				results.append(Protocol(curveType, k, l))
 	if results:
-		columns = ["Curve", "l", "k", "isValid", "isPassed", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)"]
+		columns = ["Curve", "l", "k", "isValid", "isPassed", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", "EK (B)", "EK' (B)", "CT"]
 		if handleFolder(os.path.split(filePath)[0]):
 			try:
 				df = __import__("pandas").DataFrame(results, columns = columns)

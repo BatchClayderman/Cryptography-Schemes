@@ -83,7 +83,7 @@ class ProtocolHIBME:
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("The variable $\\textit{ID}_k$ should be a tuple whose length $k = \\|\\textit{ID}_k\\|$ is an integer within the closed interval $[2, l)$. It has been generated randomly with a length of ${0} - 1 = {1}$. ".format(self.__l, self.__l - 1))
+			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		
 		# Unpack #
 		H1 = self.__mpk[-4]
@@ -145,15 +145,15 @@ class ProtocolHIBME:
 			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		
 		# Unpack #
-		g, g2, g3Bar, g3Tilde, h, H1 = self.__mpk[0], self.__mpk[2], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4]
+		g, g3Bar, g3Tilde, h, H1 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4]
 		g2ToThePowerOfAlpha, b1, b2, s, a = self.__msk[0], self.__msk[1], self.__msk[2], self.__msk[3:-self.__l], self.__msk[-self.__l:]
 		k = len(ID_k)
 		
 		# Protocol #
 		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
-		a0 = g2ToThePowerOfAlpha / g2 ** b1 * HI ** (r / b1) * g3Bar ** r # $g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r$
-		a1 = g2ToThePowerOfAlpha / g2 ** b2 * HI ** (r / b2) * g3Tilde ** r # $g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r$
+		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r$
+		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r$
 		Ak = self.__product(tuple(a[j] for j in range(k))) # A_k \gets \product\limits_{j = 1}^k a_j$
 		dk2 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_1(I_i)^{s_iA_k}, \forall i \in \{1, 2, \cdots, k\}$
 		dk3 = tuple(s[k + i - 1] * Ak for i in range(self.__l - k)) # $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
