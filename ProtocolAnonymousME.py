@@ -41,7 +41,7 @@ class ProtocolAnonymousME:
 			return element
 		else:
 			return self.__group.init(ZR, 1)
-	def Setup(self:object, l:int = 30) -> tuple: # Setup(l) -> (mpk, msk)
+	def Setup(self:object, l:int = 30) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
 		if isinstance(l, int) and l >= 3: # $l$ must be not smaller than $3$ to complete all the tasks
@@ -66,7 +66,7 @@ class ProtocolAnonymousME:
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk)
-	def KGen(self:object, IDk:tuple) -> tuple: # KGen(ID_k) -> sk_ID_k
+	def KGen(self:object, IDk:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
@@ -85,7 +85,7 @@ class ProtocolAnonymousME:
 		# Protocol #
 		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
-		sk_ID_k = ( # $\textit{sk}_\textit{ID}_k \gets (
+		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
 				g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r, # g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r, 
 				g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r, # g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r, 
@@ -100,23 +100,23 @@ class ProtocolAnonymousME:
 		
 		# Return #
 		return sk_ID_k
-	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # DerivedKGen(sk_ID_kMinus1, ID_k) -> sk_ID_k
+	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
 			ID_k = IDk
-			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(IDk) + 1) << 2) + 5: # check the length of $\textit{sk}_\textit{ID}_k$
+			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(IDk) + 1) << 2) + 5: # check the length of $\textit{sk}_{\textit{ID}_k}$
 				sk_ID_kMinus1 = skIDkMinus1
 			else:
 				sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-				print("The variable $\\textit{sk}_\\textit{ID}_{k - 1}$ is invalid, which has been computed again. ")
+				print("The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is invalid, which has been computed again. ")
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 			sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-			print("The variable $\\textit{sk}_\\textit{ID}_{k - 1}$ is generated correspondingly. ")
+			print("The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
@@ -127,7 +127,7 @@ class ProtocolAnonymousME:
 		
 		# Protocol #
 		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
-		sk_ID_k = ( # $\textit{sk}_\textit{ID}_k \gets (
+		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
 				a0 * c0[0] ** ID_k[k - 1] * (f0 * d0[0] ** ID_k[k - 1] * g3Bar) ** t, # a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t, 
 				a1 * c1[0] ** ID_k[k - 1] * (f1 * d1[0] ** ID_k[k - 1] * g3Tilde) ** t, # a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t, 
@@ -137,12 +137,12 @@ class ProtocolAnonymousME:
 			+ tuple(c1[i] * d1[i] ** t for i in range(1, lengthPerToken)) # c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t, 
 			+ tuple(d0[i] for i in range(1, lengthPerToken)) # d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l}, 
 			+ tuple(d1[i] for i in range(1, lengthPerToken)) # d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l}, 
-			+ (f0 * c0[0] ** ID_k[k - 1], f1 * c1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^I_k, f_1 \cdot c_{1, k}^I_k
+			+ (f0 * c0[0] ** ID_k[k - 1], f1 * c1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 		) # )$
 		
 		# Return #
 		return sk_ID_k
-	def Enc(self:object, IDk:tuple, message:Element) -> object: # Enc(ID_k, M) -> CT
+	def Enc(self:object, IDk:tuple, message:Element) -> object: # $\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -173,7 +173,7 @@ class ProtocolAnonymousME:
 		
 		# Return #
 		return CT
-	def Dec(self:object, cipher:tuple, skIDk:tuple) -> bytes: # Dec(CT, sk_ID_k) -> M
+	def Dec(self:object, cipher:tuple, skIDk:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
@@ -208,11 +208,11 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 		try:
 			group = PairingGroup(curveType)
 		except:
-			print("Is the system valid? No")
-			return [curveType, l, k, False, False, False] + [-1] * 13
+			print("Is the system valid? No. ")
+			return [curveType, l, k] + [False] * 3 + [-1] * 13
 	else:
-		print("Is system valid? No")
-		return [curveType, l, k, False, False, False] + [-1] * 13
+		print("Is the system valid? No. ")
+		return [curveType, l, k] + [False] * 3 + [-1] * 13
 	process = Process(os.getpid())
 	print("Type =", curveType)
 	print("l =", l)
@@ -265,8 +265,8 @@ def Protocol(curveType:str, k:int, l:int) -> list:
 	# End #
 	sizeRecords = [getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del protocolAnonymousME
-	print("Is the derver passed (message == M')? {0}".format("Yes" if message == MDerived else "No"))
-	print("Is the protocol correct (message == M)? {0}".format("Yes" if message == M else "No"))
+	print("Is the derver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
+	print("Is the protocol correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)
 	print("Size:", sizeRecords)

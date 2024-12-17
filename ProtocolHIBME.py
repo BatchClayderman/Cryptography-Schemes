@@ -43,8 +43,8 @@ class ProtocolHIBME:
 		else:
 			return self.__group.init(ZR, 1)
 	def __xor(self:object, x1:bytes, x2:bytes) -> bytes:
-		return int.from_bytes(x1.ljust(32, b"0"), byteorder = "big") ^ int.from_bytes(x2.ljust(32, b"0"), byteorder = "big").to_bytes(32, byteorder = "big") if isinstance(x1, bytes) and isinstance(x2, bytes) else self.__group.init(ZR, 1)
-	def Setup(self:object, l:int = 30) -> tuple: # Setup(l) -> (mpk, msk)
+		return (int.from_bytes(x1.ljust(32, b"0"), byteorder = "big") ^ int.from_bytes(x2.ljust(32, b"0"), byteorder = "big")).to_bytes(32, byteorder = "big") if isinstance(x1, bytes) and isinstance(x2, bytes) else self.__group.init(ZR, 1)
+	def Setup(self:object, l:int = 30) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
 		if isinstance(l, int) and l >= 3: # $l$ must be not smaller than $3$ to complete all the tasks
@@ -74,7 +74,7 @@ class ProtocolHIBME:
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk)
-	def EKGen(self:object, IDk:tuple) -> tuple: # EKGen(ID_k) -> ek_ID_k
+	def EKGen(self:object, IDk:tuple) -> tuple: # $\textbf{EKGen}(\textit{ID}_k) \rightarrow \textit{ek}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
@@ -91,49 +91,49 @@ class ProtocolHIBME:
 		k = len(ID_k)
 		
 		# Protocol #
-		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k = \product\limits_{j = 1}^k a_j$
+		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k = \prod\limits_{j = 1}^k a_j$
 		ek1 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{ek}_{1, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
 		ek2 = tuple(s[k + i] * Ak for i in range(self.__l - k)) # $\textit{ek}_{2, k + i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		ek3 = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
-		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_\textit{ID}_k \gets (\textit{ek}_1, \textit{ek}_2, \textit{ek}_3)$
+		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}_1, \textit{ek}_2, \textit{ek}_3)$
 		
 		# Return #
 		return ek_ID_k
-	def DerivedEKGen(self:object, ekIDkMinus1:tuple, IDk:tuple) -> tuple: # DerivedEKGen(ek_ID_kMinus1, ID_k) -> ek_ID_k
+	def DerivedEKGen(self:object, ekIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedEKGen}(\textit{ek}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{ek}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedEKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
 			ID_k = IDk
-			if isinstance(ekIDkMinus1, tuple) and len(ekIDkMinus1) == 3: # check the length of $\textit{ek}_\textit{ID}_{k - 1}$
+			if isinstance(ekIDkMinus1, tuple) and len(ekIDkMinus1) == 3: # check the length of $\textit{ek}_{\textit{ID}_{k - 1}}$
 				ek_ID_kMinus1 = ekIDkMinus1
 			else:
 				ek_ID_kMinus1 = self.EKGen(ID_k[:-1])
-				print("The variable $\\textit{ek}_\\textit{ID}_{k - 1}$ is invalid, which has been computed again. ")
+				print("The variable $\\textit{ek}_{\\textit{ID}_{k - 1}}$ is invalid, which has been computed again. ")
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 			ek_ID_kMinus1 = self.EKGen(ID_k[:-1])
-			print("The variable $\\textit{ek}_\\textit{ID}_{k - 1}$ is generated correspondingly. ")
+			print("The variable $\\textit{ek}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
 		
 		# Unpack #
 		H1 = self.__mpk[-4]
 		a = self.__msk[-self.__l:]
-		ek1Minus1, ek2Minus1, ek3Minus1 = ek_ID_kMinus1
 		k = len(ID_k)
+		ek1Minus1, ek2Minus1, ek3Minus1 = ek_ID_kMinus1
 		
 		# Protocol #
 		ek1 = tuple(ek1Minus1[i] ** a[k - 1] for i in range(k - 1)) # $\textit{ek}'_{1, i} \gets \textit{ek}_{1, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
 		ek2 = tuple(ek2Minus1[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{ek}'_{2, i} \gets \textit{ek}_{2, i} \cdot a_k, \forall i \in \{2, 3, \cdots, l - k + 1\}$
-		ek1k = H1(ID_k[k - 1]) ** ek2Minus1[0] # $\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1}$
+		ek1k = H1(ID_k[k - 1]) ** ek2Minus1[0] # $\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1}}$
 		ek1 = ek1 + (ek1k, ) # $\textit{ek}'_1 \gets \textit{ek}'_1 || \langle\textit{ek}'_{1, k}\rangle$
 		ek3 = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}'_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
-		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_\textit{ID}_k \gets (\textit{ek}'_1, \textit{ek}'_2, \textit{ek}'_3)$
+		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}'_1, \textit{ek}'_2, \textit{ek}'_3)$
 		
 		# Return #
 		return ek_ID_k
-	def DKGen(self:object, IDk:tuple) -> tuple: # DKGen(ID_k) -> dk_ID_k
+	def DKGen(self:object, IDk:tuple) -> tuple: # $\textbf{DKGen}(\textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
@@ -154,7 +154,7 @@ class ProtocolHIBME:
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
 		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r$
 		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r$
-		Ak = self.__product(tuple(a[j] for j in range(k))) # A_k \gets \product\limits_{j = 1}^k a_j$
+		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k \gets \prod\limits_{j = 1}^k a_j$
 		dk2 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_1(I_i)^{s_iA_k}, \forall i \in \{1, 2, \cdots, k\}$
 		dk3 = tuple(s[k + i - 1] * Ak for i in range(self.__l - k)) # $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		dk1 = ( # $\textit{dk}_1 \gets (
@@ -166,27 +166,27 @@ class ProtocolHIBME:
 			+ (HI ** (1 / b1), HI ** (1 / b2)) # \textit{HI}^{\cfrac{1}{b_1}}, \textit{HI}^{\cfrac{1}{b_2}}
 		) # )$
 		dk4 = tuple(a[i] for i in range(k, self.__l)) # $\textit{dk}_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
-		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_\textit{ID}_k \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3, \textit{dk}_4)$
+		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3, \textit{dk}_4)$
 		
 		# Return #
 		return dk_ID_k
-	def DerivedDKGen(self:object, dkIDkMinus1:tuple, IDk:tuple) -> tuple: # DerivedDKGen(dk_ID_kMinus1, ID_k) -> dk_ID_k
+	def DerivedDKGen(self:object, dkIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedDKGen}(\textit{dk}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedDKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
 			ID_k = IDk
-			if isinstance(dkIDkMinus1, tuple) and len(dkIDkMinus1) == 4: # check the length of $\textit{dk}_\textit{ID}_{k - 1}$
+			if isinstance(dkIDkMinus1, tuple) and len(dkIDkMinus1) == 4: # check the length of $\textit{dk}_{\textit{ID}_{k - 1}}$
 				dk_ID_kMinus1 = dkIDkMinus1
 			else:
 				dk_ID_kMinus1 = self.DKGen(ID_k[:-1])
-				print("The variable $\\textit{dk}_\\textit{ID}_{k - 1}$ is invalid, which has been computed again. ")
+				print("The variable $\\textit{dk}_{\\textit{ID}_{k - 1}}$ is invalid, which has been computed again. ")
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 			dk_ID_kMinus1 = self.DKGen(ID_k[:-1])
-			print("The variable $\\textit{dk}_\\textit{ID}_{k - 1}$ is generated correspondingly. ")
+			print("The variable $\\textit{dk}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h, H1 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4]
@@ -215,22 +215,22 @@ class ProtocolHIBME:
 			+ (f0Minus1 * c0Minus1[0] ** ID_k[k - 1], f1Minus1 * c1Minus1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 		) # )$
 		dk4 = tuple(a[k + i] for i in range(self.__l - k)) # $\textit{dk}'_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
-		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_\textit{ID}_k \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
+		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
 				
 		# Return #
 		return dk_ID_k
-	def Enc(self:object, ekIDS:tuple, IDSnd:tuple, IDRev:tuple, message:Element) -> Element: # Enc(ek_ID_S, ID_Rev, M) -> CT
+	def Enc(self:object, ekIDS:tuple, IDSnd:tuple, IDRev:tuple, message:Element) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
 		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l: # boundary check
 			ID_Snd = IDSnd
-			if isinstance(ekIDS, tuple) and len(ekIDS) == 3: # check the length of $\textit{ek}_\textit{ID}_S$
+			if isinstance(ekIDS, tuple) and len(ekIDS) == 3: # check the length of $\textit{ek}_{\textit{ID}_S}$
 				ek_ID_S = ekIDS
 			else:
 				ek_ID_S = self.EKGen(ID_Snd)
-				print("The variable $\\textit{ek}_\\textit{ID}_S$ is invalid, which has been computed again. ")
+				print("The variable $\\textit{ek}_{\\textit{ID}_S}$ is invalid, which has been computed again. ")
 		else:
 			ID_Snd = tuple(group.random(ZR) for i in range(self.__l - 1))
 			print(																																				\
@@ -240,7 +240,7 @@ class ProtocolHIBME:
 				).format(self.__l - 1, self.__l)																															\
 			)
 			ek_ID_S = self.EKGen(ID_Snd)
-			print("The variable $\\textit{ek}_\\textit{ID}_S$ is generated correspondingly. ")
+			print("The variable $\\textit{ek}_{\\textit{ID}_S}$ is generated correspondingly. ")
 		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l: # boundary check
 			ID_Rev = IDRev
 		else:
@@ -267,22 +267,22 @@ class ProtocolHIBME:
 		T = A ** (s1 + s2) # $T \gets A^{s_1 + s_2}$
 		eta = self.__group.random(ZR) # generate $\eta \in \mathbb{Z}_p^*$ randomly
 		if m == n: # If $m = n$:
-			K = self.__product(tuple(pair(g ** eta * ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # $K \gets \product_{i = 1}^n e(g^{\eta} \cdot \textit{ek}_{1, i}, H_2(I'_i))$
+			K = self.__product(tuple(pair(g ** eta * ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # $K \gets \prod_{i = 1}^n e(g^{\eta} \cdot \textit{ek}_{1, i}, H_2(I'_i))$
 		elif m > n: # If $m > n$:
-			An = self.__product(tuple(a[i] for i in range(n))) # $A_n \gets \product\limits_{i = 1}^n a_i$
-			Bmn = self.__product(tuple(a[i] for i in range(n, m))) # $B_n^m \gets \product\limits_{i = n + 1}^m a_i$
+			An = self.__product(tuple(a[i] for i in range(n))) # $A_n \gets \prod\limits_{i = 1}^n a_i$
+			Bmn = self.__product(tuple(a[i] for i in range(n, m))) # $B_n^m \gets \prod\limits_{i = n + 1}^m a_i$
 			K = ( # $K \gets
 				( # (
-					self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # \product\limits_{i = 1}^n e(\textit{ek}_{1, i}, H_2(I'_i))
-					* self.__product(tuple(pair(H1(ID_Snd[n - 1]), H2(ID_Rev[i])) ** (a[i] * An) for i in range(n, m))) # \cdot \product\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{\alpha_i A_n}
+					self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # \prod\limits_{i = 1}^n e(\textit{ek}_{1, i}, H_2(I'_i))
+					* self.__product(tuple(pair(H1(ID_Snd[n - 1]), H2(ID_Rev[i])) ** (a[i] * An) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{\alpha_i A_n}
 				) ** Bmn # )^{B_n^m}
-				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(g^{\eta}, \product\limits_{i = 1}^m H_2(I'_i))
+				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		else: # If $m < n$
 			K = ( # $K \gets
-				self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(m))) # \product\limits_{i = 1}^m e(\textit{ek}_{1, i}, H_2(I'_i))
-				* self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[m - 1])) for i in range(m, n))) # \product\limits_{i = m + 1}^n e(\textit{ek}_{1, i}, H_2(I'_m))
-				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \product\limits_{i = 1}^m H_2(I'_i))
+				self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(m))) # \prod\limits_{i = 1}^m e(\textit{ek}_{1, i}, H_2(I'_i))
+				* self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[m - 1])) for i in range(m, n))) # \prod\limits_{i = m + 1}^n e(\textit{ek}_{1, i}, H_2(I'_m))
+				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		C1 = self.__xor(self.__xor(M, HHat(T)), HHat(K)) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
@@ -293,18 +293,18 @@ class ProtocolHIBME:
 		
 		# Return #
 		return CT
-	def Dec(self:object, cipher:tuple, dkIDR:tuple, IDSnd:tuple, IDRev:tuple) -> bytes: # Dec(CT, dk_ID_R, ID_Snd) -> M
+	def Dec(self:object, cipher:tuple, dkIDR:tuple, IDSnd:tuple, IDRev:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Snd}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
 		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l: # boundary check
 			ID_Rev = IDRev
-			if isinstance(dkIDR, tuple) and len(dkIDR) == 4: # check the length of $\textit{dk}_\textit{ID}_R$
+			if isinstance(dkIDR, tuple) and len(dkIDR) == 4: # check the length of $\textit{dk}_{\textit{ID}_R}$
 				dk_ID_R = dkIDR
 			else:
 				dk_ID_R = self.DKGen(ID_Rev)
-				print("The variable $\\textit{dk}_\\textit{ID}_R$ is invalid, which has been computed again. ")
+				print("The variable $\\textit{dk}_{\\textit{ID}_R}$ is invalid, which has been computed again. ")
 		else:
 			ID_Rev = tuple(group.random(ZR) for i in range(self.__l - 1))
 			print(																																				\
@@ -314,7 +314,7 @@ class ProtocolHIBME:
 				).format(self.__l - 1, self.__l)																															\
 			)
 			ek_ID_R = self.DKGen(ID_Rev)
-			print("The variable $\\textit{ek}_\\textit{ID}_R$ is generated correspondingly. ")
+			print("The variable $\\textit{ek}_{\\textit{ID}_R}$ is generated correspondingly. ")
 		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l: # boundary check
 			ID_Snd = IDSnd
 			if isinstance(cipher, tuple) and len(cipher) == 5:
@@ -344,24 +344,24 @@ class ProtocolHIBME:
 		TPi = pair(dk1[2], C4) / (pair(C2, dk1[0]) * pair(C3, dk1[1])) # $T' = \cfrac{e(\textit{dk}_{1, 3}, C_4)}{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}$
 		if m == n: # If $m = n$:
 			KPi = ( # $K' \gets
-				self.__product(tuple(pair(H2(ID_Snd[i]), dk2[i]) for i in range(n))) # \product\limits_{i = 1}^n e(H_2(I_i), \textit{dk}_{2, i}) 
-				 * pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(n)))) # \cdot e(C_5, \product\limits_{i = 1}^n H_2(I'_i))
+				self.__product(tuple(pair(H2(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_2(I_i), \textit{dk}_{2, i}) 
+				 * pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(n)))) # \cdot e(C_5, \prod\limits_{i = 1}^n H_2(I'_i))
 			) # $
 		elif m > n: # If $m > n$:
 			KPi = ( # $K' \gets
-				self.__product(tuple(pair(H2(ID_Snd[i]), dk2[i]) for i in range(n))) # \product\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
-				* self.__product(tuple(pair(H2(ID_Snd[n - 1]), dk2[i]) for i in range(n, m))) # \cdot \product\limits_{i = n + 1}^m e(H_1(I_n), \textit{dk}_{2, i})
-				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot \product\limits_{i = 1}^m H_2(I'_i))
+				self.__product(tuple(pair(H2(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
+				* self.__product(tuple(pair(H2(ID_Snd[n - 1]), dk2[i]) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), \textit{dk}_{2, i})
+				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		else: # If $m < n$
-			Am = self.__product(tuple(a[i] for i in range(m))) # $A_m \gets \product\limits_{i = 1}^m a_i$
-			Bnm = self.__product(tuple(a[i] for i in range(m, n))) # $B_n^m \gets \product\limits_{i = m + 1}^n a_i$
+			Am = self.__product(tuple(a[i] for i in range(m))) # $A_m \gets \prod\limits_{i = 1}^m a_i$
+			Bnm = self.__product(tuple(a[i] for i in range(m, n))) # $B_n^m \gets \prod\limits_{i = m + 1}^n a_i$
 			KPi = ( # $K' \gets
 				( # (
-					self.__product(tuple(pair(H2(ID_Snd[i]), dk2[i]) for i in range(m))) # \product\limits_{i = 1}^m e(H_1(I_i), \textit{dk}_{2, i})
-					* self.__product(tuple(pair(H1(ID_Snd[i]), H2(ID_Rev[m - 1])) ** (a[i] * Am) for i in range(m, n))) # \cdot \product\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{\alpha_i A_m}
+					self.__product(tuple(pair(H2(ID_Snd[i]), dk2[i]) for i in range(m))) # \prod\limits_{i = 1}^m e(H_1(I_i), \textit{dk}_{2, i})
+					* self.__product(tuple(pair(H1(ID_Snd[i]), H2(ID_Rev[m - 1])) ** (a[i] * Am) for i in range(m, n))) # \cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{\alpha_i A_m}
 				) ** Bnm # )^{B_m^n}
-				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \product\limits_{i = 1}^m H_2(I'_i))
+				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		M = self.__xor(self.__xor(C1, HHat(TPi)), HHat(KPi)) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
@@ -375,14 +375,17 @@ def Protocol(curveType:str, l:int, m:int, n:int) -> list:
 		try:
 			group = PairingGroup(curveType)
 		except:
-			return [curveType, l, m, n] + [-1] * 19
+			print("Is the system valid? No. ")
+			return [curveType, l, m, n] + [False] * 3 + [-1] * 19
 	else:
-		return [curveType, l, m, n] + [-1] * 19
+		print("Is the system valid? No. ")
+		return [curveType, l, m, n] + [False] * 3 + [-1] * 19
 	process = Process(os.getpid())
 	print("Type =", curveType)
 	print("l =", l)
 	print("m =", m)
 	print("n =", n)
+	print("Is the system valid? Yes. ")
 	
 	# Initialization #
 	protocolHIBME = ProtocolHIBME(group)
@@ -431,6 +434,7 @@ def Protocol(curveType:str, l:int, m:int, n:int) -> list:
 	startTime = time()
 	message = b"ProtocolHIBME"
 	CT = protocolHIBME.Enc(ek_ID_S, ID_Snd, ID_Rev, message)
+	CTDerived = protocolHIBME.Enc(ek_ID_SDerived, ID_Snd, ID_Rev, message)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -438,18 +442,22 @@ def Protocol(curveType:str, l:int, m:int, n:int) -> list:
 	# Dec #
 	startTime = time()
 	M = protocolHIBME.Dec(CT, dk_ID_R, ID_Snd, ID_Rev)
+	MDerived = protocolHIBME.Dec(CT, dk_ID_RDerived, ID_Snd, ID_Rev)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	del protocolHIBME
 	sizeRecords = [getsizeof(ek_ID_S), getsizeof(ek_ID_SDerived), getsizeof(dk_ID_R), getsizeof(dk_ID_RDerived), getsizeof(CT)]
+	del protocolHIBME
+	print(message, MDerived, M, sep = "\n")
+	print("Is the derver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
+	print("Is the protocol correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)
 	print("Size:", sizeRecords)
 	print()
-	return [curveType, l, m, n] + timeRecords + memoryRecords + sizeRecords
+	return [curveType, l, m, n, True, message == MDerived, message == M] + timeRecords + memoryRecords + sizeRecords
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
