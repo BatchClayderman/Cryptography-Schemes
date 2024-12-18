@@ -58,14 +58,14 @@ class ProtocolAnonymousME:
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		gBar = g ** b1 # $\bar{g} \gets g^{b_1}$
 		gTilde = g ** b2 # $\tilde{g} \gets g^{b_2}$
-		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\cfrac{1}{b_1}}$
-		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\cfrac{1}{b_2}}$
+		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
+		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
 		self.__mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l)$
 		self.__msk = (g2 ** alpha, b1, b2) # $\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk)
+		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
 	def KGen(self:object, IDk:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -87,19 +87,19 @@ class ProtocolAnonymousME:
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
-				g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r, # g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r, 
-				g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r, # g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r, 
+				g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r, # g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r, 
+				g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r, # g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r, 
 				g ** r # g^r, 
 			)
-			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\cfrac{r}{b_1}}, h_{k + 2}^{\cfrac{r}{b_1}}, \cdots, h_l^{\cfrac{r}{b_1}}, 
-			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\cfrac{r}{b_2}}, h_{k + 2}^{\cfrac{r}{b_1}}, \cdots, h_l^{\cfrac{r}{b_1}}, 
+			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
+			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
 			+ tuple(h[i] ** (b1 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
 			+ tuple(h[i] ** (b2 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}}, 
 			+ (HI ** (b1 ** (-1)), HI ** (b2 ** (-1))) # \textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
 		) # )$
 		
 		# Return #
-		return sk_ID_k
+		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
 	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -141,7 +141,7 @@ class ProtocolAnonymousME:
 		) # )$
 		
 		# Return #
-		return sk_ID_k
+		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
 	def Enc(self:object, IDk:tuple, message:Element) -> object: # $\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
@@ -172,7 +172,7 @@ class ProtocolAnonymousME:
 		) # )$
 		
 		# Return #
-		return CT
+		return CT # $\textbf{return }\textit{CT}$
 	def Dec(self:object, cipher:tuple, skIDk:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
 		# Check #
 		if not self.__flag:
@@ -199,7 +199,7 @@ class ProtocolAnonymousME:
 		M = pair(b, D) * A / (pair(B, a0) * pair(C, a1)) # $M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
 		
 		# Return #
-		return M
+		return M # $\textbf{return }M$
 
 
 def Protocol(curveType:str, k:int, l:int) -> list:

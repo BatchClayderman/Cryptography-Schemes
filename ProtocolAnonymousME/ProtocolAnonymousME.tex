@@ -22,13 +22,15 @@ $\bar{g} \gets g^{b_1}$
 
 $\tilde{g} \gets g^{b_2}$
 
-$\bar{g}_3 \gets g_3^{\cfrac{1}{b_1}}$
+$\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
 
-$\tilde{g}_3 \gets g_3^{\cfrac{1}{b_2}}$
+$\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
 
 $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l)$
 
 $\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
+
+$\textbf{return }(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
@@ -37,15 +39,17 @@ generate $r \in \mathbb{Z}_p^*$ randomly
 $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 
 $\textit{sk}_{\textit{ID}_k} \gets (
-g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r,
-g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r,
+g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r,
+g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r,
 g^r,
-h_{k + 1}^{\cfrac{r}{b_1}}, h_{k + 2}^{\cfrac{r}{b_1}}, \cdots, h_l^{\cfrac{r}{b_1}},
-h_{k + 1}^{\cfrac{r}{b_2}}, h_{k + 2}^{\cfrac{r}{b_1}}, \cdots, h_l^{\cfrac{r}{b_1}},
+h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},
+h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},
 h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}},
 h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}},
 \textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
 )$
+
+$\textbf{return }\textit{sk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
@@ -62,6 +66,8 @@ d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l},
 f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 )$
 
+$\textbf{return }\textit{sk}_{\textit{ID}_k}$
+
 \subsection{$\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$}
 
 generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
@@ -73,8 +79,12 @@ e(g_1, g_2)^{s_1 + s_2} \cdot M,
 (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
 )$
 
+$\textbf{return }\textit{CT}$
+
 \subsection{$\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$}
 
 $M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
+
+$\textbf{return }M$
 
 \end{document}

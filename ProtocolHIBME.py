@@ -61,19 +61,19 @@ class ProtocolHIBME:
 		h = tuple(self.__group.random(G2) for _ in range(self.__l)) # generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)
 		H1 = lambda x:self.__group.hash(x, G1) # $H_1:\mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G2) # $H_2:\mathbb{Z}_p^* \rightarrow \mathbb{G}_2$
-		HHat = lambda x:md5(self.__group.serialize(x)).hexdigest().encode()
+		HHat = lambda x:md5(self.__group.serialize(x)).hexdigest().encode() # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		A = pair(g1, g2) # $A \gets e(g_1, g_2)$
 		gBar = g ** b1 # $\bar{g} \gets g^{b_1}$
 		gTilde = g ** b2 # $\tilde{g} \gets g^{b_2}$
-		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\cfrac{1}{b_1}}$
-		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\cfrac{1}{b_2}}$
+		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
+		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
 		self.__mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h + (H1, H2, HHat, A) # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l, H_1, H_2, HHat, A)$
 		self.__msk = (g2 ** alpha, b1, b2) + s + a # $\textit{msk} \gets (g_2^\alpha, b_1, b_2, s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l)$
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk)
+		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
 	def EKGen(self:object, IDk:tuple) -> tuple: # $\textbf{EKGen}(\textit{ID}_k) \rightarrow \textit{ek}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -98,7 +98,7 @@ class ProtocolHIBME:
 		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}_1, \textit{ek}_2, \textit{ek}_3)$
 		
 		# Return #
-		return ek_ID_k
+		return ek_ID_k # $\textbf{return }\textit{ek}_{\textit{ID}_k}$
 	def DerivedEKGen(self:object, ekIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedEKGen}(\textit{ek}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{ek}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -132,7 +132,7 @@ class ProtocolHIBME:
 		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}'_1, \textit{ek}'_2, \textit{ek}'_3)$
 		
 		# Return #
-		return ek_ID_k
+		return ek_ID_k # $\textbf{return }\textit{ek}_{\textit{ID}_k}$
 	def DKGen(self:object, IDk:tuple) -> tuple: # $\textbf{DKGen}(\textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -152,24 +152,24 @@ class ProtocolHIBME:
 		# Protocol #
 		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
-		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $g_2^{\cfrac{\alpha}{b_1}} \cdot \textit{HI}^{\cfrac{r}{b_1}} \cdot \bar{g}_3^r$
-		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $g_2^{\cfrac{\alpha}{b_2}} \cdot \textit{HI}^{\cfrac{r}{b_2}} \cdot \tilde{g}_3^r$
+		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r$
+		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
 		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k \gets \prod\limits_{j = 1}^k a_j$
 		dk2 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_1(I_i)^{s_iA_k}, \forall i \in \{1, 2, \cdots, k\}$
 		dk3 = tuple(s[k + i - 1] * Ak for i in range(self.__l - k)) # $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		dk1 = ( # $\textit{dk}_1 \gets (
 			(a0, a1, g ** r) # a_0, a_1, g^r, 
-			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\cfrac{r}{b_1}}, h_{k + 2}^{\cfrac{r}{b_1}}, \cdots, h_l^{\cfrac{r}{b_1}}, 
-			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\cfrac{r}{b_2}}, h_{k + 2}^{\cfrac{r}{b_2}}, \cdots, h_l^{\cfrac{r}{b_2}}, 
+			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
+			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_2}}, \cdots, h_l^{\frac{r}{b_2}}, 
 			+ tuple(h[i] ** (b1 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
 			+ tuple(h[i] ** (b2 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}}, 
-			+ (HI ** (1 / b1), HI ** (1 / b2)) # \textit{HI}^{\cfrac{1}{b_1}}, \textit{HI}^{\cfrac{1}{b_2}}
+			+ (HI ** (1 / b1), HI ** (1 / b2)) # \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 		) # )$
 		dk4 = tuple(a[i] for i in range(k, self.__l)) # $\textit{dk}_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3, \textit{dk}_4)$
 		
 		# Return #
-		return dk_ID_k
+		return dk_ID_k # $\textbf{return }\textit{dk}_{\textit{ID}_k}$
 	def DerivedDKGen(self:object, dkIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedDKGen}(\textit{dk}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -218,7 +218,7 @@ class ProtocolHIBME:
 		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
 				
 		# Return #
-		return dk_ID_k
+		return dk_ID_k # $\textbf{return }\textit{dk}_{\textit{ID}_k}$
 	def Enc(self:object, ekIDS:tuple, IDSnd:tuple, IDRev:tuple, message:Element) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
@@ -262,7 +262,7 @@ class ProtocolHIBME:
 		a = self.__msk[-self.__l:]
 		k, n, m = len(ek_ID_S), len(ID_Snd), len(ID_Rev)
 		
-		# Protocol 
+		# Protocol #
 		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
 		T = A ** (s1 + s2) # $T \gets A^{s_1 + s_2}$
 		eta = self.__group.random(ZR) # generate $\eta \in \mathbb{Z}_p^*$ randomly
@@ -292,7 +292,7 @@ class ProtocolHIBME:
 		CT = (C1, C2, C3, C4, C5) # $\textit{CT} \gets (C_1, C_2, C_3, C_4, C_5)$
 		
 		# Return #
-		return CT
+		return CT # $\textbf{return }\textit{CT}$
 	def Dec(self:object, cipher:tuple, dkIDR:tuple, IDSnd:tuple, IDRev:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Snd}) \rightarrow M$
 		# Check #
 		if not self.__flag:
@@ -366,7 +366,7 @@ class ProtocolHIBME:
 		M = self.__xor(self.__xor(C1, HHat(TPi)), HHat(KPi)) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #
-		return M
+		return M # $\textbf{return }M$
 
 
 def Protocol(curveType:str, l:int, m:int, n:int) -> list:

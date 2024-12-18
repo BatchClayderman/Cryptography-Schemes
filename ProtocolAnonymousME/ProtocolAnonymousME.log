@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.7)  18 DEC 2024 05:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.7)  19 DEC 2024 03:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -134,7 +134,7 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 9.
 (d:/Program Files/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (251.04001pt too wide) in paragraph at lines 39--49
+Overfull \hbox (247.9903pt too wide) in paragraph at lines 41--51
 []$[][] \OMS/cmsy/m/n/10   \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 g[] \OMS/cmsy/m/n/
 10 ^^A [][] ^^A []\OML/cmm/m/it/10 ; g[] \OMS/cmsy/m/n/10 ^^A [][] ^^A []\OML/c
 mm/m/it/10 ; g[]; h[]; h[]; []  ; h[]; h[]; h[]; []  ; h[]; h[]; h[]; []  ; h[]
@@ -142,7 +142,7 @@ mm/m/it/10 ; g[]; h[]; h[]; []  ; h[]; h[]; h[]; []  ; h[]; h[]; h[]; []  ; h[]
  []
 
 
-Overfull \hbox (128.7409pt too wide) in paragraph at lines 54--64
+Overfull \hbox (128.7409pt too wide) in paragraph at lines 58--68
 \OML/cmm/m/it/10 d[]; []  ; c[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/it/10 d[]; c[] 
 \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/it/10 d[]; c[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/
 it/10 d[]; []  ; c[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/it/10 d[]; d[]; d[]; []  ;
@@ -159,37 +159,38 @@ L3 programming layer <2024-02-20>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 1709 strings out of 474115
- 24175 string characters out of 5740621
+ 1715 strings out of 474115
+ 24234 string characters out of 5740621
  1943190 words of memory out of 5000000
- 24100 multiletter control sequences out of 15000+600000
- 568067 words of font info for 73 fonts, out of 8000000 for 9000
+ 24103 multiletter control sequences out of 15000+600000
+ 568994 words of font info for 76 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  56i,5n,65p,273b,162s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx
-12.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmbxti10.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmmi10.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmmi12.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmmi5.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmmi6.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmmi7.pfb><d:/Program Files/texlive/2024/texmf-dist/f
-onts/type1/public/amsfonts/cm/cmmi8.pfb><d:/Program Files/texlive/2024/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmr10.pfb><d:/Program Files/texlive/2024/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><d:/Program Files/texlive/2024/
-texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><d:/Program Files/texlive/20
-24/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><d:/Program Files/texlive
-/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><d:/Program Files/te
-xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><d:/Program File
-s/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><d:/Program 
-Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><d:/Pro
-gram Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti7.pfb><d:
-/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm
-10.pfb>
-Output written on ProtocolAnonymousME.pdf (1 page, 166920 bytes).
+10.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmbx12.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmbxti10.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmmi10.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmmi12.pfb><d:/Program Files/texlive/2024/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmmi5.pfb><d:/Program Files/texlive/2024/texmf-dist/font
+s/type1/public/amsfonts/cm/cmmi6.pfb><d:/Program Files/texlive/2024/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmmi7.pfb><d:/Program Files/texlive/2024/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><d:/Program Files/texlive/2024/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><d:/Program Files/texlive/2024
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><d:/Program Files/texlive/
+2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><d:/Program Files/texli
+ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><d:/Program Files/te
+xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><d:/Program Fil
+es/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><d:/Program
+ Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><d:/Pro
+gram Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><d
+:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti7.pf
+b><d:/Program Files/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols
+/msbm10.pfb>
+Output written on ProtocolAnonymousME.pdf (1 page, 178313 bytes).
 PDF statistics:
- 98 PDF objects out of 1000 (max. 8388607)
- 58 compressed objects within 1 object stream
+ 103 PDF objects out of 1000 (max. 8388607)
+ 61 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
