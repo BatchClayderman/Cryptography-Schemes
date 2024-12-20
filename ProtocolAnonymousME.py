@@ -202,21 +202,23 @@ class ProtocolAnonymousME:
 		return M # $\textbf{return }M$
 
 
-def Protocol(curveType:str, k:int, l:int) -> list:
+def Protocol(curveType:str, l:int, k:int, round:int = None) -> list:
 	# Begin #
-	if isinstance(k, int) and isinstance(l, int) and 2 <= k < l:
+	if isinstance(l, int) and isinstance(k, int) and 2 <= k < l:
 		try:
-			group = PairingGroup(curveType)
-		except:
-			print("Is the system valid? No. ")
+			group = PairingGroup(curveType[0], secparam = curveType[1]) if isinstance(curveType, tuple) and len(curveType) == 2 else PairingGroup(curveType)
+		except BaseException as e:
+			print("Is the system valid? No. {0}. ".format(e))
 			return [curveType, l, k] + [False] * 3 + [-1] * 13
 	else:
-		print("Is the system valid? No. ")
+		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
 		return [curveType, l, k] + [False] * 3 + [-1] * 13
 	process = Process(os.getpid())
 	print("Type =", curveType)
 	print("l =", l)
 	print("k =", k)
+	if isinstance(round, int):
+		print("Round =", round)
 	print("Is the system valid? Yes")
 	
 	# Initialization #
@@ -287,13 +289,33 @@ def handleFolder(fd:str) -> bool:
 			return False
 
 def main() -> int:
-	results, filePath = [], "ProtocolAnonymousME.xlsx"
-	for curveType in ("MNT159", "MNT201", "MNT224"):
-		for l in (5, 10, 15, 20, 25, 30):
-			for k in range(5, l, 5):
-				results.append(Protocol(curveType, k, l))
+	# Begin #
+	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
+	roundCount, results, filePath = 20, [], "ProtocolAnonymousME.xlsx"
+	columns = ["Curve", "l", "k", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", "SK (B)", "SK' (B)", "CT"]
+	
+	# Protocol #
+	try:
+		for curveType in curveTypes:
+			for l in (5, 10, 15, 20, 25, 30):
+				for k in range(5, l, 5):
+					rounds = []
+					for round in range(roundCount):
+						rounds.append(Protocol(curveType, l, k, round))
+					length, average = len(columns), [curveType, l, k]
+					for idx in range(3, 6):
+						average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
+					for idx in range(6, length):
+						average.append(sum([round[idx] for round in rounds]) / roundCount)
+					results.append(average)
+	except KeyboardInterrupt:
+		print("The experiments were interrupted by users. The program will try to save the results collected. ")
+	except BaseException as e:
+		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. ")
+		print(e)
+	
+	# Output #
 	if results:
-		columns = ["Curve", "l", "k", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", "SK (B)", "SK' (B)", "CT"]
 		if handleFolder(os.path.split(filePath)[0]):
 			try:
 				df = __import__("pandas").DataFrame(results, columns = columns)
@@ -320,6 +342,8 @@ def main() -> int:
 		print("The results are empty. Please press the enter key to exit ({0}). ".format(EOF))
 		input()
 		return EOF
+	
+	# End #
 	iRet = EXIT_SUCCESS if all([all(result[3:6]) for result in results]) else EXIT_FAILURE
 	print("Please press the enter key to exit ({0}). ".format(iRet))
 	input()

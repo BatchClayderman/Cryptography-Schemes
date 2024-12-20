@@ -369,22 +369,24 @@ class ProtocolHIBME:
 		return M # $\textbf{return }M$
 
 
-def Protocol(curveType:str, l:int, m:int, n:int) -> list:
+def Protocol(curveType:str, l:int, m:int, n:int, round:int = None) -> list:
 	# Begin #
-	if isinstance(l, int) and isinstance(m, int) and isinstance(n, int) and 2 <= m < l and 2 <= n < l:
+	if isinstance(l, int) and isinstance(m, int) and isinstance(n, int) and 2 <= m < l and 2 <= n < l: # no need to check the parameters for curve types here
 		try:
-			group = PairingGroup(curveType)
+			group = PairingGroup(curveType[0], secparam = curveType[1]) if isinstance(curveType, tuple) and len(curveType) == 2 else PairingGroup(curveType)
 		except:
-			print("Is the system valid? No. ")
+			print("Is the system valid? No. {0}. ".format(e))
 			return [curveType, l, m, n] + [False] * 3 + [-1] * 19
 	else:
-		print("Is the system valid? No. ")
+		print("Is the system valid? No. The parameters $l$, $m$, and $n$ should be three positive integers satisfying $2 \\leqslant m < l \\land 2 \\leqslant n < l$. ")
 		return [curveType, l, m, n] + [False] * 3 + [-1] * 19
 	process = Process(os.getpid())
 	print("Type =", curveType)
 	print("l =", l)
 	print("m =", m)
 	print("n =", n)
+	if isinstance(round, int):
+		print("Round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -474,22 +476,36 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = ("MNT159", "MNT201", "MNT224")
-	results, filePath = [], "ProtocolHIBME.xlsx"
+	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
+	roundCount, results, filePath = 20, [], "ProtocolHIBME.xlsx"
+	columns = [																																					\
+		"Curve", "l", "m", "n", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", "Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 	\
+		"Setup (B)", "EKGen (B)", "DerivedEKGen (B)", "DKGen (B)", "DerivedDKGen (B)", "Enc (B)", "Dec (B)", "EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"						\
+	]
 	
 	# Protocol #
-	for curveType in curveTypes:
-		for l in (5, 10, 15, 20, 25, 30):
-			for m in range(5, l, 5):
-				for n in range(5, l, 5):
-					results.append(Protocol(curveType, l, m, n))
+	try:
+		for curveType in curveTypes:
+			for l in (5, 10, 15, 20, 25, 30):
+				for m in range(5, l, 5):
+					for n in range(5, l, 5):
+						rounds = []
+						for round in range(roundCount):
+							rounds.append(Protocol(curveType, l, m, n, round))
+						length, average = len(columns), [curveType, l, m, n]
+						for idx in range(4, 7):
+							average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
+						for idx in range(7, length):
+							average.append(sum([round[idx] for round in rounds]) / roundCount)
+						results.append(average)
+	except KeyboardInterrupt:
+		print("The experiments were interrupted by users. The program will try to save the results collected. ")
+	except BaseException as e:
+		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. ")
+		print(e)
+	
+	# Output #
 	if results:
-		columns = [																						\
-			"Curve", "l", "m", "n", 																			\
-			"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 		\
-			"Setup (B)", "EKGen (B)", "DerivedEKGen (B)", "DKGen (B)", "DerivedDKGen (B)", "Enc (B)", "Dec (B)", 	\
-			"EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"													\
-		]
 		if handleFolder(os.path.split(filePath)[0]):
 			try:
 				df = __import__("pandas").DataFrame(results, columns = columns)
