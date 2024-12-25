@@ -47,14 +47,16 @@ def generateProtocolTxt(pythonFilePath:str) -> bool:
 				try:
 					with open(os.path.join(folderPath, fileName), "w", encoding = "utf-8") as f:
 						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\n\\begin{document}\n\n\\section{Protocol}\n\n")
-						functionFlag, protocolFlag, doubleSeparatorSwitch = False, False, True
+						classFlag, functionFlag, protocolFlag, doubleSeparatorSwitch = False, False, False, True
 						for line in content.splitlines():
-							if line.startswith("\tdef ") and "#" in line:
+							if line.startswith("class Protocol"):
+								classFlag = True
+							elif classFlag and line.startswith("\tdef ") and "#" in line:
 								f.write("\\subsection{" + line[line.index("#") + 1:].strip() + "}\n\n")
 								functionFlag = True
-							elif functionFlag and "\t\t# Protocol #" == line:
+							elif classFlag and functionFlag and "\t\t# Protocol #" == line:
 								protocolFlag = True
-							elif functionFlag and protocolFlag and line.count("#") == 1 and "#" in line:
+							elif classFlag and functionFlag and protocolFlag and line.count("#") == 1 and "#" in line:
 								prompt = line[line.index("#") + 1:].strip()
 								if "$" == prompt:
 									doubleSeparatorSwitch = not doubleSeparatorSwitch # invert the double separator switch
@@ -63,6 +65,8 @@ def generateProtocolTxt(pythonFilePath:str) -> bool:
 								elif not prompt.startswith("$") and prompt.endswith("$"):
 									doubleSeparatorSwitch = True # enable the double separator switch
 								f.write(prompt + ("\n\n" if doubleSeparatorSwitch else "\n"))
+							elif line.strip() and not line.startswith("\t") and not line.lstrip().startswith("#"):
+								classFlag, functionFlag, protocolFlag, doubleSeparatorSwitch = False, False, False, True # reset
 							if functionFlag and protocolFlag and line.startswith("\t\treturn "):
 								functionFlag, protocolFlag = False, False
 						f.write("\\end{document}")
@@ -89,7 +93,7 @@ def generateProtocolTxt(pythonFilePath:str) -> bool:
 
 def main() -> int:
 	bRet = True
-	for pythonFilePath in ("ProtocolAnonymousME.py", "ProtocolHIBME.py"):
+	for pythonFilePath in ("ProtocolAnonymousME.py", "ProtocolHIBME.py", "ProtocolIBMETR.py"):
 		bRet = generateProtocolTxt(pythonFilePath) and bRet
 	iRet = EXIT_SUCCESS if bRet else EXIT_FAILURE
 	print("Please press the enter key to exit ({0}). ".format(iRet))

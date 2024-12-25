@@ -84,10 +84,6 @@ $g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
 
 $A_k \gets \prod\limits_{j = 1}^k a_j$
 
-$\textit{dk}_{2, i} \gets H_1(I_i)^{s_iA_k}, \forall i \in \{1, 2, \cdots, k\}$
-
-$\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
-
 $\textit{dk}_1 \gets (
 a_0, a_1, g^r,
 h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},
@@ -96,6 +92,10 @@ h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}},
 h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}},
 \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 )$
+
+$\textit{dk}_{2, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
+
+$\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 
 $\textit{dk}_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 
@@ -174,7 +174,7 @@ $C_2 \gets \bar{g}^{s_1}$
 
 $C_3 \gets \tilde{g}^{s_2}$
 
-$C_4 \gets (h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}$
+$C_4 \gets (h_1^{I_1} h_2^{I_2} \cdots h_n^{I_n} \cdot g_3)^{s_1 + s_2}$
 
 $C_5 \gets g^{\eta}$
 
@@ -182,14 +182,14 @@ $\textit{CT} \gets (C_1, C_2, C_3, C_4, C_5)$
 
 $\textbf{return }\textit{CT}$
 
-\subsection{$\textbf{Dec}(\textit{CT}, \textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Snd}) \rightarrow M$}
+\subsection{$\textbf{Dec}(\textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Rev}, \textit{ID}_\textit{Snd}, \textit{CT}) \rightarrow M$}
 
 $T' = \cfrac{e(\textit{dk}_{1, 3}, C_4)}{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}$
 
 If $m = n$:
 
 $K' \gets
-\prod\limits_{i = 1}^n e(H_2(I_i), \textit{dk}_{2, i})
+\prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
 \cdot e(C_5, \prod\limits_{i = 1}^n H_2(I'_i))
 $
 

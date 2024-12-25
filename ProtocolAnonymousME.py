@@ -29,6 +29,9 @@ EOF = (-1)
 class ProtocolAnonymousME:
 	def __init__(self, group:None|PairingGroup = None) -> None:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
+		if self.__group.secparam < 1:
+			self.__group = PairingGroup(self.__group.groupType())
+			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
 		self.__l = 30
 		self.__mpk = None
 		self.__msk = None
@@ -48,7 +51,7 @@ class ProtocolAnonymousME:
 			self.__l = l
 		else:
 			self.__l = 30
-			print("The variable $l$ must be not smaller than $3$ to complete all the tasks. It has been defaulted to $30$. ")
+			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
 		
 		# Protocol #
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
@@ -69,13 +72,13 @@ class ProtocolAnonymousME:
 	def KGen(self:object, IDk:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
+			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
+			print("KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$, which has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
@@ -103,20 +106,25 @@ class ProtocolAnonymousME:
 	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
+			print("DerivedKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
 			ID_k = IDk
-			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(IDk) + 1) << 2) + 5: # check the length of $\textit{sk}_{\textit{ID}_k}$
+			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDkMinus1]): # hybrid check
 				sk_ID_kMinus1 = skIDkMinus1
 			else:
 				sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-				print("The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is invalid, which has been computed again. ")
+				print("DerivedKGen: The variable $\\textit{{sk}}_{{\\textit{{ID}}_{{k - 1}}}}$ should be a tuple containing $(l - k + 1) \\times 4 + 5 = {0}$ elements, which has been generated accordingly. ".format(((self.__l - len(ID_k) + 1) << 2) + 5))
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
+			print(																																		\
+				(																																		\
+					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																			\
+				).format(self.__l - 1, self.__l)																													\
+			)
 			sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-			print("The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
+			print("DerivedKGen: The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
@@ -145,18 +153,18 @@ class ProtocolAnonymousME:
 	def Enc(self:object, IDk:tuple, message:Element) -> object: # $\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
+			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l: # boundary check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[2, {0}]$. It has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
+			print("Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$, which has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
 		if isinstance(message, Element):
 			M = message
 		else:
 			M = self.__group.random(GT)
-			print("The message passed should be a $\\mathbb{G}_T$ element but it is not. It will be generated randomly. ")
+			print("Enc: The message passed should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
@@ -173,23 +181,21 @@ class ProtocolAnonymousME:
 		
 		# Return #
 		return CT # $\textbf{return }\textit{CT}$
-	def Dec(self:object, cipher:tuple, skIDk:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
+	def Dec(self:object, skIDk:tuple, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
 		# Check #
 		if not self.__flag:
-			print("The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
+			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= 5 + ((self.__l - 1) << 2): # boundary check
+		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= ((self.__l - 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDk]): # hybrid check
 			sk_ID_k = skIDk
-			if isinstance(cipher, tuple) and 4 == len(cipher):
-				CT = cipher
-			else:
-				CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
-				print("The variable $\\textit{CT}$ is invalid, which has been computed again with $M \\in \\mathbb{G}_T$ generated randomly. ")
 		else:
 			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple whose length $k = \\|\\textit{{ID}}_k\\|$ is an integer within the closed interval $[9, {0}]$. It has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
+			print("The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
+		if isinstance(cipher, tuple) and len(cipher) == 4 and all([isinstance(ele, Element) for ele in cipher]):# hybrid check
+			CT = cipher
+		else:
 			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
-			print("The variable $\\textit{CT}$ has been generated accordingly. ")
+			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated randomly with $M \\in \\mathbb{G}_T$ generated randomly. ")
 		
 		# Unpack #
 		A, B, C, D = CT
@@ -202,24 +208,33 @@ class ProtocolAnonymousME:
 		return M # $\textbf{return }M$
 
 
-def Protocol(curveType:str, l:int, k:int, round:int = None) -> list:
+def Protocol(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(k, int) and 2 <= k < l:
 		try:
 			group = PairingGroup(curveType[0], secparam = curveType[1]) if isinstance(curveType, tuple) and len(curveType) == 2 else PairingGroup(curveType)
 		except BaseException as e:
+			if isinstance(curveType, (tuple, list)):
+				if len(curveType) == 2:
+					print("curveType =", curveType[0])
+					print("secparam =", curveType[1])
+				else:
+					print("curveType =", curveType)
+			elif isinstance(curveType, str):
+				print("curveType =", curveType)
 			print("Is the system valid? No. {0}. ".format(e))
-			return [curveType, l, k] + [False] * 3 + [-1] * 13
+			return ([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 else [curveType, None]) + [l, k] + [False] * 3 + [-1] * 13
 	else:
 		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
-		return [curveType, l, k] + [False] * 3 + [-1] * 13
+		return ([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 else [curveType, None]) + [l, k] + [False] * 3 + [-1] * 13
 	process = Process(os.getpid())
-	print("Type =", curveType)
+	print("curveType =", group.groupType())
+	print("secparam =", group.secparam)
 	print("l =", l)
 	print("k =", k)
 	if isinstance(round, int):
 		print("Round =", round)
-	print("Is the system valid? Yes")
+	print("Is the system valid? Yes. ")
 	
 	# Initialization #
 	protocolAnonymousME = ProtocolAnonymousME(group)
@@ -258,8 +273,8 @@ def Protocol(curveType:str, l:int, k:int, round:int = None) -> list:
 	
 	# Dec #
 	startTime = time()
-	M = protocolAnonymousME.Dec(CT, sk_ID_k)
-	MDerived = protocolAnonymousME.Dec(CT, sk_ID_kDerived)
+	M = protocolAnonymousME.Dec(sk_ID_k,  CT)
+	MDerived = protocolAnonymousME.Dec(sk_ID_kDerived, CT)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -273,7 +288,7 @@ def Protocol(curveType:str, l:int, k:int, round:int = None) -> list:
 	print("Memory:", memoryRecords)
 	print("Size:", sizeRecords)
 	print()
-	return [curveType, l, k, True, message == MDerived, message == M] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, l, k, True, message == MDerived, message == M] + timeRecords + memoryRecords + sizeRecords
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -292,7 +307,12 @@ def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
 	roundCount, results, filePath = 20, [], "ProtocolAnonymousME.xlsx"
-	columns = ["Curve", "l", "k", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", "Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", "Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", "SK (B)", "SK' (B)", "CT"]
+	columns = [																			\
+		"curveType", "secparam", "l", "k", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", 		\
+		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 							\
+		"Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", 							\
+		"SK (B)", "SK' (B)", "CT"															\
+	]
 	
 	# Protocol #
 	try:
@@ -302,12 +322,13 @@ def main() -> int:
 					rounds = []
 					for round in range(roundCount):
 						rounds.append(Protocol(curveType, l, k, round))
-					length, average = len(columns), [curveType, l, k]
-					for idx in range(3, 6):
-						average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
-					for idx in range(6, length):
-						average.append(sum([round[idx] for round in rounds]) / roundCount)
-					results.append(average)
+					if rounds:
+						length, average = len(columns), [rounds[0][0], rounds[0][1], l, k]
+						for idx in range(4, 7):
+							average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
+						for idx in range(7, length):
+							average.append(sum([round[idx] for round in rounds]) / roundCount)
+						results.append(average)
 	except KeyboardInterrupt:
 		print("The experiments were interrupted by users. The program will try to save the results collected. ")
 	except BaseException as e:
