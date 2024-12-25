@@ -4,7 +4,7 @@ There are three cryptography protocols implemented here based on the Python prog
 
 A Python script for generating LaTeX files of protocols from Python scripts is also provided. 
 
-A possible Chinese Python charm environment configuration tutorial can be seen at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189). 
+A possible Chinese Python charm environment configuration tutorial can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. 
 
 When there are hash functions, the following rules will be applied. 
 
