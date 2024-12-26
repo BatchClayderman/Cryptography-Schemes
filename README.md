@@ -28,6 +28,6 @@ The script will try to finish the compilation once a LaTeX source file is genera
 
 Usually, it will succeed if ``pdflatex`` is available and on the path. 
 
-@import ./ProtocolHIBME/README.md
+@import "./ProtocolHIBME/README.md"
 
-@import ./ProtocolIBMETR/README.md
+@import "./ProtocolIBMETR/README.md"
