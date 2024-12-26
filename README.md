@@ -28,6 +28,10 @@ The script will try to finish the compilation once a LaTeX source file is genera
 
 Usually, it will succeed if ``pdflatex`` is available and on the path. 
 
-[//]: # (Source: ./ProtocolHIBME/README.md)
+## ProtocolHIBME
 
-[//]: # (Source: ./ProtocolIBMETR/README.md)
+Click [here](./ProtocolHIBME/README.md) to view details. 
+
+## ProtocolIBMETR
+
+Click [here](./ProtocolIBMETR/README.md) to view details. 
