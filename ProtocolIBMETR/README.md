@@ -1,12 +1,12 @@
-### ProtocolIBMETR
+## ProtocolIBMETR
 
 This is the implementation of the IBMETR protocol, with AIBE and ARES as the baselines. 
 
-##### ProtocolIBMETR.py
+#### ProtocolIBMETR.py
 
 This is the implementation of the IBMETR protocol based on the Python programming language. 
 
-##### ProtocolAIBE.py
+#### ProtocolAIBE.py
 
 This is the implementation of the ``Anonymous hierarchical identity-based encryption (without random oracles)`` (AIBE) protocol based on the Python prgoramming language. 
 
