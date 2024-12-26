@@ -30,6 +30,8 @@ Usually, it will succeed if ``pdflatex`` is available and on the path.
 
 ## ProtocolHIBME
 
+![./ProtocolHIBME/README.md](./ProtocolHIBME/README.md)
+
 Click [here](./ProtocolHIBME/README.md) to view details. 
 
 ## ProtocolIBMETR
