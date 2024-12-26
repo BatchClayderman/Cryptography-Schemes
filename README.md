@@ -12,8 +12,7 @@ An EOF (-1) signal will be returned to its parent process if the program lacks a
 
 When there are hash functions, the following rules will be applied. 
 
-- The function of the variable $\hat{H}$ is to hash something into a bit array whose length is the security parameter $\lambda$.
-- An ``int`` object instead of an object belonging to any series data type is designed to store the bit array and accomplish the $\oplus$ operation to accelerate the $\oplus$ operation and reduce the memory consumption. 
+- The function of the variable $\hat{H}$ is to hash something into a bit array whose length is the security parameter $\lambda$. Thus, an ``int`` object instead of an object belonging to any series data type is designed to store the bit array and accomplish the $\oplus$ operation to accelerate the $\oplus$ operation and reduce the memory consumption. 
 - The message inputted to the ``Enc`` function can be an ``int`` or a ``bytes`` object, where the overflowed values will be cast by performing the ``&`` operation on the message and the operand indicating the maximum value of the limited count of bits.
 - The ``str`` object is not accepted as a possible form of the message inputted to the ``Enc`` function since the encoding and decoding are not the things should be considered in these scripts. 
 - The statement ``int.from_bytes(x, byteorder = "big")`` will be used to convert the ``bytes`` object into the ``int`` object if a ``bytes`` object is passed as the message for encryption. 
