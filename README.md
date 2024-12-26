@@ -27,3 +27,7 @@ This script helps convert each Python script into the corresponding LaTeX source
 The script will try to finish the compilation once a LaTeX source file is generated. 
 
 Usually, it will succeed if ``pdflatex`` is available and on the path. 
+
+[title](./ProtocolHIBME/README.md)
+
+[title](./ProtocolIBMETR/README.md)
