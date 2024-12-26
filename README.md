@@ -4,7 +4,7 @@ Two proposed cryptography protocols with their baselines have been implemented h
 
 A Python script for generating LaTeX files of protocols from Python scripts is also provided. 
 
-A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189?_blank) if necessary. <a href="https://blog.csdn.net/weixin_45726033/article/details/144254189" target="_blank"></a>
+A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189?_blank) if necessary. <a href="https://blog.csdn.net/weixin_45726033/article/details/144254189" target="_blank">https://blog.csdn.net/weixin_45726033/article/details/144254189</a>
 
 To test the Python charm environment initially, try to execute ``from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element`` in Python, which is also how all the Python scripts in this project import the necesssary libraries. 
 
