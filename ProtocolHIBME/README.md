@@ -4,7 +4,7 @@ This is the implementation of the proposed HIB-ME protocol, with the anonymous M
 
 #### ProtocolAnonymousME.py
 
-This is the implementation of the Anonymous Hierarchical Identity-based Encryption (Anonymous ME) protocol based on the Python programming language. 
+This is the implementation of the ``Anonymous Hierarchical Identity-based Encryption`` (AnonymousME) protocol based on the Python programming language. 
 
 #### ProtocolHIBME.py
 
