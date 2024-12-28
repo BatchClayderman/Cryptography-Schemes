@@ -74,11 +74,16 @@ class ProtocolAnonymousME:
 		if not self.__flag:
 			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$, which has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
+			print(																																			\
+				(																																			\
+					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																				\
+				).format(self.__l - 1, self.__l)																														\
+			)
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
@@ -108,7 +113,7 @@ class ProtocolAnonymousME:
 		if not self.__flag:
 			print("DerivedKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDkMinus1]): # hybrid check
 				sk_ID_kMinus1 = skIDkMinus1
@@ -117,11 +122,11 @@ class ProtocolAnonymousME:
 				print("DerivedKGen: The variable $\\textit{{sk}}_{{\\textit{{ID}}_{{k - 1}}}}$ should be a tuple containing $(l - k + 1) \\times 4 + 5 = {0}$ elements, which has been generated accordingly. ".format(((self.__l - len(ID_k) + 1) << 2) + 5))
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																		\
-				(																																		\
-					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$ but it is not, "		\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																			\
-				).format(self.__l - 1, self.__l)																													\
+			print(																																								\
+				(																																								\
+					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																									\
+				).format(self.__l - 1, self.__l)																																			\
 			)
 			sk_ID_kMinus1 = self.KGen(ID_k[:-1])
 			print("DerivedKGen: The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
@@ -155,12 +160,17 @@ class ProtocolAnonymousME:
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print("Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$, which has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l))
-		if isinstance(message, Element):
+			print(																																			\
+				(																																			\
+					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																				\
+				).format(self.__l - 1, self.__l)																														\
+			)
+		if isinstance(message, Element) and message.type == GT: # type check
 			M = message
 		else:
 			M = self.__group.random(GT)
@@ -306,7 +316,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
-	roundCount, results, filePath = 20, [], "ProtocolAnonymousME.xlsx"
+	roundCount, filePath = 20, "ProtocolAnonymousME.xlsx"
 	columns = [																			\
 		"curveType", "secparam", "l", "k", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", 		\
 		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 							\
@@ -315,6 +325,7 @@ def main() -> int:
 	]
 	
 	# Protocol #
+	length, results = len(columns), []
 	try:
 		for curveType in curveTypes:
 			for l in (5, 10, 15, 20, 25, 30):
@@ -327,10 +338,11 @@ def main() -> int:
 						for idx in range(4, 7):
 							average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
 						for idx in range(7, length):
-							average.append(sum([round[idx] for round in rounds]) / roundCount)
+							values = [round[idx] for round in rounds]
+							average.append(-1 if -1 in values else sum(values) / roundCount)
 						results.append(average)
 	except KeyboardInterrupt:
-		print("The experiments were interrupted by users. The program will try to save the results collected. ")
+		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
 	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. ")
 		print(e)
@@ -367,7 +379,10 @@ def main() -> int:
 	# End #
 	iRet = EXIT_SUCCESS if all([all(result[3:6]) for result in results]) else EXIT_FAILURE
 	print("Please press the enter key to exit ({0}). ".format(iRet))
-	input()
+	try:
+		input()
+	except:
+		pass
 	return iRet
 
 

@@ -563,7 +563,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, results, filePath = 20, [], "ProtocolHIBME.xlsx"
+	roundCount, filePath = 20, "ProtocolHIBME.xlsx"
 	columns = [																						\
 		"curveType", "secparam", "l", "m", "n", "isSystemValid", "isDeriverPassed", "isProtocolCorrect", 				\
 		"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 		\
@@ -572,6 +572,7 @@ def main() -> int:
 	]
 	
 	# Protocol #
+	length, results = len(columns), []
 	try:
 		for curveType in curveTypes:
 			for l in (5, 10, 15, 20, 25, 30):
@@ -581,14 +582,15 @@ def main() -> int:
 						for round in range(roundCount):
 							rounds.append(Protocol(curveType, l, m, n, round))
 						if rounds:
-							length, average = len(columns), [rounds[0][0], rounds[0][1], l, m, n]
+							average = [rounds[0][0], rounds[0][1], l, m, n]
 							for idx in range(5, 8):
 								average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
 							for idx in range(8, length):
-								average.append(sum([round[idx] for round in rounds]) / roundCount)
+								values = [round[idx] for round in rounds]
+								average.append(-1 if -1 in values else sum(values) / roundCount)
 							results.append(average)
 	except KeyboardInterrupt:
-		print("The experiments were interrupted by users. The program will try to save the results collected. ")
+		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
 	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. ")
 		print(e)
@@ -618,7 +620,10 @@ def main() -> int:
 	# End #
 	iRet = EXIT_SUCCESS if results else EXIT_FAILURE
 	print("Please press the enter key to exit ({0}). ".format(iRet))
-	input()
+	try:
+		input()
+	except:
+		pass
 	return iRet
 
 
