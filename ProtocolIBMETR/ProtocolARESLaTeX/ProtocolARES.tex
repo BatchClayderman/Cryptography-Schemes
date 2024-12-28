@@ -46,6 +46,24 @@ $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
 
 $\textbf{return }\textit{Pvk}_\textit{Id}$
 
+\subsection{$\textbf{TSK}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$}
+
+generate $r1, r2 \in \mathbb{Z}_p^*$ randomly
+
+$d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
+
+$d_1 \gets (g_0 g_1^\textit{Id})^{-  r_1 t_2}$
+
+$d_2 \gets (g_0 g_1^\textit{Id})^{-  r_1 t_1}$
+
+$d_3 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_4}$
+
+$d_4 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_3}$
+
+$\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
+
+$\textbf{return }\textit{Pvk}_\textit{Id}$
+
 \subsection{$\textbf{Encrypt}(\textit{Id}, m) \rightarrow \textit{CT}$}
 
 generate $s, s_1, s_2 \in \mathbb{Z}_p^*$ randomly
@@ -71,5 +89,9 @@ $\textbf{return }\textit{CT}$
 $M \gets C' \cdot e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4)$
 
 $\textbf{return }M$
+
+\subsection{$\textbf{TVerify}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow y, y \in \{0, 1\}$}
+
+$\textbf{return }e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4) = 1 (\mathbb{G}_T)$
 
 \end{document}

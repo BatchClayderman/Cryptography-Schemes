@@ -26,7 +26,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class ProtocolAIBE:
+class ProtocolARES:
 	def __init__(self:object, group:None|PairingGroup = None) -> None:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -73,6 +73,32 @@ class ProtocolAIBE:
 		d0 = g ** (r1 * t1 * t2 + r2 * t3 * t4) # $d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
 		d1 = g ** (-(w * t2)) * (g0 * g1 ** Id) ** (-(r1 * t2)) # $d_1 \gets g^{- w t_2} \cdot (g_0 g_1^\textit{Id})^{-  r_1 t_2}$
 		d2 = g ** (-(w * t1)) * (g0 * g1 ** Id) ** (-(r1 * t1)) # $d_2 \gets g^{- w t_1} \cdot (g_0 g_1^\textit{Id})^{-  r_1 t_1}$
+		d3 = (g0 * g1 ** Id) ** (-(r2 * t4)) # $d_3 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_4}$
+		d4 = (g0 * g1 ** Id) ** (-(r2 * t3)) # $d_4 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_3}$
+		Pvk_Id = (d0, d1, d2, d3, d4) # $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
+		
+		# Return #
+		return Pvk_Id # $\textbf{return }\textit{Pvk}_\textit{Id}$
+	def TSK(self:object, identity:Element) -> tuple: # $\textbf{TSK}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$
+		# Check #
+		if not self.__flag:
+			print("Extract: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TSK`` subsequently. ")
+			self.Setup()
+		if isinstance(identity, Element) and identity.type == ZR: # type check
+			Id = identity
+		else:
+			Id = self.__group.random(ZR)
+			print("Extract: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		g, g0, g1 = self.__mpk[1], self.__mpk[2], self.__mpk[3]
+		w, t1, t2, t3, t4 = self.__msk
+		
+		# Protocol #
+		r1, r2 = self.__group.random(ZR), self.__group.random(ZR) # generate $r1, r2 \in \mathbb{Z}_p^*$ randomly
+		d0 = g ** (r1 * t1 * t2 + r2 * t3 * t4) # $d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
+		d1 = (g0 * g1 ** Id) ** (-(r1 * t2)) # $d_1 \gets (g_0 g_1^\textit{Id})^{-  r_1 t_2}$
+		d2 = (g0 * g1 ** Id) ** (-(r1 * t1)) # $d_2 \gets (g_0 g_1^\textit{Id})^{-  r_1 t_1}$
 		d3 = (g0 * g1 ** Id) ** (-(r2 * t4)) # $d_3 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_4}$
 		d4 = (g0 * g1 ** Id) ** (-(r2 * t3)) # $d_4 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_3}$
 		Pvk_Id = (d0, d1, d2, d3, d4) # $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
@@ -135,6 +161,31 @@ class ProtocolAIBE:
 		
 		# Return #
 		return M # $\textbf{return }M$
+	def TVerify(self:object, PvkId:tuple, cipher:tuple) -> bool: # $\textbf{TVerify}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow y, y \in \{0, 1\}$
+		# Check #
+		if not self.__flag:
+			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Decrypt`` subsequently. ")
+			self.Setup()
+		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all([isinstance(ele, Element) for ele in PvkId]): # hybrid check
+			Pvk_Id = PvkId
+		else:
+			Pvk_Id = self.Extract(self.__group.random(ZR))
+			print("Decrypt: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
+		if isinstance(cipher, tuple) and len(cipher) == 6 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
+			CT = cipher
+		else:
+			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
+			print("Decrypt: The variable $\\textit{CT}$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		d0, d1, d2, d3, d4 = Pvk_Id
+		CPi, C0, C1, C2, C3, C4 = CT
+		
+		# Protocol #
+		pass
+		
+		# Return #
+		return pair(C0, d0) * pair(C1, d1) * pair(C2, d2) * pair(C3, d3) * pair(C4, d4) == self.__group.init(GT) # $\textbf{return }e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4) = 1 (\mathbb{G}_T)$
 
 
 def Protocol(curveType:tuple|list|str, round:int = None) -> list:
@@ -151,7 +202,7 @@ def Protocol(curveType:tuple|list|str, round:int = None) -> list:
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
 		print("Is the system valid? No. {0}. ".format(e))
-		return ([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 else [curveType, None]) + [False] * 2 + [-1] * 10
+		return ([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 else [curveType, None]) + [False] * 3 + [-1] * 15
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -160,12 +211,12 @@ def Protocol(curveType:tuple|list|str, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	protocolAIBE = ProtocolAIBE(group)
+	protocolARES = ProtocolARES(group)
 	timeRecords, memoryRecords = [], []
 	
 	# Setup #
 	startTime = time()
-	mpk, msk = protocolAIBE.Setup()
+	mpk, msk = protocolARES.Setup()
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -173,7 +224,14 @@ def Protocol(curveType:tuple|list|str, round:int = None) -> list:
 	# Extract #
 	startTime = time()
 	Id = group.random(ZR)
-	Pvk_Id = protocolAIBE.Extract(Id)
+	Pvk_Id = protocolARES.Extract(Id)
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# TSK #
+	startTime = time()
+	Pvk_IdTraced = protocolARES.TSK(Id)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -181,27 +239,35 @@ def Protocol(curveType:tuple|list|str, round:int = None) -> list:
 	# Encrypt #
 	startTime = time()
 	message = group.random(GT)
-	CT = protocolAIBE.Encrypt(Id, message)
+	CT = protocolARES.Encrypt(Id, message)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Decrypt #
 	startTime = time()
-	M = protocolAIBE.Decrypt(Pvk_Id, CT)
+	M = protocolARES.Decrypt(Pvk_Id, CT)
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# TVerify #
+	startTime = time()
+	bRet = protocolARES.TVerify(Pvk_IdTraced, CT)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(Pvk_Id), getsizeof(CT)]
-	del protocolAIBE
+	sizeRecords = [getsizeof(Pvk_Id), getsizeof(Pvk_IdTraced), getsizeof(CT)]
+	del protocolARES
 	print("Is the protocol correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
+	print("Is the tracing verified? {0}. ".format("Yes" if bRet else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)
 	print("Size:", sizeRecords)
 	print()
-	return [group.groupType(), group.secparam, True, message == M] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, True, message == M, bRet] + timeRecords + memoryRecords + sizeRecords
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -219,10 +285,12 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 20, "ProtocolAIBE.xlsx"
-	columns = [																								\
-		"curveType", "secparam", "isSystemValid", "isProtocolCorrect", "Setup (s)", "Extract (s)", "Encrypt (s)", "Decrypt (s)", 	\
-		"Setup (B)", "Extract (B)", "Encrypt (B)", "Decrypt (B)", "Pvk_Id (B)", "CT (B)"									\
+	roundCount, filePath = 20, "ProtocolARES.xlsx"
+	columns = [																	\
+		"curveType", "secparam", "isSystemValid", "isProtocolCorrect", "isTracingVerified", 	\
+		"Setup (s)", "Extract (s)", "TSK (s)", "Encrypt (s)", "Decrypt (s)", "TVerify (s)", 		\
+		"Setup (B)", "Extract (B)", "TSK (B)", "Encrypt (B)", "Decrypt (B)", "TVerify (B)", 	\
+		"Pvk_Id (B)", "Pvk_IdTraced (B)", "CT (B)"										\
 	]
 	
 	# Protocol #
@@ -234,9 +302,9 @@ def main() -> int:
 				rounds.append(Protocol(curveType, round))
 			if rounds:
 				average = [rounds[0][0], rounds[0][1]]
-				for idx in range(2, 4):
+				for idx in range(2, 5):
 					average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
-				for idx in range(4, length):
+				for idx in range(5, length):
 					values = [round[idx] for round in rounds]
 					average.append(-1 if -1 in values else sum(values) / roundCount)
 				results.append(average)
