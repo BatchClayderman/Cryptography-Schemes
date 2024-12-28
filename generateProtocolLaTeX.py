@@ -71,7 +71,7 @@ def generateProtocolTxt(pythonFilePath:str) -> bool:
 								functionFlag, protocolFlag = False, False
 						f.write("\\end{document}")
 					print("The TEX generation for \"{0}\" succeeded. ".format(pythonFilePath))
-					process = Popen(["pdflatex", fileName], cwd = folderPath)
+					process = Popen(["pdflatex", fileName], cwd = folderPath, shell = True)
 					if process.wait() == EXIT_SUCCESS:
 						print("The TEX compilation for \"{0}\" succeeded. ".format(pythonFilePath))
 						return True
