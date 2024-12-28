@@ -1,4 +1,4 @@
-# Cryptography-Protocols
+# Cryptography Protocols
 
 Two proposed cryptography protocols with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
 
@@ -27,6 +27,15 @@ This script helps convert each Python script into the corresponding LaTeX source
 The script will try to finish the compilation once a LaTeX source file is generated. 
 
 Usually, it will succeed if ``pdflatex`` is available and on the path. 
+
+#### Environment details
+
+- [Ubuntu 24.04.1 LTS (WSL)](https://learn.microsoft.com/windows/wsl/install)
+- [Python 3.12.3](https://www.python.org/)
+- [GMP-6.3.0](https://gmplib.org/)
+- [PBC-0.5.14](https://crypto.stanford.edu/pbc/download.html)
+- OpenSSL library 3.0.13 (``sudo apt-get install libssl-dev``)
+- [Python charm library](https://github.com/EliusSolis/charm)
 
 ## ProtocolHIBME
 
