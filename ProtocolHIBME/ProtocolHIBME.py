@@ -76,8 +76,8 @@ class ProtocolHIBME:
 		elif 128 == self.__group.secparam:
 			HHat = lambda x:int.from_bytes(md5(self.__group.serialize(x)).digest(), byteorder = "big")
 		else:
-			HHat = int.from_bytes(sha512(self.__group.serialize(x)).digest() * ((self.__group.secparam - 1) // 512 + 1), byteorder = "big") & self.__operand # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
-			print("Setup: An inregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
+			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest() * ((self.__group.secparam - 1) // 512 + 1), byteorder = "big") & self.__operand # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
+			print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		A = pair(g1, g2) # $A \gets e(g_1, g_2)$
 		gBar = g ** b1 # $\bar{g} \gets g^{b_1}$
