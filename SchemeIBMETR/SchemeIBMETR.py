@@ -14,7 +14,7 @@ try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
-	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese sif necessary. ")
+	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -125,7 +125,7 @@ class SchemeIBMETR:
 		
 		# Return #
 		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
-	def TKGen(self:object, idR:Element) -> tuple: # $\textbf{TKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
+	def TKGen(self:object, idR:Element) -> tuple: # $\textbf{TKGen}(\textit{id}_R) \rightarrow \textit{tk}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
 			print("TKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TKGen`` subsequently. ")
