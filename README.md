@@ -1,8 +1,8 @@
-# Cryptography Protocols
+# Cryptography Schemes
 
-Two proposed cryptography protocols with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
+Two proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
 
-A Python script for generating LaTeX files of protocols from Python scripts is also provided. 
+A Python script for generating LaTeX files of schemes from Python scripts is also provided. 
 
 A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. 
 
@@ -20,7 +20,7 @@ When there are hash functions, the following rules will be applied.
 
 Otherwise, all the objects during the algebraic operations should belong to the ``Element`` type. 
 
-#### generateProtocolLaTeX.py
+#### generateSchemeLaTeX.py
 
 This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
 
@@ -37,10 +37,10 @@ Usually, it will succeed if ``pdflatex`` is available and on the path.
 - OpenSSL library 3.0.13 (``sudo apt-get install libssl-dev``)
 - [Python charm library](https://github.com/EliusSolis/charm)
 
-## ProtocolHIBME
+## SchemeHIBME
 
-Click [here](./ProtocolHIBME/README.md) to view details. 
+Click [here](./SchemeHIBME/README.md) to view details. 
 
-## ProtocolIBMETR
+## SchemeIBMETR
 
-Click [here](./ProtocolIBMETR/README.md) to view details. 
+Click [here](./SchemeIBMETR/README.md) to view details. 
