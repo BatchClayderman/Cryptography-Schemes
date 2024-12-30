@@ -2,13 +2,9 @@
 
 Two proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
 
-A Python script for generating LaTeX files of schemes from Python scripts is also provided. 
-
-A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. 
-
 To test the Python charm environment initially, try to execute ``from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element`` in Python, which is also how all the Python scripts in this project import the necesssary libraries. 
 
-An EOF (-1) signal will be returned to its parent process if the program lacks any of the necessary libraries. 
+For all the Python scripts here, an EOF ($-1$) signal will be returned to its parent process if the program lacks any of the necessary libraries. 
 
 When there are hash functions, the following rules will be applied. 
 
@@ -19,6 +15,8 @@ When there are hash functions, the following rules will be applied.
 - The output of the ``Dec`` function is an ``int`` object. 
 
 Otherwise, all the objects during the algebraic operations should belong to the ``Element`` type. 
+
+Additionally, a Python script for generating LaTeX files of schemes from Python scripts is provided here. A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. If you are a Chinese beginner, [https://blog.csdn.net/weixin_45726033/article/details/144822018](https://blog.csdn.net/weixin_45726033/article/details/144822018) may be helpful. 
 
 #### generateSchemeLaTeX.py
 
