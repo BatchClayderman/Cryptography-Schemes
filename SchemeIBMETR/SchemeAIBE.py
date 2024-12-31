@@ -140,22 +140,31 @@ class SchemeAIBE:
 def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	# Begin #
 	try:
-		group = PairingGroup(curveType[0], secparam = curveType[1]) if isinstance(curveType, (tuple, list)) and len(curveType) == 2 else PairingGroup(curveType)
-	except:
-		if isinstance(curveType, (tuple, list)):
-			if len(curveType) == 2:
-				print("curveType =", curveType[0])
-				print("secparam =", curveType[1])
+		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
+			if curveType[1] >= 1:
+				group = PairingGroup(curveType[0], secparam = curveType[1])
 			else:
-				print("curveType =", curveType)
+				group = PairingGroup(curveType[0])
+		else:
+			group = PairingGroup(curveType)
+	except:
+		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
+			print("curveType =", curveType[0])
+			if curveType[1] >= 1:
+				print("secparam =", curveType[1])
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
+		if isinstance(round, int) and round >= 0:
+			print("Round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
-		return ([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 else [curveType, None]) + [False] * 2 + [-1] * 10
+		return (																																														\
+			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
+			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 10																														\
+		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
-	if isinstance(round, int):
+	if isinstance(round, int) and round >= 0:
 		print("Round =", round)
 	print("Is the system valid? Yes. ")
 	
@@ -201,7 +210,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Memory:", memoryRecords)
 	print("Size:", sizeRecords)
 	print()
-	return [group.groupType(), group.secparam, True, message == M] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M] + timeRecords + memoryRecords + sizeRecords
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -220,58 +229,74 @@ def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeAIBE.xlsx"
-	columns = [																								\
-		"curveType", "secparam", "isSystemValid", "isSchemeCorrect", "Setup (s)", "Extract (s)", "Encrypt (s)", "Decrypt (s)", 	\
-		"Setup (B)", "Extract (B)", "Encrypt (B)", "Decrypt (B)", "Pvk_Id (B)", "CT (B)"									\
+	columns = [																\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
+		"Setup (s)", "Extract (s)", "Encrypt (s)", "Decrypt (s)", 						\
+		"Setup (B)", "Extract (B)", "Encrypt (B)", "Decrypt (B)", "Pvk_Id (B)", "CT (B)"	\
 	]
 	
 	# Scheme #
 	length, results = len(columns), []
 	try:
+		roundCount = max(1, roundCount)
 		for curveType in curveTypes:
-			rounds = []
-			for round in range(roundCount):
-				rounds.append(Scheme(curveType, round))
-			if rounds:
-				average = [rounds[0][0], rounds[0][1]]
-				for idx in range(2, 4):
-					average.append("{0}/{1}".format([round[idx] for round in rounds].count(True), roundCount))
-				for idx in range(4, length):
-					values = [round[idx] for round in rounds]
-					average.append(-1 if -1 in values else sum(values) / roundCount)
-				results.append(average)
+			average = Scheme(curveType, 0)
+			for round in range(1, roundCount):
+				result = Scheme(curveType, round)
+				for idx in range(3, 5):
+					average[idx] += result[idx]
+				for idx in range(5, length):
+					average[idx] = -1 if -1 == average[idx] or -1 == result[idx] else average[idx] + result[idx]
+			average[2] = roundCount
+			for idx in range(5, length):
+				average[idx] = -1 if -1 == average[idx] else average[idx] / roundCount
+			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
 	except BaseException as e:
-		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. ")
-		print(e)
+		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
+	print()
 	if results:
 		if handleFolder(os.path.split(filePath)[0]):
-			try:
-				df = __import__("pandas").DataFrame(results, columns = columns)
-				if os.path.splitext(filePath)[1].lower() == ".csv":
-					df.to_csv(filePath, index = False)
-				else:
-					df.to_excel(filePath, index = False)
-				print("\nSuccessfully saved the results to \"{0}\" in the three-line table form. ".format(filePath))
-			except:
+			flag = False # write to the file or not
+			if os.path.isfile(filePath):
 				try:
-					with open(filePath, "w", encoding = "utf-8") as f:
-						f.write(str(columns) + "\n" + str(results))
-					print("\nSuccessfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
-				except BaseException as e:
-					print("\nResults: \n{0}\n\nFailed to save the results to \"{1}\" since {2}. ".format(results, filePath, e))
+					flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(filePath)).upper() in ("Y", "YES", "TRUE", "1")
+				except:
+					print()
+			else:
+				flag = True
+			if flag:
+				try:
+					df = __import__("pandas").DataFrame(results, columns = columns)
+					if os.path.splitext(filePath)[1].lower() == ".csv":
+						df.to_csv(filePath, index = False, float_format = "%.9f")
+					else:
+						df.to_excel(filePath, index = False, float_format = "%.9f")
+					print("Successfully saved the results to \"{0}\" in the three-line table form. ".format(filePath))
+				except:
+					try:
+						with open(filePath, "w", encoding = "utf-8") as f:
+							f.write(str(columns) + "\n" + str(results))
+						print("Successfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
+					except BaseException as e:
+						print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, filePath, e))
+			else:
+				print("Results: \n{0}\n\nThe overwriting is canceled by users. ".format(results))
 		else:
-			print("\nResults: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
+			print("Results: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
 	else:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:5]] + [r > 0 for r in result[5:length]]) for result in results]) else EXIT_FAILURE
 	print("Please press the enter key to exit ({0}). ".format(iRet))
-	input()
+	try:
+		input()
+	except:
+		print()
 	return iRet
 
 
