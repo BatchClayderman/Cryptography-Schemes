@@ -64,7 +64,7 @@ class SchemeIBMETR:
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
 		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_1:\{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G2) # $H_2:\{0, 1\}^* \rightarrow \mathbb{G}_2$
-		HHat = lambda x:self.__group.serialize(x) * ((self.__group.secparam - 1) // len(self.__group.serialize(x)) + 1) # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
+		HHat = lambda x:self.__group.serialize(x) # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
 		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
 		w, alpha, t1, t2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, alpha, t_1, t_2 \in \mathbb{Z}_p^*$
 		Omega = pair(g, g) ** w # $\Omega \gets e(g, g)^w$
@@ -160,7 +160,7 @@ class SchemeIBMETR:
 		else:
 			id_Rev = self.__group.random(ZR)
 			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element but it is not, which has been generated randomly. ")
-		if isinstance(message, bytes):
+		if isinstance(message, bytes): # type check
 			m = message
 		else:
 			m = b"SchemeIBMETR"
