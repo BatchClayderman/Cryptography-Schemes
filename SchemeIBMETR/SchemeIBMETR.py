@@ -1,5 +1,6 @@
 import os
 from sys import exit, getsizeof
+from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 from time import time
 try:
 	from psutil import Process
@@ -44,17 +45,6 @@ class SchemeIBMETR:
 			return element
 		else:
 			return self.__group.init(ZR, 1)
-	def __xor(self:object, *bElements:bytes) -> bytes:
-		if bElements and all([isinstance(bEle, bytes) for bEle in bElements]):
-			minLength = min([len(bEle) for bEle in bElements])
-			bResult = bytearray(minLength)
-			for i in range(minLength):
-				bResult[i] = bElements[0][i]
-				for bElement in bElements[1:]:
-					bResult[i] ^= bElement[i]
-			return bytes(bResult)
-		else:
-			return b""
 	def Setup(self:object) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
@@ -64,7 +54,21 @@ class SchemeIBMETR:
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
 		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_1:\{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G2) # $H_2:\{0, 1\}^* \rightarrow \mathbb{G}_2$
-		HHat = lambda x:self.__group.serialize(x) # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
+		if 512 == self.__group.secparam:
+			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest(), byteorder = "big")
+		elif 384 == self.__group.secparam:
+			HHat = lambda x:int.from_bytes(sha384(self.__group.serialize(x)).digest(), byteorder = "big")
+		elif 256 == self.__group.secparam:
+			HHat = lambda x:int.from_bytes(sha256(self.__group.serialize(x)).digest(), byteorder = "big")
+		elif 224 == self.__group.secparam:
+			HHat = lambda x:int.from_bytes(sha224(self.__group.serialize(x)).digest(), byteorder = "big")
+		elif 160 == self.__group.secparam:
+			HHat = lambda x:int.from_bytes(sha1(self.__group.serialize(x)).digest(), byteorder = "big")
+		elif 128 == self.__group.secparam:
+			HHat = lambda x:int.from_bytes(md5(self.__group.serialize(x)).digest(), byteorder = "big")
+		else:
+			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest() * ((self.__group.secparam - 1) // 512 + 1), byteorder = "big") & self.__operand # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
+			print("Setup: An inregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
 		w, alpha, t1, t2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, alpha, t_1, t_2 \in \mathbb{Z}_p^*$
 		Omega = pair(g, g) ** w # $\Omega \gets e(g, g)^w$
@@ -145,7 +149,7 @@ class SchemeIBMETR:
 		
 		# Return #
 		return tk_id_R # $\textbf{return }\textit{tk}_{\textit{id}_R}$
-	def Enc(self:object, ekidS:Element, idRev:Element, message:bytes) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{id}_S}, \textit{id}_\textit{Rev}, m) \rightarrow \textit{ct}$
+	def Enc(self:object, ekidS:Element, idRev:Element, message:int|bytes) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{id}_S}, \textit{id}_\textit{Rev}, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -160,11 +164,17 @@ class SchemeIBMETR:
 		else:
 			id_Rev = self.__group.random(ZR)
 			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element but it is not, which has been generated randomly. ")
-		if isinstance(message, bytes): # type check
-			m = message
+		if isinstance(message, int): # type check
+			m = message & self.__operand
+			if message != m:
+				print("Enc: The passed message (int) is too long, which has been cast. ")
+		elif isinstance(message, bytes):
+			m = int.from_bytes(message, byteorder = "big") & self.__operand
+			if len(message) << 3 > self.__group.secparam:
+				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
-			m = b"SchemeIBMETR"
-			print("Enc: The message passed should be a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBMETR\". ")
+			m = int.from_bytes(b"SchemeIBMETR", byteorder = "big")
+			print("Enc: The message passed should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBMETR\". ")
 		
 		# Unpack #
 		g, g0, g1, v1, v2, Omega, H2, HHat = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[-2], self.__mpk[-1]
@@ -172,10 +182,10 @@ class SchemeIBMETR:
 		# Scheme #
 		s1, s2, beta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, beta \in \mathbb{Z}_p^*$ randomly
 		s = s1 + s2 # $s = s_1 + s_2$
-		R = Omega ** s # $R = \Omega^s$
+		R = Omega ** -s # $R = \Omega^{-s}$
 		T = g ** beta # $T \gets g^\beta$
 		K = pair(H2(id_Rev), ek_id_S * T) # $K \gets e(H_2(\textit{id}_\textit{Rev}), \textit{ek}_{\textit{id}_S} \cdot T)$
-		ct0 = self.__xor(HHat(R), HHat(K), m) # $\textit{ct}_0 \gets \hat{H}(R) \oplus \hat{H}(K) \oplus m$
+		ct0 = HHat(R) ^ HHat(K) ^ m # $\textit{ct}_0 \gets \hat{H}(R) \oplus \hat{H}(K) \oplus m$
 		ct1 = (g0 * g1 ** id_Rev) ** s # $\textit{ct}_1 \gets (g_0 g_1^{\textit{id}_\textit{Rev}})^s$
 		ct2 = v1 ** s1 # $\textit{ct}_2 \gets v_1^{s_1}$
 		ct3 = v2 ** s2 # $\textit{ct}_3 \gets v_2^{s_2}$
@@ -206,10 +216,10 @@ class SchemeIBMETR:
 		else:
 			id_Snd = self.__group.random(ZR)
 			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], bytes) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
 			ct = cipher
 		else:
-			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), b"SchemeIBMETR")
+			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), int.from_bytes(b"SchemeIBMETR", byteorder = "big"))
 			print("Dec: The variable $\\textit{ct}$ should be a tuple containing an integer and 5 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -220,7 +230,7 @@ class SchemeIBMETR:
 		# Scheme #
 		RPi = pair(dk1, ct1) * pair(dk2, ct2) * pair(dk3, ct3) # $R' \gets e(\textit{dk}_1, \textit{ct}_1) \cdot e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3)$
 		KPi = pair(dk0, H1(id_Snd)) * pair(H2(id_Rev), T) # $K' \gets e(\textit{dk}_0, H_1(\textit{id}_\textit{Snd})) \cdot e(H_2(\textit{id}_R), T)$
-		m = self.__xor(ct0, HHat(RPi), HHat(KPi)) # $m \gets \textit{ct}_0 \oplus \hat{H}(R') \oplus \hat{H}(K')$
+		m = ct0 ^ HHat(RPi) ^ HHat(KPi) # $m \gets \textit{ct}_0 \oplus \hat{H}(R') \oplus \hat{H}(K')$
 		
 		# Return #
 		return m # $\textbf{return }m$
@@ -234,10 +244,10 @@ class SchemeIBMETR:
 		else:
 			tk_id_R = self.TKGen(self.__group.random(ZR))
 			print("TVerify: The variable $\\textit{tk}_{\\textit{id}_R}$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], bytes) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
 			ct = cipher
 		else:
-			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), b"SchemeIBMETR")
+			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), int.from_bytes(b"SchemeIBMETR", byteorder = "big"))
 			print("TVerify: The variable $\\textit{ct}$ should be a tuple containing an integer and 5 elements but it is not, which has been generated with $m$ set to b\"SchemeIBMETR\". ")
 		
 		# Unpack #
@@ -309,7 +319,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Enc #
 	startTime = time()
-	message = b"SchemeIBMETR"
+	message = int.from_bytes(b"SchemeIBMETR", byteorder = "big")
 	ct = schemeIBMETR.Enc(ek_id_S, id_R, message)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
@@ -415,6 +425,7 @@ def main() -> int:
 	try:
 		input()
 	except:
+		print()
 		pass
 	return iRet
 

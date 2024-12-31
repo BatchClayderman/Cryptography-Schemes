@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.7)  30 DEC 2024 13:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.7)  31 DEC 2024 21:52
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -107,8 +107,7 @@ def
 File: l3backend-pdftex.def 2024-02-20 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count274
 \l__pdf_internal_box=\box53
-)
-No file SchemeAIBE.aux.
+) (./SchemeAIBE.aux)
 \openout1 = `SchemeAIBE.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 5.
@@ -126,6 +125,7 @@ LaTeX Font Info:    ... okay on input line 5.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 5.
 LaTeX Font Info:    ... okay on input line 5.
 LaTeX Font Info:    Trying to load font information for U+msa on input line 9.
+
 (d:/Program Files/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
@@ -143,10 +143,10 @@ L3 programming layer <2024-02-20>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 1712 strings out of 474115
- 24069 string characters out of 5740621
+ 1715 strings out of 474115
+ 24126 string characters out of 5740621
  1935190 words of memory out of 5000000
- 24102 multiletter control sequences out of 15000+600000
+ 24103 multiletter control sequences out of 15000+600000
  568994 words of font info for 76 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  56i,5n,65p,210b,162s stack positions out of 10000i,1000n,20000p,200000b,200000s

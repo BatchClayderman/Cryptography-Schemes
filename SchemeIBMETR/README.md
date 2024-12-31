@@ -1,6 +1,6 @@
 ## SchemeIBMETR
 
-This is the implementation of the IBMETR scheme, with AIBE, ARES, etc. as the baselines. 
+This is the implementation of the IBMETR scheme, with AIBE and ARES as the baselines. 
 
 #### SchemeIBMETR.py
 
@@ -35,6 +35,3 @@ This is the implementation of the ``Anonymous identity based encryption with tra
 }
 ```
 
-##### Others
-
-Please also consider using the "02_ibmech", "03_ibmef", and the "04_ibme" from [https://github.com/xuehuan-yang/PSME/tree/main/src](https://github.com/xuehuan-yang/PSME/tree/main/src) as the baselines. 

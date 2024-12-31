@@ -56,7 +56,7 @@ $\textit{dk}_{\textit{ID}_R} \gets (\textit{dk}_0, \textit{dk}_1, \textit{dk}_2,
 
 $\textbf{return }\textit{dk}_{\textit{id}_R}$
 
-\subsection{$\textbf{TKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$}
+\subsection{$\textbf{TKGen}(\textit{id}_R) \rightarrow \textit{tk}_{\textit{id}_R}$}
 
 generate $k \in \mathbb{Z}_p^*$ randomly
 
@@ -76,7 +76,7 @@ generate $s_1, s_2, beta \in \mathbb{Z}_p^*$ randomly
 
 $s = s_1 + s_2$
 
-$R = \Omega^s$
+$R = \Omega^{-s}$
 
 $T \gets g^\beta$
 
