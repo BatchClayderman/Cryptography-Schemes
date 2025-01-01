@@ -36,7 +36,7 @@ $\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
 
 $\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
 
-$\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l, H_1, H_2, HHat, A)$
+$\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l, H_1, H_2, \hat{H}, A)$
 
 $\textit{msk} \gets (g_2^\alpha, b_1, b_2, s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l)$
 
@@ -48,7 +48,7 @@ $A_k = \prod\limits_{j = 1}^k a_j$
 
 $\textit{ek}_{1, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
 
-$\textit{ek}_{2, k + i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
+$\textit{ek}_{2, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 
 $\textit{ek}_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 
@@ -78,9 +78,9 @@ generate $r \in \mathbb{Z}_p^*$ randomly
 
 $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
 
-$g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r$
+$a_0 \gets g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r$
 
-$g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
+$a_1 \gets g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
 
 $A_k \gets \prod\limits_{j = 1}^k a_j$
 
@@ -93,7 +93,7 @@ h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}},
 \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 )$
 
-$\textit{dk}_{2, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
+$\textit{dk}_{2, i} \gets H_2(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
 
 $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 
@@ -109,13 +109,13 @@ generate $t \in \mathbb{Z}_p^*$ randomly
 
 $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t$
 
-$a'_1 \gets a_1 \cdot c{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
+$a'_1 \gets a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
 
 $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
 
 $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \{2, 3, \cdots, l - k + 1\}$
 
-$\textit{dk}'_{2, k} \gets H_1(I_k)^{\textit{dk}_{3, 1}}$
+$\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1}}$
 
 $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
 
@@ -136,11 +136,9 @@ $\textbf{return }\textit{dk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$}
 
-generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+generate $s_1, s_2, \eta \in \mathbb{Z}_p^*$ randomly
 
 $T \gets A^{s_1 + s_2}$
-
-generate $\eta \in \mathbb{Z}_p^*$ randomly
 
 If $m = n$:
 
@@ -198,7 +196,7 @@ If $m > n$:
 $K' \gets
 \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
 \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), \textit{dk}_{2, i})
-\cdot \prod\limits_{i = 1}^m H_2(I'_i))
+\cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 $
 
 If $m < n$

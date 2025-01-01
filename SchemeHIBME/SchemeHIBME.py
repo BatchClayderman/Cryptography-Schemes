@@ -84,7 +84,7 @@ class SchemeHIBME:
 		gTilde = g ** b2 # $\tilde{g} \gets g^{b_2}$
 		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
 		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
-		self.__mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h + (H1, H2, HHat, A) # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l, H_1, H_2, HHat, A)$
+		self.__mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h + (H1, H2, HHat, A) # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l, H_1, H_2, \hat{H}, A)$
 		self.__msk = (g2 ** alpha, b1, b2) + s + a # $\textit{msk} \gets (g_2^\alpha, b_1, b_2, s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l)$
 		
 		# Flag #
@@ -112,7 +112,7 @@ class SchemeHIBME:
 		# Scheme #
 		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k = \prod\limits_{j = 1}^k a_j$
 		ek1 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{ek}_{1, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
-		ek2 = tuple(s[k + i] * Ak for i in range(self.__l - k)) # $\textit{ek}_{2, k + i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
+		ek2 = tuple(s[k + i] * Ak for i in range(self.__l - k)) # $\textit{ek}_{2, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		ek3 = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}_1, \textit{ek}_2, \textit{ek}_3)$
 		
@@ -183,15 +183,15 @@ class SchemeHIBME:
 			)
 		
 		# Unpack #
-		g, g3Bar, g3Tilde, h, H1 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4]
+		g, g3Bar, g3Tilde, h, H1, H2 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4], self.__mpk[-3]
 		g2ToThePowerOfAlpha, b1, b2, s, a = self.__msk[0], self.__msk[1], self.__msk[2], self.__msk[3:-self.__l], self.__msk[-self.__l:]
 		k = len(ID_k)
 		
 		# Scheme #
 		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
-		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r$
-		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
+		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $a_0 \gets g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r$
+		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $a_1 \gets g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
 		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k \gets \prod\limits_{j = 1}^k a_j$
 		dk1 = ( # $\textit{dk}_1 \gets (
 			(a0, a1, g ** r) # a_0, a_1, g^r, 
@@ -201,7 +201,7 @@ class SchemeHIBME:
 			+ tuple(h[i] ** (b2 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}}, 
 			+ (HI ** (1 / b1), HI ** (1 / b2)) # \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 		) # )$
-		dk2 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
+		dk2 = tuple(H2(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_2(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
 		dk3 = tuple(s[k + i - 1] * Ak for i in range(self.__l - k)) # $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		dk4 = tuple(a[i] for i in range(k, self.__l)) # $\textit{dk}_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3, \textit{dk}_4)$
@@ -242,7 +242,7 @@ class SchemeHIBME:
 			print("DerivedDKGen: The variable $\\textit{dk}_{\\textit{ID}_{k - 1}}$ is generated accordingly. ")
 		
 		# Unpack #
-		g, g3Bar, g3Tilde, h, H1 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4]
+		g, g3Bar, g3Tilde, h, H1, H2 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4], self.__mpk[-3]
 		a = self.__msk[-self.__l:]
 		k = len(ID_k)
 		dk1Minus1, dk2Minus1, dk3Minus1, dk4Minus1 = dk_ID_kMinus1
@@ -254,10 +254,10 @@ class SchemeHIBME:
 		# Scheme #
 		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
 		a0 = a0Minus1 * c0Minus1[0] ** ID_k[0] * (f0Minus1 * d0Minus1[0] ** ID_k[k - 1] * g3Bar) ** t # $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t$
-		a1 = a1Minus1 * c1Minus1[0] ** ID_k[0] * (f1Minus1 * d1Minus1[0] ** ID_k[k - 1] * g3Tilde) ** t # $a'_1 \gets a_1 \cdot c{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
+		a1 = a1Minus1 * c1Minus1[0] ** ID_k[0] * (f1Minus1 * d1Minus1[0] ** ID_k[k - 1] * g3Tilde) ** t # $a'_1 \gets a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
 		dk2 = tuple(dk2Minus1[i] ** a[k - 1] for i in range(k - 1)) # $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
 		dk3 = tuple(dk3Minus1[i] ** a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \{2, 3, \cdots, l - k + 1\}$
-		dk2k = H1(ID_k[k - 1]) ** dk3[0] # $\textit{dk}'_{2, k} \gets H_1(I_k)^{\textit{dk}_{3, 1}}$
+		dk2k = H2(ID_k[k - 1]) ** dk3[0] # $\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1}}$
 		dk2 = dk2 + (dk2k, ) # $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
 		dk1 = ( # $\textit{dk}'_1 \gets (
 			(a0, a1, bMinus1 * g ** t) # a'_0, a'_1, b \cdot g^t, 
@@ -330,9 +330,8 @@ class SchemeHIBME:
 		n, m = len(ID_Snd), len(ID_Rev)
 		
 		# Scheme #
-		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+		s1, s2, eta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, \eta \in \mathbb{Z}_p^*$ randomly
 		T = A ** (s1 + s2) # $T \gets A^{s_1 + s_2}$
-		eta = self.__group.random(ZR) # generate $\eta \in \mathbb{Z}_p^*$ randomly
 		if m == n: # If $m = n$:
 			K = self.__product(tuple(pair(g ** eta * ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # $K \gets \prod_{i = 1}^n e(g^{\eta} \cdot \textit{ek}_{1, i}, H_2(I'_i))$
 		elif m > n: # If $m > n$:
@@ -426,7 +425,7 @@ class SchemeHIBME:
 			KPi = ( # $K' \gets
 				self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
 				* self.__product(tuple(pair(H1(ID_Snd[n - 1]), dk2[i]) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), \textit{dk}_{2, i})
-				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot \prod\limits_{i = 1}^m H_2(I'_i))
+				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		else: # If $m < n$
 			Am = self.__product(tuple(a[i] for i in range(m))) # $A_m \gets \prod\limits_{i = 1}^m a_i$
@@ -579,7 +578,7 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
 	roundCount, filePath = 20, "SchemeHIBME.xlsx"
 	columns = [																						\
 		"curveType", "secparam", "l", "m", "n", "roundCount", "isSystemValid", "isDeriverPassed", "isSchemeCorrect", 	\
@@ -609,8 +608,8 @@ def main() -> int:
 						results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	except BaseException as e:
-		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
+	#except BaseException as e:
+	#	print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
 	print()
