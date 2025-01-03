@@ -46,7 +46,7 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 			elif handleFolder(folderPath):
 				try:
 					with open(os.path.join(folderPath, fileName), "w", encoding = "utf-8") as f:
-						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\n\\begin{document}\n\n\\section{Scheme}\n\n")
+						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\\usepackage{bm}\n\n\\begin{document}\n\n\\section{Scheme}\n\n")
 						classFlag, functionFlag, schemeFlag, doubleSeparatorSwitch = False, False, False, True
 						for line in content.splitlines():
 							if line.startswith("class Scheme"):
@@ -100,7 +100,7 @@ def main() -> int:
 				successCount += int(generateSchemeTxt(os.path.join(root, fileName)))
 	iRet = EXIT_SUCCESS if totalCount and successCount == totalCount else EXIT_FAILURE
 	print("\n")
-	print("Successfully handled {0} / {1} {2} with a success rate of {3}%. ".format(successCount, totalCount, "items" if successCount > 1 else "item", successCount * 100 / totalCount) if totalCount else "Nothing was handled. ")
+	print("Successfully handled {0} / {1} {2} with a success rate of {3:.2f}%. ".format(successCount, totalCount, "items" if successCount > 1 else "item", successCount * 100 / totalCount) if totalCount else "Nothing was handled. ")
 	print("Please press the enter key to exit ({0}). ".format(iRet))
 	input()
 	return iRet

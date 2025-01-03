@@ -27,7 +27,7 @@ EOF = (-1)
 
 
 class SchemeARES:
-	def __init__(self:object, group:None|PairingGroup = None) -> None:
+	def __init__(self:object, group:None|PairingGroup = None) -> object:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -35,7 +35,7 @@ class SchemeARES:
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
-	def Setup(self:object) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
+	def Setup(self:object) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
 		

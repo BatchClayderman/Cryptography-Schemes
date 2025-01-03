@@ -2,14 +2,23 @@
 
 Two proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
 
-To test the Python charm environment initially, try to execute ``from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element`` in Python, which is also how all the Python scripts in this project import the necesssary libraries. 
+To test the Python charm environment initially, try to execute ``from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element`` in Python, which is also how all the Python scripts in this project import the necessary libraries. 
 
-For all the Python scripts here, an EOF ($-1$) signal will be returned to its parent process if the program lacks any of the necessary libraries. 
+The rules of exit codes are as follows. 
+- For all the Python scripts here, an EXIT_SUCCESS ($0$) signal will be returned to its parent process if some results are obtained and all the results pass all the tests. 
+- For all the Python scripts here, an EXIT_FAILURE ($1$) signal will be returned to its parent process if no results are obtained or any of the results fail any of the tests. 
+- For all the Python scripts here, an EOF ($-1$) signal will be returned to its parent process if the program lacks any of the necessary libraries. 
+
+Vectors, arrays, or lists in theory are stored as Python ``tuple`` objects in practice. This can help: 
+- avoid modifying variables inside a class from outside the class as much as possible; 
+- make the memory computation of an object of a series datum type as exact as possible; 
+- reduce the time consumption since the index lookup is faster compared with the key-value pair one (especially in large dictionaries); and 
+- perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix accelebration computation. 
 
 When there are hash functions, the following rules will be applied. 
 
-- The function of the variable $\hat{H}$ in theory is to hash an element of any bit length ($\{0, 1\}^*$) into a bit array whose length is the security parameter $\lambda$ ($\{0, 1\}^\lambda$). Thus, an ``int`` object instead of an object belonging to any series data type storing $\lambda$ bits is designed to store a bit array and accomplish the $\oplus$ operation to accelerate the $\oplus$ operation and reduce the memory consumption.
-- As an ``int`` object is used for storing a bit array and performing the $\oplus$ operation, they will be aligned to the right, filled with 0's (``b"\0"``) on the left when bit arrays are in different lengths. 
+- The function of the variable $\hat{H}$ in theory is to hash an element of any bit length ($\{0, 1\}^*$) into a bit array whose length is the security parameter $\lambda$ ($\{0, 1\}^\lambda$). Thus, the ``int`` object instead of any series datum type storing $\lambda$ ``bool`` values is designed to store the bit array and accomplish the $\oplus$ operation to accelerate the $\oplus$ operation and reduce memory consumption.
+- The bit arrays will be aligned to the right by being filled with 0's (``b"\0"`` or ``0b0``) on the left when they are in different lengths. As ``int`` objects are used for storing bit arrays and performing the $\oplus$ operation for binary strings, this will be done automatically during the ``int ^ int``. 
 - The message inputted to the ``Enc`` function can be an ``int`` or a ``bytes`` object, where the overflowed values will be cast by performing the ``&`` operation on the message and the operand indicating the maximum value of the limited count of bits.
 - The ``str`` object is not accepted as a possible form of the message inputted to the ``Enc`` function since the encoding and decoding are not the things should be considered in these scripts. 
 - The statement ``int.from_bytes(x, byteorder = "big")`` will be used to convert the ``bytes`` object into the ``int`` object if a ``bytes`` object is passed as the message for encryption. 

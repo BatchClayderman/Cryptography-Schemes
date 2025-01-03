@@ -37,7 +37,7 @@ This is the implementation of the ARES scheme (``Anonymous identity based encryp
 
 ##### SchemeIBMECH.py
 
-This is the implementation of the IBMECH scheme (``Identity-Based Matchmaking Encryption from Standard Assumptions``) based on the Python programming language, referring to [https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py](https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py). 
+This is the implementation of the IBMECH scheme (``Identity-Based Matchmaking Encryption from Standard Assumptions``) based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py](https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py). 
 
 ```
 @inproceedings{chen2022identity,

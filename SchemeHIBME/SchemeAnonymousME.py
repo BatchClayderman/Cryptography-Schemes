@@ -27,7 +27,7 @@ EOF = (-1)
 
 
 class SchemeAnonymousME:
-	def __init__(self, group:None|PairingGroup = None) -> None:
+	def __init__(self, group:None|PairingGroup = None) -> object:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())

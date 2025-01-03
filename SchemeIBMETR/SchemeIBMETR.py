@@ -28,7 +28,7 @@ EOF = (-1)
 
 
 class SchemeIBMETR:
-	def __init__(self:object, group:None|PairingGroup = None) -> None:
+	def __init__(self:object, group:None|PairingGroup = None) -> object:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -45,7 +45,7 @@ class SchemeIBMETR:
 			return element
 		else:
 			return self.__group.init(ZR, 1)
-	def Setup(self:object) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
+	def Setup(self:object) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
 		
@@ -68,7 +68,7 @@ class SchemeIBMETR:
 			HHat = lambda x:int.from_bytes(md5(self.__group.serialize(x)).digest(), byteorder = "big")
 		else:
 			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest() * ((self.__group.secparam - 1) // 512 + 1), byteorder = "big") & self.__operand # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
-			print("Setup: An inregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
+			print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
 		w, alpha, t1, t2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, alpha, t_1, t_2 \in \mathbb{Z}_p^*$
 		Omega = pair(g, g) ** w # $\Omega \gets e(g, g)^w$
@@ -85,7 +85,7 @@ class SchemeIBMETR:
 		if not self.__flag:
 			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(idS, Element): # type check
+		if isinstance(idS, Element) and idS.type == ZR: # type check
 			id_S = idS
 		else:
 			id_S = self.__group.random(ZR)
@@ -105,7 +105,7 @@ class SchemeIBMETR:
 		if not self.__flag:
 			print("DKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(idR, Element): # type check
+		if isinstance(idR, Element) and idR.type == ZR: # type check
 			id_R = idR
 		else:
 			id_R = self.__group.random(ZR)
@@ -130,7 +130,7 @@ class SchemeIBMETR:
 		if not self.__flag:
 			print("TKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(idR, Element): # type check
+		if isinstance(idR, Element) and idR.type == ZR: # type check
 			id_R = idR
 		else:
 			id_R = self.__group.random(ZR)
@@ -159,7 +159,7 @@ class SchemeIBMETR:
 		else:
 			ek_id_S = self.__group.random(ZR)
 			print("Enc: The variable $\\textit{ek}_{\\textit{id}_S}$ should be an element but it is not, which has been generated randomly. ")
-		if isinstance(idRev, Element): # type check
+		if isinstance(idRev, Element) and idRev.type == ZR: # type check
 			id_Rev = idRev
 		else:
 			id_Rev = self.__group.random(ZR)
@@ -199,7 +199,7 @@ class SchemeIBMETR:
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if isinstance(idRev, Element): # type check
+		if isinstance(idRev, Element) and idRev.type == ZR: # type check
 			id_Rev = idRev
 			if isinstance(dkidR, tuple) and len(dkidR) == 4 and all([isinstance(ele, Element) for ele in dkidR]): # hybrid check
 				dk_id_R = dkidR
@@ -211,7 +211,7 @@ class SchemeIBMETR:
 			print("Dec: The variable $\\textit{id}_\\textit{Rev}$ should be an element but it is not, which has been generated randomly. ")
 			dk_id_R = self.DKGen(id_Rev)
 			print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ has been generated accordingly. ")
-		if isinstance(idSnd, Element): # type check
+		if isinstance(idSnd, Element) and idSnd.type == ZR: # type check
 			id_Snd = idSnd
 		else:
 			id_Snd = self.__group.random(ZR)
@@ -228,9 +228,9 @@ class SchemeIBMETR:
 		ct0, ct1, ct2, ct3, T = ct[0], ct[1], ct[2], ct[3], ct[4]
 		
 		# Scheme #
-		RPi = pair(dk1, ct1) * pair(dk2, ct2) * pair(dk3, ct3) # $R' \gets e(\textit{dk}_1, \textit{ct}_1) \cdot e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3)$
-		KPi = pair(dk0, H1(id_Snd)) * pair(H2(id_Rev), T) # $K' \gets e(\textit{dk}_0, H_1(\textit{id}_\textit{Snd})) \cdot e(H_2(\textit{id}_R), T)$
-		m = ct0 ^ HHat(RPi) ^ HHat(KPi) # $m \gets \textit{ct}_0 \oplus \hat{H}(R') \oplus \hat{H}(K')$
+		RPrime = pair(dk1, ct1) * pair(dk2, ct2) * pair(dk3, ct3) # $R' \gets e(\textit{dk}_1, \textit{ct}_1) \cdot e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3)$
+		KPrime = pair(dk0, H1(id_Snd)) * pair(H2(id_Rev), T) # $K' \gets e(\textit{dk}_0, H_1(\textit{id}_\textit{Snd})) \cdot e(H_2(\textit{id}_R), T)$
+		m = ct0 ^ HHat(RPrime) ^ HHat(KPrime) # $m \gets \textit{ct}_0 \oplus \hat{H}(R') \oplus \hat{H}(K')$
 		
 		# Return #
 		return m # $\textbf{return }m$
@@ -283,7 +283,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [round] + [False] * 3 + [-1] * 18																																								\
+			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 18																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())

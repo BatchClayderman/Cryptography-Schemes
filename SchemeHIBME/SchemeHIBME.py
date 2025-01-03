@@ -28,7 +28,7 @@ EOF = (-1)
 
 
 class SchemeHIBME:
-	def __init__(self:object, group:None|PairingGroup = None) -> None:
+	def __init__(self:object, group:None|PairingGroup = None) -> object:
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -77,7 +77,7 @@ class SchemeHIBME:
 			HHat = lambda x:int.from_bytes(md5(self.__group.serialize(x)).digest(), byteorder = "big")
 		else:
 			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest() * ((self.__group.secparam - 1) // 512 + 1), byteorder = "big") & self.__operand # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
-			print("Setup: An inregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
+			print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		A = pair(g1, g2) # $A \gets e(g_1, g_2)$
 		gBar = g ** b1 # $\bar{g} \gets g^{b_1}$
@@ -95,7 +95,7 @@ class SchemeHIBME:
 		if not self.__flag:
 			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -123,7 +123,7 @@ class SchemeHIBME:
 		if not self.__flag:
 			print("DerivedEKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedEKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 			if (																																											\
 				isinstance(ekIDkMinus1, tuple) and len(ekIDkMinus1) == 3 and isinstance(ekIDkMinus1[0], tuple) and len(ekIDkMinus1[0]) == len(ID_k) - 1 and all([isinstance(ele, Element) for ele in ekIDkMinus1[0]])		\
@@ -154,15 +154,15 @@ class SchemeHIBME:
 		H1 = self.__mpk[-4]
 		a = self.__msk[-self.__l:]
 		k = len(ID_k)
-		ek1Minus1, ek2Minus1, ek3Minus1 = ek_ID_kMinus1
+		ek1, ek2, ek3 = ek_ID_kMinus1
 		
 		# Scheme #
-		ek1 = tuple(ek1Minus1[i] ** a[k - 1] for i in range(k - 1)) # $\textit{ek}'_{1, i} \gets \textit{ek}_{1, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
-		ek2 = tuple(ek2Minus1[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{ek}'_{2, i} \gets \textit{ek}_{2, i} \cdot a_k, \forall i \in \{2, 3, \cdots, l - k + 1\}$
-		ek1k = H1(ID_k[k - 1]) ** ek2Minus1[0] # $\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1}}$
-		ek1 = ek1 + (ek1k, ) # $\textit{ek}'_1 \gets \textit{ek}'_1 || \langle\textit{ek}'_{1, k}\rangle$
-		ek3 = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}'_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
-		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}'_1, \textit{ek}'_2, \textit{ek}'_3)$
+		ek1Prime = tuple(ek1[i] ** a[k - 1] for i in range(k - 1)) # $\textit{ek}'_{1, i} \gets \textit{ek}_{1, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
+		ek1kPrime = H1(ID_k[k - 1]) ** ek2[0] # $\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1}}$
+		ek1Prime += (ek1kPrime, ) # $\textit{ek}'_1 \gets \textit{ek}'_1 || \langle\textit{ek}'_{1, k}\rangle$
+		ek2Prime = tuple(ek2[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{ek}'_{2, i} \gets \textit{ek}_{2, i} \cdot a_k, \forall i \in \{2, 3, \cdots, l - k + 1\}$
+		ek3Prime = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}'_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
+		ek_ID_k = (ek1Prime, ek2Prime, ek3Prime) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}'_1, \textit{ek}'_2, \textit{ek}'_3)$
 		
 		# Return #
 		return ek_ID_k # $\textbf{return }\textit{ek}_{\textit{ID}_k}$
@@ -171,7 +171,7 @@ class SchemeHIBME:
 		if not self.__flag:
 			print("DKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -202,7 +202,7 @@ class SchemeHIBME:
 			+ (HI ** (1 / b1), HI ** (1 / b2)) # \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 		) # )$
 		dk2 = tuple(H2(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_2(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
-		dk3 = tuple(s[k + i - 1] * Ak for i in range(self.__l - k)) # $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
+		dk3 = tuple(s[k + i] * Ak for i in range(self.__l - k)) # $\textit{dk}_{3, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		dk4 = tuple(a[i] for i in range(k, self.__l)) # $\textit{dk}_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3, \textit{dk}_4)$
 		
@@ -213,7 +213,7 @@ class SchemeHIBME:
 		if not self.__flag:
 			print("DerivedDKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedDKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 			if (
 				isinstance(dkIDkMinus1, tuple) and len(dkIDkMinus1) == 4 and isinstance(dkIDkMinus1[0], tuple) and len(dkIDkMinus1[0]) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all([isinstance(ele, Element) for ele in dkIDkMinus1[0]])
@@ -245,30 +245,30 @@ class SchemeHIBME:
 		g, g3Bar, g3Tilde, h, H1, H2 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4], self.__mpk[-3]
 		a = self.__msk[-self.__l:]
 		k = len(ID_k)
-		dk1Minus1, dk2Minus1, dk3Minus1, dk4Minus1 = dk_ID_kMinus1
-		a0Minus1, a1Minus1, bMinus1 = dk1Minus1[0], dk1Minus1[1], dk1Minus1[2]
+		dk1, dk2, dk3, dk4 = dk_ID_kMinus1
+		a0, a1, b = dk1[0], dk1[1], dk1[2]
 		lengthPerToken = self.__l - k + 1
-		c0Minus1, c1Minus1, d0Minus1, d1Minus1 = dk1Minus1[3:3 + lengthPerToken], dk1Minus1[3 + lengthPerToken:3 + (lengthPerToken << 1)], dk1Minus1[-2 - (lengthPerToken << 1):-2 - lengthPerToken], dk1Minus1[-2 - lengthPerToken:-2]
-		f0Minus1, f1Minus1 = dk1Minus1[-2], dk1Minus1[-1]
+		c0, c1, d0, d1 = dk1[3:3 + lengthPerToken], dk1[3 + lengthPerToken:3 + (lengthPerToken << 1)], dk1[-2 - (lengthPerToken << 1):-2 - lengthPerToken], dk1[-2 - lengthPerToken:-2]
+		f0, f1 = dk1[-2], dk1[-1]
 		
 		# Scheme #
 		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
-		a0 = a0Minus1 * c0Minus1[0] ** ID_k[0] * (f0Minus1 * d0Minus1[0] ** ID_k[k - 1] * g3Bar) ** t # $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t$
-		a1 = a1Minus1 * c1Minus1[0] ** ID_k[0] * (f1Minus1 * d1Minus1[0] ** ID_k[k - 1] * g3Tilde) ** t # $a'_1 \gets a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
-		dk2 = tuple(dk2Minus1[i] ** a[k - 1] for i in range(k - 1)) # $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
-		dk3 = tuple(dk3Minus1[i] ** a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \{2, 3, \cdots, l - k + 1\}$
-		dk2k = H2(ID_k[k - 1]) ** dk3[0] # $\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1}}$
-		dk2 = dk2 + (dk2k, ) # $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
-		dk1 = ( # $\textit{dk}'_1 \gets (
-			(a0, a1, bMinus1 * g ** t) # a'_0, a'_1, b \cdot g^t, 
-			+ tuple(c0Minus1[i] * d0Minus1[i] ** t for i in range(1, self.__l - k + 1)) # c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t, 
-			+ tuple(c1Minus1[i] * d1Minus1[i] ** t for i in range(1, self.__l - k + 1)) # c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t, 
-			+ tuple(d0Minus1[i] for i in range(1, self.__l - k + 1)) # d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l}, 
-			+ tuple(d1Minus1[i] for i in range(1, self.__l - k + 1)) # d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l}, 
-			+ (f0Minus1 * c0Minus1[0] ** ID_k[k - 1], f1Minus1 * c1Minus1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
+		a0Prime = a0 * c0[0] ** ID_k[k - 1] * (f0 * d0[0] ** ID_k[k - 1] * g3Bar) ** t # $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t$
+		a1Prime = a1 * c1[0] ** ID_k[k - 1] * (f1 * d1[0] ** ID_k[k - 1] * g3Tilde) ** t # $a'_1 \gets a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
+		dk1Prime = ( # $\textit{dk}'_1 \gets (
+			(a0, a1, b * g ** t) # a'_0, a'_1, b \cdot g^t, 
+			+ tuple(c0[i] * d0[i] ** t for i in range(1, self.__l - k + 1)) # c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t, 
+			+ tuple(c1[i] * d1[i] ** t for i in range(1, self.__l - k + 1)) # c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t, 
+			+ tuple(d0[i] for i in range(1, self.__l - k + 1)) # d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l}, 
+			+ tuple(d1[i] for i in range(1, self.__l - k + 1)) # d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l}, 
+			+ (f0 * c0[0] ** ID_k[k - 1], f1 * c1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 		) # )$
-		dk4 = tuple(a[k + i] for i in range(self.__l - k)) # $\textit{dk}'_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
-		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
+		dk2Prime = tuple(dk2[i] ** a[k - 1] for i in range(k - 1)) # $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
+		dk2kPrime = H2(ID_k[k - 1]) ** dk3[0] # $\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1}}$
+		dk2Prime += (dk2kPrime, ) # $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
+		dk3Prime = tuple(dk3[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \{2, 3, \cdots, l - k + 1\}$
+		dk4Prime = tuple(a[k + i] for i in range(self.__l - k)) # $\textit{dk}'_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
+		dk_ID_k = (dk1Prime, dk2Prime, dk3Prime, dk4Prime) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
 				
 		# Return #
 		return dk_ID_k # $\textbf{return }\textit{dk}_{\textit{ID}_k}$
@@ -277,7 +277,7 @@ class SchemeHIBME:
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
-		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) for ele in IDSnd]): # hybrid check
+		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDSnd]): # hybrid check
 			ID_Snd = IDSnd
 			if (
 				isinstance(ekIDS, tuple) and len(ekIDS) == 3 and isinstance(ekIDS[0], tuple) and len(ekIDS[0]) == len(ID_Snd) and all([isinstance(ele, Element) for ele in ekIDS[0]])
@@ -302,7 +302,7 @@ class SchemeHIBME:
 			)
 			ek_ID_S = self.EKGen(ID_Snd)
 			print("Enc: The variable $\\textit{ek}_{\\textit{ID}_S}$ is generated accordingly. ")
-		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) for ele in IDRev]): # hybrid check
+		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDRev]): # hybrid check
 			ID_Rev = IDRev
 		else:
 			ID_Rev = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -350,6 +350,8 @@ class SchemeHIBME:
 				* self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[m - 1])) for i in range(m, n))) # \prod\limits_{i = m + 1}^n e(\textit{ek}_{1, i}, H_2(I'_m))
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
+		print("K =", K)
+		print("T =", T)
 		C1 = M ^ HHat(T) ^ HHat(K) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
 		C3 = gTilde ** s2 # $C_3 \gets \tilde{g}^{s_2}$
@@ -364,7 +366,7 @@ class SchemeHIBME:
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) for ele in IDRev]): # hybrid check
+		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDRev]): # hybrid check
 			ID_Rev = IDRev
 			if (
 				isinstance(dkIDR, tuple) and len(dkIDR) == 4 and isinstance(dkIDR[0], tuple) and len(dkIDR[0]) == ((self.__l - len(ID_Rev)) << 2) + 5 and all([isinstance(ele, Element) for ele in dkIDR[0]])
@@ -391,7 +393,7 @@ class SchemeHIBME:
 			)
 			dk_ID_R = self.DKGen(ID_Rev)
 			print("Dec: The variable $\\textit{dk}_{\\textit{ID}_R}$ is generated accordingly. ")
-		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) for ele in IDSnd]): # hybrid check
+		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDSnd]): # hybrid check
 			ID_Snd = IDSnd
 		else:
 			ID_Snd = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -415,14 +417,14 @@ class SchemeHIBME:
 		m, n = len(ID_Rev), len(ID_Snd)
 		
 		# Scheme #
-		TPi = pair(dk1[2], C4) / (pair(C2, dk1[0]) * pair(C3, dk1[1])) # $T' = \cfrac{e(\textit{dk}_{1, 3}, C_4)}{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}$
+		TPrime = (pair(C2, dk1[0]) * pair(C3, dk1[1])) / pair(dk1[2], C4) # $T' = \cfrac{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}{e(\textit{dk}_{1, 3}, C_4)}$
 		if m == n: # If $m = n$:
-			KPi = ( # $K' \gets
+			KPrime = ( # $K' \gets
 				self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i}) 
 				 * pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(n)))) # \cdot e(C_5, \prod\limits_{i = 1}^n H_2(I'_i))
 			) # $
 		elif m > n: # If $m > n$:
-			KPi = ( # $K' \gets
+			KPrime = ( # $K' \gets
 				self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
 				* self.__product(tuple(pair(H1(ID_Snd[n - 1]), dk2[i]) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), \textit{dk}_{2, i})
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
@@ -430,14 +432,17 @@ class SchemeHIBME:
 		else: # If $m < n$
 			Am = self.__product(tuple(a[i] for i in range(m))) # $A_m \gets \prod\limits_{i = 1}^m a_i$
 			Bnm = self.__product(tuple(a[i] for i in range(m, n))) # $B_n^m \gets \prod\limits_{i = m + 1}^n a_i$
-			KPi = ( # $K' \gets
+			KPrime = ( # $K' \gets
 				( # (
 					self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(m))) # \prod\limits_{i = 1}^m e(H_1(I_i), \textit{dk}_{2, i})
 					* self.__product(tuple(pair(H1(ID_Snd[i]), H2(ID_Rev[m - 1])) ** (a[i] * Am) for i in range(m, n))) # \cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{\alpha_i A_m}
 				) ** Bnm # )^{B_m^n}
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
-		M = C1 ^ HHat(TPi) ^ HHat(KPi) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
+		print("KPrime =", KPrime)
+		print("TPrime =", TPrime)
+		input()
+		M = C1 ^ HHat(TPrime) ^ HHat(KPrime) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #
 		return M # $\textbf{return }M$
