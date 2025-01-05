@@ -19,8 +19,6 @@ except:
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
-#from charm.core.crypto.cryptobase import *
-#debug = True
 try:
 	os.chdir(os.path.abspath(os.path.dirname(__file__)))
 except:
@@ -58,20 +56,28 @@ class SchemeIBMECH(IBEnc):
 		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
 		alpha, eta = self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, \eta \in \mathbb{Z}_p^*$ randomly
-		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\mathbb{0}, \mathbb{1} \in \mathbb{Z}_p^*$ randomly
+		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\mathbf{0}_{\mathbb{Z}_p^*}, \mathbf{1}_{\mathbb{Z}_p^*} \in \mathbb{Z}_p^*$ randomly
 		B = [[self.__group.random(ZR) for j in range(8)] for i in range(8)] # generate $\bm{B} \gets (\mathbb{Z}_p^*)^{8 \times 8}$ randomly
 		D = tuple(tuple(g1 ** B[i][j] for j in range(8)) for i in range(4)) # $\mathbb{D}_{i, j} \gets g_1^{\bm{B}_{i, j}}, \forall i \in \{1, 2, 3, 4\}, \forall j \in \{1, 2, \cdots, 8\}$
 		DStar = tuple(tuple(GaussEliminationinGroups([B[j] + [one if i == j else zero] for j in range(8)])) for i in range(4)) # $\mathbb{D}_i^* \gets \textit{GaussEliminationinGroups}(\bm{B} || [1 = i, 2 = i, \cdots, 8 = i]^\mathrm{T}), \forall i \in \{1, 2, 3, 4\}$
 		del B
 		gT = pair(g1, g2) # $g_T \gets e(g_1, g_2)$
-		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \mathbb{1}}, g_T^{\eta \times \mathbb{1}}, D_1, D_2)$
+		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \mathbf{1}_{\mathbb{Z}_p^*}}, g_T^{\eta \times \mathbf{1}_{\mathbb{Z}_p^*}}, D_1, D_2)$
 		self.__msk = (alpha, eta, g1, g2, D[2], D[3], DStar[0], DStar[1], DStar[2], DStar[3]) # $\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*$)
 		
 		# Return #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def SKGen(self:object, sigma:Element) -> Element: # $\textbf{SKGen}(\sigma) \rightarrow \textit{ek}_\sigma$
+	def SKGen(self:object, sender:Element) -> tuple: # $\textbf{SKGen}(\sigma) \rightarrow \textit{ek}_\sigma$
 		# Check #
+		if not self.__flag:
+			print("SKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``SKGen`` subsequently. ")
+			self.Setup()
+		if isinstance(sender, Element) and sender.type == ZR: # type check
+			sigma = sender
+		else:
+			sigma = self.__group.random(ZR)
+			print("SKGen: The variable $\\sigma$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		eta, d3, d4 = self.__msk[1], self.__msk[4], self.__msk[5]
@@ -82,7 +88,17 @@ class SchemeIBMECH(IBEnc):
 		
 		# Return #
 		return ek_sigma # $\textbf{return }\textit{ek}_\sigma$
-	def RKGen(self:object, rho:Element): # $\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$
+	def RKGen(self:object, receiver:Element): # $\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$
+		# Check #
+		if not self.__flag:
+			print("RKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``RKGen`` subsequently. ")
+			self.Setup()
+		if isinstance(receiver, Element) and receiver.type == ZR: # type check
+			rho = receiver
+		else:
+			rho = self.__group.random(ZR)
+			print("RKGen: The variable $\\rho$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		
 		# Unpack #
 		gTToThePowerOfEta = self.__mpk[1]
 		alpha, g2, DStar1, DStar2, DStar3, DStar4 = self.__msk[0], self.__msk[3], self.__msk[6], self.__msk[7], self.__msk[8], self.__msk[9]
@@ -96,9 +112,26 @@ class SchemeIBMECH(IBEnc):
 		
 		# Return #
 		return dk_rho # $\mathbb{return }\textit{dk}_\rho$
-	def Enc(self, eksigma, rcv, m) -> tuple: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{rcv}, m) \rightarrow \textit{ct}$
+	def Enc(self, eksigma:tuple, receiver:Element, message:Element) -> tuple: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{rcv}, m) \rightarrow \textit{ct}$
 		# Check #
-		ek_sigma = eksigma
+		if not self.__flag:
+			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
+			self.Setup()
+		if isinstance(eksigma, tuple) and len(eksigma) == 8 and all([isinstance(ele, Element) for ele in eksigma]): # hybrid check
+			ek_sigma = eksigma
+		else:
+			ek_sigma = self.SKGen(self.__group.random(ZR))
+			print("Enc: The variable $\\textit{ek}_\\sigma$ should be a tuple containing 8 elements but it is not, which has been generated randomly. ")
+		if isinstance(receiver, Element) and receiver.type == ZR: # type check
+			rcv = receiver
+		else:
+			rcv = self.__group.random(ZR)
+			print("Enc: The variable $\\textit{rcv}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(message, Element) and message.type == GT: # type check
+			m = message
+		else:
+			m = self.__group.random(GT)
+			print("Enc: The message passed should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		gTToThePowerOfAlpha, D1, D2 = self.__mpk[0], self.__mpk[2], self.__mpk[3]
@@ -111,7 +144,30 @@ class SchemeIBMECH(IBEnc):
 		
 		# Return #
 		return ct # $\mathbf{return }\textit{ct}$
-	def Dec(self:object, dk_rho:tuple, snd:Element, ct:tuple) -> Element: # $\textbf{Dec}(\textit{dk}_\rho, \textit{snd}, \textit{ct}) \rightarrow m$
+	def Dec(self:object, dkrho:tuple, sender:Element, cipher:tuple) -> Element: # $\textbf{Dec}(\textit{dk}_\rho, \textit{snd}, \textit{ct}) \rightarrow m$
+		# Check #
+		if not self.__flag:
+			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
+			self.Setup()
+		if (																																\
+			isinstance(dkrho, tuple) and len(dkrho) == 3 and isinstance(dkrho[0], tuple) and len(dkrho[0]) == 8 and all([isinstance(ele, Element) for ele in dkrho[0]])	\
+			and isinstance(dkrho[1], tuple) and len(dkrho[1]) == 8 and all([isinstance(ele, Element) for ele in dkrho[1]]) and isinstance(dkrho[2], Element)			\
+		): # hybrid check
+			dk_rho = dkrho
+		else:
+			dk_rho = self.RKGen(self.__group.random(ZR))
+			print("Dec: The variable $\\textit{dk}_\\rho$ should be a tuple containing 2 tuples and an element but it is not, which has been generated randomly. ")
+		if isinstance(sender, Element) and sender.type == ZR: # type check
+			snd = sender
+		else:
+			snd = self.__group.random(ZR)
+			print("Dec: The variable $\\textit{snd}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(cipher, tuple) and len(cipher) == 2 and isinstance(cipher[0], tuple) and len(cipher[0]) == 8 and all([isinstance(ele, Element) for ele in cipher[0]]) and isinstance(cipher[1], Element): # hybrid check
+			ct = cipher
+		else:
+			ct = self.Enc(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), self.__group.random(GT))
+			print("Dec: The variable $\textit{ct} should be a tuple containing a tuple and an element but it is not, which has been generated randomly. ")
+		
 		# Unpack #
 		k1, k2, k3 = dk_rho
 		C, C0 = ct
@@ -223,7 +279,7 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBMECH.xlsx"
 	columns = [													\
 		"curveType", "secparam", "roundCount", 						\
@@ -251,8 +307,8 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
-	#	print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
+	except BaseException as e:
+		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
 	print()

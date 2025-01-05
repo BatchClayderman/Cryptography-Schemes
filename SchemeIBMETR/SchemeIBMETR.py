@@ -89,7 +89,7 @@ class SchemeIBMETR:
 			id_S = idS
 		else:
 			id_S = self.__group.random(ZR)
-			print("EKGen: The variable $\\textit{id}_S$ should be an element but it is not, which has been generated randomly. ")
+			print("EKGen: The variable $\\textit{id}_S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		H1 = self.__mpk[-3]
@@ -109,7 +109,7 @@ class SchemeIBMETR:
 			id_R = idR
 		else:
 			id_R = self.__group.random(ZR)
-			print("DKGen: The variable $\\textit{id}_R$ should be an element but it is not, which has been generated randomly. ")
+			print("DKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, g0, g1, H2 = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[-2]
@@ -134,7 +134,7 @@ class SchemeIBMETR:
 			id_R = idR
 		else:
 			id_R = self.__group.random(ZR)
-			print("TKGen: The variable $\\textit{id}_R$ should be an element but it is not, which has been generated randomly. ")
+			print("TKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, g0, g1 = self.__mpk[1], self.__mpk[2], self.__mpk[3]
@@ -157,13 +157,13 @@ class SchemeIBMETR:
 		if isinstance(ekidS, Element): # type check
 			ek_id_S = ekidS
 		else:
-			ek_id_S = self.__group.random(ZR)
+			ek_id_S = self.EKGen(self.__group.random(ZR))
 			print("Enc: The variable $\\textit{ek}_{\\textit{id}_S}$ should be an element but it is not, which has been generated randomly. ")
 		if isinstance(idRev, Element) and idRev.type == ZR: # type check
 			id_Rev = idRev
 		else:
 			id_Rev = self.__group.random(ZR)
-			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element but it is not, which has been generated randomly. ")
+			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		if isinstance(message, int): # type check
 			m = message & self.__operand
 			if message != m:
@@ -208,14 +208,14 @@ class SchemeIBMETR:
 				print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ should be a tuple containing 4 elements but it is not, which has been generated accordingly. ")
 		else:
 			id_Rev = self.__group.random(ZR)
-			print("Dec: The variable $\\textit{id}_\\textit{Rev}$ should be an element but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\\textit{id}_\\textit{Rev}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 			dk_id_R = self.DKGen(id_Rev)
 			print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ has been generated accordingly. ")
 		if isinstance(idSnd, Element) and idSnd.type == ZR: # type check
 			id_Snd = idSnd
 		else:
 			id_Snd = self.__group.random(ZR)
-			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
 			ct = cipher
 		else:
