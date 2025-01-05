@@ -63,7 +63,7 @@ class SchemeIBMECH(IBEnc):
 		del B
 		gT = pair(g1, g2) # $g_T \gets e(g_1, g_2)$
 		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \mathbf{1}_{\mathbb{Z}_p^*}}, g_T^{\eta \times \mathbf{1}_{\mathbb{Z}_p^*}}, D_1, D_2)$
-		self.__msk = (alpha, eta, g1, g2, D[2], D[3], DStar[0], DStar[1], DStar[2], DStar[3]) # $\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*$)
+		self.__msk = (alpha, eta, g1, g2, D[2], D[3], DStar[0], DStar[1], DStar[2], DStar[3]) # $\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*)$
 		
 		# Return #
 		self.__flag = True
@@ -88,7 +88,7 @@ class SchemeIBMECH(IBEnc):
 		
 		# Return #
 		return ek_sigma # $\textbf{return }\textit{ek}_\sigma$
-	def RKGen(self:object, receiver:Element): # $\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$
+	def RKGen(self:object, receiver:Element) -> tuple: # $\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$
 		# Check #
 		if not self.__flag:
 			print("RKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``RKGen`` subsequently. ")

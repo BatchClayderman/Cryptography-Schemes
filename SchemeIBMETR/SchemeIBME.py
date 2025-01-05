@@ -1,283 +1,357 @@
-
-from charm.toolbox.pairinggroup import ZR,G1,pair
-from charm.toolbox.hash_module import Hash
-import pickle
-import base64
-import sys
-
-sys.path.append('../')
-from common.msp import *
-from common.parse import *
-
-debug = False
-
-class IBME():
-
-    def __init__(self, groupObj=None):
-        if groupObj is None:
-            from charm.toolbox.pairinggroup import PairingGroup
-            groupObj = PairingGroup('SS512', secparam=512)  
-        global group
-        group = groupObj
-        mask = 'ed27dbfb02752e0e16bc4502d6c732bc5f1cc92ba19b2d93a4e95c597ca42753e93550b52f82b6c13fb8cc0c2fc64487'
-        self._mask = bytes.fromhex(mask)
-        
-    def setup(self):
-        r, s, P = group.random(ZR), group.random(ZR), group.random(G1)
-        P0 = r * P
-
-        pk = (P, P0)
-        sk = (r, s)
-        if(debug):
-            print("Public parameters...")
-            group.debug(pk)
-            print("Secret parameters...")
-            group.debug(sk)
-        return (pk, sk)
-
-    def H(self, X):
-        return group.hash(X, G1)
-
-    def H_prime(self, X):
-        # Both H and H' are computed from the same method group.hash()
-        # In order to make them different, we apply a fixed mask to the
-        # inputs of H'
-        X = bytes([ a ^ b for (a,b) in zip(X.encode(), self._mask) ])
-        return group.hash(X, G1)
-    
-    def skgen(self, sk, S):  
-        (_, s) = sk      
-        ek = s * self.H_prime(S)
-
-        if(debug):
-            print("Key for attrs S '{}' => {}".format(S, ek))
-        return ek
-
-    def rkgen(self, sk, R):  
-        (r, s) = sk       
-        H_R = self.H(R) 
-        dk1 = r * H_R
-        dk2 = s * H_R
-        dk3 = H_R
-        
-        dk = (dk1, dk2, dk3)
-
-        if(debug):
-            print("Key for attrs R '{}' => {}".format(R, dk))
-        return dk
-        
-    
-    def encrypt(self, pk, R, ek_S, M): # check length to make sure it is within n bits
-
-        (P, P0) = pk
-
-        u = group.random(ZR)
-        t = group.random(ZR)
-        
-        T = t * P
-        U = u * P
-
-        H_R = self.H(R) 
-        k_R = pair(H_R, u * P0)
-
-        k_S = pair(H_R, T + ek_S)
-
-        enc_k_R = group.serialize(k_R)[2:-1]
-        enc_k_S = group.serialize(k_S)[2:-1]
-
-        V = bytes([ a ^ b ^ c for (a,b,c) in zip(M, enc_k_R, enc_k_S) ])
-
-        C = (T, U, V)
-
-        if(debug):
-            print('\nEncrypt...')
-            print('T   =>', T)
-            print('u => %s' % u)
-            print('U => %s' % U)
-            print("V'  =>" % V)
-            print('enc_k_R => %s' % enc_k_R)
-            print('enc_k_S => %s' % enc_k_S)
-            #group.debug(C)
-        return C
-    
-    def decrypt(self, pk, dk, S, C):
-
-        (dk1, dk2, dk3) = dk
-        (T, U, V) = C
-        
-        k_R = pair(dk1, U)
-
-        H_prime_S = self.H_prime(S)
-   
-        k_S = pair(dk3, T) * pair(H_prime_S, dk2)
-
-        enc_k_R = group.serialize(k_R)[2:-1]
-        enc_k_S = group.serialize(k_S)[2:-1]
-        
-        M = bytes([ a ^ b ^ c for (a,b,c) in zip(V, enc_k_R, enc_k_S) ])
-
-        if(debug):
-            print('\n1111111Decrypt....')
-            print('T   =>', T)
-            print('U   =>', U)
-            print('V   =>', V)
-            print("M'  =>", M)
-        return M
-
-    def serialize_ciphertext(self, C):
-        T, U, V = C
-        T = base64.b64decode(group.serialize(T)[2:])
-        U = base64.b64decode(group.serialize(U)[2:])
-        return pickle.dumps((T, U, V))
-
-    def deserialize_ciphertext(self, bitstring):
-        T, U, V = pickle.loads(bitstring)
-        T = group.deserialize(b'1:'+base64.b64encode(T))
-        U = group.deserialize(b'1:'+base64.b64encode(U))
-        return (T, U, V)
-
-    def serialize_setup(self, S):
-        pk, sk = S
-        return pickle.dumps(tuple(group.serialize(x) for x in pk+sk))
-
-    def deserialize_setup(self, bitstring):
-        pieces = pickle.loads(bitstring)
-        P, P0, r, s = tuple(group.deserialize(p) for p in pieces)
-        pk = (P, P0)
-        sk = (r, s)
-        return pk, sk
-        
-    def serialize_tuple(self, input):
-        return pickle.dumps(tuple(group.serialize(x) for x in input))
-
-    def deserialize_tuple(self, bitstring):
-        pieces = pickle.loads(bitstring)
-        return tuple(group.deserialize(p) for p in pieces)
+import os
+from sys import exit, getsizeof
+from base64 import b64encode, b64decode
+from time import time
+try:
+	from psutil import Process
+except:
+	print("Cannot compute the memory via ``psutil.Process``. ")
+	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please press the enter key to exit. ")
+	input()
+	exit(-1)
+try:
+	from charm.toolbox.pairinggroup import PairingGroup, G1, ZR, pair, pc_element as Element
+except:
+	print("The environment of the ``charm`` library is not handled correctly. ")
+	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
+	print("Please press the enter key to exit. ")
+	input()
+	exit(-1)
+try:
+	os.chdir(os.path.abspath(os.path.dirname(__file__)))
+except:
+	pass
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+EOF = (-1)
 
 
-if __name__ == "__main__":
-    debug = True
-    from charm.toolbox.pairinggroup import PairingGroup
-    group = PairingGroup('SS512', secparam=512)    
-    ME = IBME(group)
-    (master_public_key, master_secret_key) = ME.setup()
-    R = 'attribute 1, attribute 2'
-    S = 'attribute 3, attribute 4'
-    dk = ME.rkgen(master_secret_key, R)
-    ek = ME.skgen(master_secret_key, S)
-    msg = b"hello world!!!!!"
-    cipher_text = ME.encrypt(master_public_key, R, ek, msg)
+class SchemeIBME:
+	def __init__(self:object, group:None|PairingGroup = None) -> object:
+		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
+		if self.__group.secparam < 1:
+			self.__group = PairingGroup(self.__group.groupType())
+			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
+		self.__operand = (1 << self.__group.secparam) - 1 # use to cast binary strings
+		self.__mpk = None
+		self.__msk = None
+		self.__flag = False # to indicate whether it has already set up
+	def Setup(self:object) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
+		# Check #
+		self.__flag = False
+		
+		# Scheme #
+		r, s = self.__group.random(ZR), self.__group.random(ZR) # generate $r, s \in \mathbb{Z}_p^*$ randomly
+		P = self.__group.random(G1) # generate $P \in \mathbb{G}_1$ randomly
+		P0 = r * P # $P_0 \gets r \cdot P$
+		H = lambda x:self.__group.hash(x, G1) # $H_1:\mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
+		mask = bytes.fromhex("ed27dbfb02752e0e16bc4502d6c732bc5f1cc92ba19b2d93a4e95c597ca42753e93550b52f82b6c13fb8cc0c2fc64487")
+		HPrime = lambda x:self.__group.hash(bytes([ a ^ b for (a, b) in zip(self.__group.serialize(x), mask)]), G1) # $H':\mathbb{Z}_p^* \oplus \textit{mask} \rightarrow \mathbb{G}_1$
+		self.__mpk = (P, P0, H, HPrime) # $\textit{mpk} \gets (P, P_0, H, H')$
+		self.__msk = (r, s) # $\textit{msk} \gets (r, s)$
+		
+		# Return #
+		self.__flag = True
+		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+	def SKGen(self:object, sender:Element) -> Element: # $\textbf{SKGen}(S) \rightarrow \textit{ek}_S$
+		# Check #
+		if not self.__flag:
+			self.Setup()
+			print("SKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``SKGen`` subsequently. ")
+		if isinstance(sender, Element) and sender.type == ZR: # type check
+			S = sender
+		else:
+			S = self.__group.random(ZR)
+			print("SKGen: The variable $S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		HPrime = self.__mpk[-1]
+		s = self.__msk[1]
+		
+		# Scheme #
+		ek_S = s * HPrime(S) # $\textit{ek}_S \gets s \cdot H'(S)$
+		
+		# Return #
+		return ek_S # $textbf{return }\textit{ek}_S$
+	def RKGen(self:object, receiver:Element) -> Element: # $\textbf{SKGen}(S) \rightarrow \textit{dk}_R$
+		# Check #
+		if not self.__flag:
+			self.Setup()
+			print("RKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``RKGen`` subsequently. ")
+		if isinstance(receiver, Element) and receiver.type == ZR: # type check
+			R = receiver
+		else:
+			R = self.__group.random(ZR)
+			print("RKGen: The variable $R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		H = self.__mpk[-2]
+		r, s = self.__msk
+		
+		# Scheme #
+		H_R = H(R) # $H_R \gets H(R)$
+		dk1 = r * H_R # $\textit{dk}_1 \gets r \cdot H_R$
+		dk2 = s * H_R # $\textit{dk}_2 \gets s \cdot H_R$
+		dk3 = H_R # $\textit{dk}_3 \gets H_R$
+		dk_R = (dk1, dk2, dk3) # $\textit{dk}_R \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3)$
+		
+		# Return #
+		return dk_R # $textbf{return }\textit{dk}_R$
+	def Encrypt(self:object, ekS:Element, receiver:Element, message:int|bytes) -> tuple: # $\textbf{Encrypt}(\textit{ek}_S, R, M) \rightarrow C$
+		# Check #
+		if not self.__flag:
+			self.Setup()
+			print("Encrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Encrypt`` subsequently. ")
+		if isinstance(ekS, Element):
+			ek_S = ekS
+		else:
+			ek_S = self.SKGen(self.__group.random(ZR))
+			print("Encrypt: The variable $\\textit{ek}_S$ should be an element but it is not, which has been generated randomly. ")
+		if isinstance(receiver, Element) and receiver.type == ZR: # type check
+			R = receiver
+		else:
+			R = self.__group.random(ZR)
+			print("Encrypt: The variable $R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(message, int): # type check
+			M = message & self.__operand
+			if message != M:
+				print("Encrypt: The passed message (int) is too long, which has been cast. ")
+		elif isinstance(message, bytes):
+			M = int.from_bytes(message, byteorder = "big") & self.__operand
+			if len(message) << 3 > self.__group.secparam:
+				print("Enc: The passed message (bytes) is too long, which has been cast. ")
+		else:
+			M = int.from_bytes(b"SchemeIBME", byteorder = "big") & self.__operand
+			print("Encrypt: The message passed should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeHIBME\". ")
+		
+		# Unpack #
+		H = self.__mpk[-2]
+		P, P0 = self.__mpk[0], self.__mpk[1]
+		
+		# Scheme #
+		u, t = self.__group.random(ZR), self.__group.random(ZR) # generate $u, t \in \mathbb{Z}_p^*$ randomly
+		T = t * P # $T \gets t \cdot P$
+		U = u * P # $U \gets u \cdot P$
+		H_R = H(R) # $H_R \gets H(R)$
+		k_R = pair(H_R, u * P0) # $k_R \gets e(H_R, u \cdot P_0)$
+		k_S = pair(H_R, T + ek_S) # $k_S \gets e(H_R, T + \textit{ek}_S)$
+		V = M ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $V \gets M \oplus k_R \oplus k_S$
+		C = (T, U, V) # $C \gets (T, U, V)$
+		
+		# Return #
+		return C # $\textbf{return }C$	
+	def Decrypt(self:object, dkR:tuple, sender:Element, cipher:tuple) -> int: # $\textbf{Decrypt}(\textit{dk}_R, S, C) \rightarrow M$
+		# Check #
+		if not self.__flag:
+			self.Setup()
+			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dncrypt`` subsequently. ")
+		if isinstance(dkR, tuple) and len(dkR) == 3 and all([isinstance(ele, Element) for ele in dkR]): # hybrid check
+			dk_R = dkR
+		else:
+			dk_R = self.RKGen(self.__group.random(ZR))
+			print("Decrypt: The variable $\\textit{dk}_R$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
+		if isinstance(sender, Element) and sender.type == ZR: # type check
+			S = sender
+		else:
+			S = self.__group.random(ZR)
+			print("Decrypt: The variable $S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(cipher, tuple) and len(cipher) == 3 and isinstance(cipher[0], Element) and isinstance(cipher[1], Element) and isinstance(cipher[2], int): # hybrid check
+			C = cipher
+		else:
+			C = self.Encrypt(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), b"SchemeIBME")
+			print("Decrypt: The variable $C$ should be a tuple containing 2 elements and an ``int`` object but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		HPrime = self.__mpk[-1]
+		dk1, dk2, dk3 = dk_R
+		T, U, V = C
+		
+		# Scheme #
+		k_R = pair(dk1, U) # $k_R \gets e(\textit{dk}_1, U)$
+		HPrime_S = HPrime(S) # $H'_S \gets H'(S)$
+		k_S = pair(dk3, T) * pair(HPrime_S, dk2) # $k_S \gets e(\textit{dk}_3, T)$
+		M = V ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $M \gets V \oplus k_R \oplus k_S$
+		
+		# Return #
+		return M # $\textbf{return }M$
 
-    msg_prime = ME.decrypt(master_public_key, dk, S, cipher_text)
-    print("1111msg_prime: ", msg_prime)
-    assert msg == msg_prime
 
-    S2 = 'attribute 5'
-    msg_2 = ME.decrypt(master_public_key, dk, S2, cipher_text)
-    print("1111msg_2: ", msg_2)
-    assert msg != msg_2
+def Scheme(curveType:tuple|list|str, round:int = None) -> list:
+	# Begin #
+	try:
+		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
+			if curveType[1] >= 1:
+				group = PairingGroup(curveType[0], secparam = curveType[1])
+			else:
+				group = PairingGroup(curveType[0])
+		else:
+			group = PairingGroup(curveType)
+	except:
+		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
+			print("curveType =", curveType[0])
+			if curveType[1] >= 1:
+				print("secparam =", curveType[1])
+		elif isinstance(curveType, str):
+			print("curveType =", curveType)
+		if isinstance(round, int) and round >= 0:
+			print("Round =", round)
+		print("Is the system valid? No. {0}. ".format(e))
+		return (																																														\
+			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
+			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13																																	\
+		)
+	process = Process(os.getpid())
+	print("curveType =", group.groupType())
+	print("secparam =", group.secparam)
+	if isinstance(round, int) and round >= 0:
+		print("Round =", round)
+	print("Is the system valid? Yes. ")
+	
+	# Initialization #
+	schemeIBME = SchemeIBME(group)
+	timeRecords, memoryRecords = [], []
 
-    import timeit
+	# Setup #
+	startTime = time()
+	mpk, msk = schemeIBME.Setup()
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# SKGen #
+	startTime = time()
+	S = group.random(ZR)
+	ek_S = schemeIBME.SKGen(S)
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# RKGen #
+	startTime = time()
+	R = group.random(ZR)
+	dk_R = schemeIBME.RKGen(R)
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# Encrypt #
+	startTime = time()
+	message = int.from_bytes(b"SchemeIBME", byteorder = "big")
+	C = schemeIBME.Encrypt(ek_S, R, message)
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# Decrypt #
+	startTime = time()
+	M = schemeIBME.Decrypt(dk_R, S, C)
+	endTime = time()
+	timeRecords.append(endTime - startTime)
+	memoryRecords.append(process.memory_info().rss)
+	
+	# End #
+	sizeRecords = [getsizeof(ek_S), getsizeof(dk_R), getsizeof(C)]
+	del schemeIBME
+	print("Original:", message)
+	print("Decrypted:", M)
+	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
+	print("Time:", timeRecords)
+	print("Memory:", memoryRecords)
+	print("Size:", sizeRecords)
+	print()
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M] + timeRecords + memoryRecords + sizeRecords
 
-    setup = '''
-from __main__ import IBME
-from charm.toolbox.pairinggroup import PairingGroup,pair
-from charm.toolbox.pairinggroup import ZR,G1,pair
-group = PairingGroup('SS512', secparam=512)    
-ME = IBME(group)
-(master_public_key, master_secret_key) = ME.setup()
-R = 'attribute 1, attribute 2'
-S = 'attribute 3, attribute 4'
-dk = ME.rkgen(master_secret_key, R)
-ek = ME.skgen(master_secret_key, S)
-msg = b"hello world!!!!!"
-    '''
-    debug = False
-    iters = 10
-    repetitions = 50
-    print("\n=====")
-    print("Benchmarking IB-ME...{} iters, {} repetitions".format(iters, repetitions))
-    encryption = 'cipher_text = ME.encrypt(master_public_key, R, ek, msg)'
-    timer = timeit.Timer(encryption, setup=setup)
-    print('Encryption time (ms):')
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    enctime = (1.0/repetitions)*sum(timings)
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
+def handleFolder(fd:str) -> bool:
+	folder = str(fd)
+	if not folder:
+		return True
+	elif os.path.exists(folder):
+		return os.path.isdir(folder)
+	else:
+		try:
+			os.makedirs(folder)
+			return True
+		except:
+			return False
 
-    setup = setup + "\n" + encryption
-
-    decryption = 'ME.decrypt(master_public_key, dk, S, cipher_text)'
-    timer = timeit.Timer(decryption, setup=setup)
-    print('Decryption time (ms):')
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    dectime = (1.0/repetitions)*sum(timings)
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    pairing = 'pair(dk[0], ek)'
-    timer = timeit.Timer(pairing, setup=setup)
-    print('Pairing time (ms):')
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    expo = "master_secret_key[0] * ek"
-    timer = timeit.Timer(expo, setup=setup)
-    print('Expo time (ms):')
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    ra = "group.random(ZR)"
-    timer = timeit.Timer(ra, setup=setup)
-    print('Random time (ms):')
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    h = "ME.H(R)"
-    timer = timeit.Timer(h, setup=setup)
-    print('H time (ms):')
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    h2 = "ME.H_prime(R)"
-    timer = timeit.Timer(h2, setup=setup)
-    print("H' time (ms):")
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    
-    setupp = "(master_public_key, master_secret_key) = ME.setup()"
-    timer = timeit.Timer(setupp, setup=setup)
-    print("setup time (ms):")
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    setuptime = (1.0/repetitions)*sum(timings)
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-
-    rkgen = "dk = ME.rkgen(master_secret_key, R)"
-    timer = timeit.Timer(setupp, setup=setup)
-    print("rkgen time (ms):")
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    rkgentime = (1.0/repetitions)*sum(timings)
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-
-    setupp = "ek = ME.skgen(master_secret_key, S)"
-    timer = timeit.Timer(setupp, setup=setup)
-    print("skgen time (ms):")
-    timings = [time/iters for time in timer.repeat(repetitions, iters)]
-    skgentime = (1.0/repetitions)*sum(timings)
-    print('\tmin', 1000*min(timings), '\tavg', 1000*(1.0/repetitions)*sum(timings))
-
-    output_txt= output_func('34_ibme')
-    with open(output_txt, 'w+', encoding='utf-8') as f:
-        f.write(
-            "Seq SetupAveTime       skgenAveTime       rkgenAveTime       encAVeTime         decAveTime         " + '\n')
-
-        out0 = str(1).zfill(2)
-        out1 = str(format(enctime, '.16f'))
-        out2 = str(format(skgentime, '.16f'))
-        out3 = str(format(rkgentime, '.16f'))
-        out4 = str(format(enctime, '.16f'))
-        out5 = str(format(dectime, '.16f'))
-        f.write(out0 + '  ' + out1 + ' ' + out2 + ' ' + out3 + ' ' + out4 + ' ' + out5)
+def main() -> int:
+	# Begin #
+	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	roundCount, filePath = 20, "SchemeIBME.xlsx"
+	columns = [															\
+		"curveType", "secparam", "roundCount", 								\
+		"isSystemValid", "isSchemeCorrect", 									\
+		"Setup (s)", "SKGen (s)", "RKGen (s)", "Encrypt (s)", "Decrypt (s)", 			\
+		"Setup (B)", "SKGen (B)", "RKGen (B)", "Encrypt (B)", "Decrypt (B)", 		\
+		"ek_S (B)", "dk_R (B)", "C (B)"										\
+	]
+	
+	# Scheme #
+	length, results = len(columns), []
+	try:
+		roundCount = max(1, roundCount)
+		for curveType in curveTypes:
+			average = Scheme(curveType, 0)
+			for round in range(1, roundCount):
+				result = Scheme(curveType, round)
+				for idx in range(3, 5):
+					average[idx] += result[idx]
+				for idx in range(6, length):
+					average[idx] = -1 if -1 == average[idx] or -1 == result[idx] else average[idx] + result[idx]
+			average[2] = roundCount
+			for idx in range(5, length):
+				average[idx] = -1 if -1 == average[idx] else average[idx] / roundCount
+			results.append(average)
+	except KeyboardInterrupt:
+		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
+	#except BaseException as e:
+	#	print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
+	
+	# Output #
+	print()
+	if results:
+		if handleFolder(os.path.split(filePath)[0]):
+			flag = False # write to the file or not
+			if os.path.isfile(filePath):
+				try:
+					flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(filePath)).upper() in ("Y", "YES", "TRUE", "1")
+				except:
+					print()
+			else:
+				flag = True
+			if flag:
+				try:
+					df = __import__("pandas").DataFrame(results, columns = columns)
+					if os.path.splitext(filePath)[1].lower() == ".csv":
+						df.to_csv(filePath, index = False, float_format = "%.9f")
+					else:
+						df.to_excel(filePath, index = False, float_format = "%.9f")
+					print("Successfully saved the results to \"{0}\" in the three-line table form. ".format(filePath))
+				except:
+					try:
+						with open(filePath, "w", encoding = "utf-8") as f:
+							f.write(str(columns) + "\n" + str(results))
+						print("Successfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
+					except BaseException as e:
+						print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, filePath, e))
+			else:
+				print("Results: \n{0}\n\nThe overwriting is canceled by users. ".format(results))
+		else:
+			print("Results: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
+	else:
+		print("The results are empty. ")
+	
+	# End #
+	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:5]] + [r > 0 for r in result[5:length]]) for result in results]) else EXIT_FAILURE
+	print("Please press the enter key to exit ({0}). ".format(iRet))
+	try:
+		input()
+	except:
+		print()
+	return iRet
 
 
+
+if "__main__" == __name__:
+	exit(main())
