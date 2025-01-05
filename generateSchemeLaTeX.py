@@ -107,9 +107,9 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 							elif "print(" in line:
 								printFlag = True
 							elif printFlag:
-								buffer += line
+								buffer += line.strip()
 								if ")" in line:
-									fetchPrompts(pythonFilePath, idx, functionFlag, line[line.index("print(\"") + 7:line.rindex("\")")])
+									fetchPrompts(pythonFilePath, idx, functionFlag, buffer)
 									printFlag = False
 						f.write("\\end{document}")
 					endTime = time()
