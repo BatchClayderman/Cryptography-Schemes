@@ -36,6 +36,10 @@ The script will try to finish the compilation once a LaTeX source file is genera
 
 Usually, it will succeed if ``pdflatex`` is available and on the path. 
 
+For developers, this script will check the style of the Python scripts. 
+
+Execute ``find . -maxdepth 1 -type f -name "*.py" -exec python {} \;`` in a Linux terminal to execute all the Python scripts in a scheme folder if you wish to. 
+
 #### Environment details
 
 - [Ubuntu 24.04.1 LTS (WSL)](https://learn.microsoft.com/windows/wsl/install)
