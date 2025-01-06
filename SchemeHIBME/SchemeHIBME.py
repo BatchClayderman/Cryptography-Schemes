@@ -6,7 +6,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -110,7 +110,7 @@ class SchemeHIBME:
 		k = len(ID_k)
 		
 		# Scheme #
-		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k = \prod\limits_{j = 1}^k a_j$
+		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k \gets \prod\limits_{j = 1}^k a_j$
 		ek1 = tuple(H1(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{ek}_{1, i} \gets H_1(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
 		ek2 = tuple(s[k + i] * Ak for i in range(self.__l - k)) # $\textit{ek}_{2, i} \gets s_{k + i}A_k, \forall i \in \{1, 2, \cdots, l - k\}$
 		ek3 = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
@@ -148,7 +148,7 @@ class SchemeHIBME:
 				).format(self.__l - 1, self.__l)																														\
 			)
 			ek_ID_kMinus1 = self.EKGen(ID_k[:-1])
-			print("DerivedEKGen: The variable $\\textit{ek}_{\\textit{ID}_{k - 1}}$ is generated accordingly. ")
+			print("DerivedEKGen: The variable $\\textit{ek}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
 		
 		# Unpack #
 		H1 = self.__mpk[-4]
@@ -194,11 +194,11 @@ class SchemeHIBME:
 		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $a_1 \gets g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
 		Ak = self.__product(tuple(a[j] for j in range(k))) # $A_k \gets \prod\limits_{j = 1}^k a_j$
 		dk1 = ( # $\textit{dk}_1 \gets (
-			(a0, a1, g ** r) # a_0, a_1, g^r, 
-			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
-			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_2}}, \cdots, h_l^{\frac{r}{b_2}}, 
-			+ tuple(h[i] ** (b1 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
-			+ tuple(h[i] ** (b2 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}}, 
+			(a0, a1, g ** r) # a_0, a_1, g^r,\allowbreak 
+			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},\allowbreak 
+			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_2}}, \cdots, h_l^{\frac{r}{b_2}},\allowbreak 
+			+ tuple(h[i] ** (b1 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}},\allowbreak 
+			+ tuple(h[i] ** (b2 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}},\allowbreak 
 			+ (HI ** (1 / b1), HI ** (1 / b2)) # \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 		) # )$
 		dk2 = tuple(H2(ID_k[i]) ** (s[i] * Ak) for i in range(k)) # $\textit{dk}_{2, i} \gets H_2(I_i)^{s_i A_k}, \forall i \in \{1, 2, \cdots, k\}$
@@ -239,7 +239,7 @@ class SchemeHIBME:
 				).format(self.__l - 1, self.__l)																													\
 			)
 			dk_ID_kMinus1 = self.DKGen(ID_k[:-1])
-			print("DerivedDKGen: The variable $\\textit{dk}_{\\textit{ID}_{k - 1}}$ is generated accordingly. ")
+			print("DerivedDKGen: The variable $\\textit{dk}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h, H1, H2 = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:-4], self.__mpk[-4], self.__mpk[-3]
@@ -301,7 +301,7 @@ class SchemeHIBME:
 				).format(self.__l - 1, self.__l)																																\
 			)
 			ek_ID_S = self.EKGen(ID_Snd)
-			print("Enc: The variable $\\textit{ek}_{\\textit{ID}_S}$ is generated accordingly. ")
+			print("Enc: The variable $\\textit{ek}_{\\textit{ID}_S}$ has been generated accordingly. ")
 		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDRev]): # hybrid check
 			ID_Rev = IDRev
 		else:
@@ -322,7 +322,7 @@ class SchemeHIBME:
 				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
 			M = int.from_bytes(b"SchemeHIBME", byteorder = "big") & self.__operand
-			print("Enc: The message passed should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeHIBME\". ")
+			print("Enc: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeHIBME\". ")
 		
 		# Unpack #
 		g, g3, gBar, gTilde, h, H1, H2, HHat, A = self.__mpk[0], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:-4], self.__mpk[-4], self.__mpk[-3], self.__mpk[-2], self.__mpk[-1]
@@ -350,8 +350,6 @@ class SchemeHIBME:
 				* self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[m - 1])) for i in range(m, n))) # \prod\limits_{i = m + 1}^n e(\textit{ek}_{1, i}, H_2(I'_m))
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
-		print("K =", K)
-		print("T =", T)
 		C1 = M ^ HHat(T) ^ HHat(K) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
 		C3 = gTilde ** s2 # $C_3 \gets \tilde{g}^{s_2}$
@@ -392,7 +390,7 @@ class SchemeHIBME:
 				).format(self.__l - 1, self.__l)																																	\
 			)
 			dk_ID_R = self.DKGen(ID_Rev)
-			print("Dec: The variable $\\textit{dk}_{\\textit{ID}_R}$ is generated accordingly. ")
+			print("Dec: The variable $\\textit{dk}_{\\textit{ID}_R}$ has been generated accordingly. ")
 		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDSnd]): # hybrid check
 			ID_Snd = IDSnd
 		else:
@@ -439,9 +437,6 @@ class SchemeHIBME:
 				) ** Bnm # )^{B_m^n}
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
-		print("KPrime =", KPrime)
-		print("TPrime =", TPrime)
-		input()
 		M = C1 ^ HHat(TPrime) ^ HHat(KPrime) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #
@@ -472,7 +467,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 			print("m =", m)
 			print("n =", n)
 			if isinstance(round, int) and round >= 0:
-				print("Round =", round)
+				print("round =", round)
 			print("Is the system valid? No. {0}. ".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -491,7 +486,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	print("m =", m)
 	print("n =", n)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -560,7 +555,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
-	print("Is the derver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
+	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)

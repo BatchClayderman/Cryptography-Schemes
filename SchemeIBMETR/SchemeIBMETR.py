@@ -6,7 +6,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -174,7 +174,7 @@ class SchemeIBMETR:
 				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
 			m = int.from_bytes(b"SchemeIBMETR", byteorder = "big")
-			print("Enc: The message passed should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBMETR\". ")
+			print("Enc: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBMETR\". ")
 		
 		# Unpack #
 		g, g0, g1, v1, v2, Omega, H2, HHat = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[-2], self.__mpk[-1]
@@ -279,7 +279,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
-			print("Round =", round)
+			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -289,7 +289,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #

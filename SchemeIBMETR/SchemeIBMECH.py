@@ -5,7 +5,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -56,13 +56,13 @@ class SchemeIBMECH(IBEnc):
 		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
 		alpha, eta = self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, \eta \in \mathbb{Z}_p^*$ randomly
-		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\mathbf{0}_{\mathbb{Z}_p^*}, \mathbf{1}_{\mathbb{Z}_p^*} \in \mathbb{Z}_p^*$ randomly
+		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\textbf{0}_{\mathbb{Z}_p^*}, \textbf{1}_{\mathbb{Z}_p^*} \in \mathbb{Z}_p^*$ randomly
 		B = [[self.__group.random(ZR) for j in range(8)] for i in range(8)] # generate $\bm{B} \gets (\mathbb{Z}_p^*)^{8 \times 8}$ randomly
 		D = tuple(tuple(g1 ** B[i][j] for j in range(8)) for i in range(4)) # $\mathbb{D}_{i, j} \gets g_1^{\bm{B}_{i, j}}, \forall i \in \{1, 2, 3, 4\}, \forall j \in \{1, 2, \cdots, 8\}$
 		DStar = tuple(tuple(GaussEliminationinGroups([B[j] + [one if i == j else zero] for j in range(8)])) for i in range(4)) # $\mathbb{D}_i^* \gets \textit{GaussEliminationinGroups}(\bm{B} || [1 = i, 2 = i, \cdots, 8 = i]^\mathrm{T}), \forall i \in \{1, 2, 3, 4\}$
 		del B
 		gT = pair(g1, g2) # $g_T \gets e(g_1, g_2)$
-		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \mathbf{1}_{\mathbb{Z}_p^*}}, g_T^{\eta \times \mathbf{1}_{\mathbb{Z}_p^*}}, D_1, D_2)$
+		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \textbf{1}_{\mathbb{Z}_p^*}}, g_T^{\eta \times \textbf{1}_{\mathbb{Z}_p^*}}, D_1, D_2)$
 		self.__msk = (alpha, eta, g1, g2, D[2], D[3], DStar[0], DStar[1], DStar[2], DStar[3]) # $\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*)$
 		
 		# Return #
@@ -111,8 +111,8 @@ class SchemeIBMECH(IBEnc):
 		dk_rho = (k1, k2, k3) # $\textit{dk}_\rho \gets (k_1, k_2, k_3)$
 		
 		# Return #
-		return dk_rho # $\mathbb{return }\textit{dk}_\rho$
-	def Enc(self, eksigma:tuple, receiver:Element, message:Element) -> tuple: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{rcv}, m) \rightarrow \textit{ct}$
+		return dk_rho # $\textbf{return }\textit{dk}_\rho$
+	def Enc(self:object, eksigma:tuple, receiver:Element, message:Element) -> tuple: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{rcv}, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -131,7 +131,7 @@ class SchemeIBMECH(IBEnc):
 			m = message
 		else:
 			m = self.__group.random(GT)
-			print("Enc: The message passed should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $m$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		gTToThePowerOfAlpha, D1, D2 = self.__mpk[0], self.__mpk[2], self.__mpk[3]
@@ -143,7 +143,7 @@ class SchemeIBMECH(IBEnc):
 		ct = (C, C0) # $\textit{ct} \gets (C, C_0)$
 		
 		# Return #
-		return ct # $\mathbf{return }\textit{ct}$
+		return ct # $\textbf{return }\textit{ct}$
 	def Dec(self:object, dkrho:tuple, sender:Element, cipher:tuple) -> Element: # $\textbf{Dec}(\textit{dk}_\rho, \textit{snd}, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
@@ -166,7 +166,7 @@ class SchemeIBMECH(IBEnc):
 			ct = cipher
 		else:
 			ct = self.Enc(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), self.__group.random(GT))
-			print("Dec: The variable $\textit{ct} should be a tuple containing a tuple and an element but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\textit{ct}$ should be a tuple containing a tuple and an element but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		k1, k2, k3 = dk_rho
@@ -197,7 +197,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
-			print("Round =", round)
+			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -207,7 +207,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #

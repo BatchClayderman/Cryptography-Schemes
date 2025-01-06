@@ -5,7 +5,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -13,7 +13,7 @@ try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
-	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 if necessary. ")
+	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -78,11 +78,11 @@ class SchemeAnonymousME:
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																			\
-				(																																			\
-					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																				\
-				).format(self.__l - 1, self.__l)																														\
+			print(																																					\
+				(																																					\
+					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
+				).format(self.__l - 1, self.__l)																																\
 			)
 		
 		# Unpack #
@@ -119,7 +119,12 @@ class SchemeAnonymousME:
 				sk_ID_kMinus1 = skIDkMinus1
 			else:
 				sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-				print("DerivedKGen: The variable $\\textit{{sk}}_{{\\textit{{ID}}_{{k - 1}}}}$ should be a tuple containing $(l - k + 1) \\times 4 + 5 = {0}$ elements, which has been generated accordingly. ".format(((self.__l - len(ID_k) + 1) << 2) + 5))
+				print(
+					(
+						"DerivedKGen: The variable $\\textit{{sk}}_{{\\textit{{ID}}_{{k - 1}}}}$ should be a tuple containing $(l - k + 1) \\times 4 + 5 = {0}$ elements but it is not, "
+						+ "which has been generated accordingly. "
+					).format(((self.__l - len(ID_k) + 1) << 2) + 5)
+				)
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																								\
@@ -129,7 +134,7 @@ class SchemeAnonymousME:
 				).format(self.__l - 1, self.__l)																																			\
 			)
 			sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-			print("DerivedKGen: The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ is generated correspondingly. ")
+			print("DerivedKGen: The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
@@ -164,17 +169,17 @@ class SchemeAnonymousME:
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																			\
-				(																																			\
-					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$, "		\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																				\
-				).format(self.__l - 1, self.__l)																														\
+			print(																																					\
+				(																																					\
+					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
+				).format(self.__l - 1, self.__l)																																\
 			)
 		if isinstance(message, Element) and message.type == GT: # type check
 			M = message
 		else:
 			M = self.__group.random(GT)
-			print("Enc: The message passed should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
@@ -200,12 +205,12 @@ class SchemeAnonymousME:
 			sk_ID_k = skIDk
 		else:
 			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
-			print("The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
+			print("Dec: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
 		if isinstance(cipher, tuple) and len(cipher) == 4 and all([isinstance(ele, Element) for ele in cipher]):# hybrid check
 			CT = cipher
 		else:
 			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
-			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated randomly with $M \\in \\mathbb{G}_T$ generated randomly. ")
+			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated with $M \\in \\mathbb{G}_T$ generated randomly. ")
 		
 		# Unpack #
 		A, B, C, D = CT
@@ -241,7 +246,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 			print("l =", l)
 			print("k =", k)
 			if isinstance(round, int) and round >= 0:
-				print("Round =", round)
+				print("round =", round)
 			print("Is the system valid? No. {0}. ".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -259,7 +264,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	print("l =", l)
 	print("k =", k)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -308,7 +313,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	# End #
 	sizeRecords = [getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del schemeAnonymousME
-	print("Is the derver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
+	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)

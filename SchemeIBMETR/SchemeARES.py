@@ -5,7 +5,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -13,7 +13,7 @@ try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
-	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese sif necessary. ")
+	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -82,13 +82,13 @@ class SchemeARES:
 	def TSK(self:object, identity:Element) -> tuple: # $\textbf{TSK}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$
 		# Check #
 		if not self.__flag:
-			print("Extract: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TSK`` subsequently. ")
+			print("TSK: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TSK`` subsequently. ")
 			self.Setup()
 		if isinstance(identity, Element) and identity.type == ZR: # type check
 			Id = identity
 		else:
 			Id = self.__group.random(ZR)
-			print("Extract: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("TSK: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, g0, g1 = self.__mpk[1], self.__mpk[2], self.__mpk[3]
@@ -164,18 +164,18 @@ class SchemeARES:
 	def TVerify(self:object, PvkId:tuple, cipher:tuple) -> bool: # $\textbf{TVerify}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow y, y \in \{0, 1\}$
 		# Check #
 		if not self.__flag:
-			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Decrypt`` subsequently. ")
+			print("TVerify: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TVerify`` subsequently. ")
 			self.Setup()
 		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all([isinstance(ele, Element) for ele in PvkId]): # hybrid check
 			Pvk_Id = PvkId
 		else:
 			Pvk_Id = self.Extract(self.__group.random(ZR))
-			print("Decrypt: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
+			print("TVerify: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 6 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
 			CT = cipher
 		else:
 			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
-			print("Decrypt: The variable $\\textit{CT}$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
+			print("TVerify: The variable $\\textit{CT}$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		d0, d1, d2, d3, d4 = Pvk_Id
@@ -206,7 +206,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
-			print("Round =", round)
+			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -216,7 +216,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #

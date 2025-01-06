@@ -6,7 +6,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -98,32 +98,32 @@ class SchemeIBME:
 		
 		# Return #
 		return dk_R # $textbf{return }\textit{dk}_R$
-	def Encrypt(self:object, ekS:Element, receiver:Element, message:int|bytes) -> tuple: # $\textbf{Encrypt}(\textit{ek}_S, R, M) \rightarrow C$
+	def Enc(self:object, ekS:Element, receiver:Element, message:int|bytes) -> tuple: # $\textbf{Enc}(\textit{ek}_S, R, M) \rightarrow C$
 		# Check #
 		if not self.__flag:
 			self.Setup()
-			print("Encrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Encrypt`` subsequently. ")
+			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 		if isinstance(ekS, Element):
 			ek_S = ekS
 		else:
 			ek_S = self.SKGen(self.__group.random(ZR))
-			print("Encrypt: The variable $\\textit{ek}_S$ should be an element but it is not, which has been generated randomly. ")
+			print("Enc: The variable $\\textit{ek}_S$ should be an element but it is not, which has been generated randomly. ")
 		if isinstance(receiver, Element) and receiver.type == ZR: # type check
 			R = receiver
 		else:
 			R = self.__group.random(ZR)
-			print("Encrypt: The variable $R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		if isinstance(message, int): # type check
 			M = message & self.__operand
 			if message != M:
-				print("Encrypt: The passed message (int) is too long, which has been cast. ")
+				print("Enc: The passed message (int) is too long, which has been cast. ")
 		elif isinstance(message, bytes):
 			M = int.from_bytes(message, byteorder = "big") & self.__operand
 			if len(message) << 3 > self.__group.secparam:
 				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
 			M = int.from_bytes(b"SchemeIBME", byteorder = "big") & self.__operand
-			print("Encrypt: The message passed should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeHIBME\". ")
+			print("Enc: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBME\". ")
 		
 		# Unpack #
 		H = self.__mpk[-2]
@@ -141,26 +141,26 @@ class SchemeIBME:
 		
 		# Return #
 		return C # $\textbf{return }C$	
-	def Decrypt(self:object, dkR:tuple, sender:Element, cipher:tuple) -> int: # $\textbf{Decrypt}(\textit{dk}_R, S, C) \rightarrow M$
+	def Dec(self:object, dkR:tuple, sender:Element, cipher:tuple) -> int: # $\textbf{Dec}(\textit{dk}_R, S, C) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			self.Setup()
-			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dncrypt`` subsequently. ")
+			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 		if isinstance(dkR, tuple) and len(dkR) == 3 and all([isinstance(ele, Element) for ele in dkR]): # hybrid check
 			dk_R = dkR
 		else:
 			dk_R = self.RKGen(self.__group.random(ZR))
-			print("Decrypt: The variable $\\textit{dk}_R$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\\textit{dk}_R$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
 		if isinstance(sender, Element) and sender.type == ZR: # type check
 			S = sender
 		else:
 			S = self.__group.random(ZR)
-			print("Decrypt: The variable $S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec: The variable $S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 3 and isinstance(cipher[0], Element) and isinstance(cipher[1], Element) and isinstance(cipher[2], int): # hybrid check
 			C = cipher
 		else:
-			C = self.Encrypt(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), b"SchemeIBME")
-			print("Decrypt: The variable $C$ should be a tuple containing 2 elements and an ``int`` object but it is not, which has been generated randomly. ")
+			C = self.Enc(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), b"SchemeIBME")
+			print("Dec: The variable $C$ should be a tuple containing 2 elements and an ``int`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		HPrime = self.__mpk[-1]
@@ -195,7 +195,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
-			print("Round =", round)
+			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -205,7 +205,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -235,17 +235,17 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
-	# Encrypt #
+	# Enc #
 	startTime = time()
 	message = int.from_bytes(b"SchemeIBME", byteorder = "big")
-	C = schemeIBME.Encrypt(ek_S, R, message)
+	C = schemeIBME.Enc(ek_S, R, message)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
-	# Decrypt #
+	# Dec #
 	startTime = time()
-	M = schemeIBME.Decrypt(dk_R, S, C)
+	M = schemeIBME.Dec(dk_R, S, C)
 	endTime = time()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
@@ -282,8 +282,8 @@ def main() -> int:
 	columns = [															\
 		"curveType", "secparam", "roundCount", 								\
 		"isSystemValid", "isSchemeCorrect", 									\
-		"Setup (s)", "SKGen (s)", "RKGen (s)", "Encrypt (s)", "Decrypt (s)", 			\
-		"Setup (B)", "SKGen (B)", "RKGen (B)", "Encrypt (B)", "Decrypt (B)", 		\
+		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 			\
+		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 		\
 		"ek_S (B)", "dk_R (B)", "C (B)"										\
 	]
 	
@@ -305,8 +305,8 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
-	#	print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
+	except BaseException as e:
+		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
 	print()

@@ -27,32 +27,110 @@ def getTxt(filePath:str, index:int = 0) -> str: # get .txt content
 	else:
 		return None # out of range
 
-def fetchPrompts(filePath:str, idx:int, functionName:str, s:str, sleepingTime:int = 5) -> bool|None:
-	if isinstance(filePath, str) and isinstance(idx, int) and isinstance(functionName, str) and isinstance(s, str):
-		if s in (
-			"Cannot compute the memory via ``psutil.Process``. ", 
-			"Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ", 
-			"Please press the enter key to exit. ", 
-			"The environment of the ``charm`` library is not handled correctly. ", 
-			"See https://blog.csdn.net/weixin_45726033/article/details/144254189 if necessary. ", 
-			"Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ", 
-			functionName + ": The message passed should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 
-			"{0}: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``{0}`` subsequently. ".format(functionName), 
+def convertEscaped(string:str) -> str:
+	if isinstance(string, str):
+		vec = list(string)
+		d = {"\\":"\\\\", "\"":"\\\"", "\'":"\\\'", "\a":"\\a", "\b":"\\b", "\f":"\\f", "\n":"\\n", "\r":"\\r", "\t":"\\t", "\v":"\\v"}
+		for i, ch in enumerate(vec):
+			if ch in d:
+				vec[i] = d[ch]
+			elif not ch.isprintable():
+				vec[i] = "\\x" + hex(ord(ch))[2:]
+		return "\"" + "".join(vec) + "\""
+	else:
+		return str(string)
+
+def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionName:str|None, sleepingTime:int = 3) -> bool:
+	if isinstance(filePath, str) and isinstance(idx, (int, str)) and isinstance(s, str):
+		if isinstance(className, str) and className.isalnum() and isinstance(functionName, str) and functionName.isalnum():
+			if s in (																																			\
+				functionName + ": An irregular security parameter ($\\\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ", 		\
+				"{0}: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``{0}`` subsequently. ".format(functionName), 					\
+				functionName + ": The passed message (bytes) is too long, which has been cast. ", functionName + ": The passed message (int) is too long, which has been cast. ", 			\
+				functionName + ": The variable $M$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
+				functionName + ": The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ", 										\
+				functionName + ": The variable $m$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
+				"{0}: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\\\"{1}\\\". ".format(functionName, className), 					\
+				"{0}: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\\\"{1}\\\". ".format(functionName, className)					\
+			):
+				return True
+			elif (																																																\
+				findall("^{0}: The variable \\$.+\\$ has been generated accordingly\\. $".format(functionName), s)																												\
+				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)												\
+				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$(?:M|m)\\$ set to b\\\\\\\"{1}\\\\\\\"\\. $".format(functionName, className), s)						\
+				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$M \\\\\\\\in \\\\\\\\mathbb{{G}}_T\\$ generated randomly\\. $".format(functionName, className), s)		\
+				or findall(																																														\
+					(																																														\
+						"^{0}: The variable \\$.+\\$ should be a tuple containing \\$.+ = .+\\$ elements(?: of \\$\\\\\\\\mathbb\\{{\\{{Z\\}}\\}}_p\\^\\*\\$)?(?: where the integer \\$.+ \\\\\\\\in .+\\$)? but it is not\\, "										\
+						+ "which has been generated (?:randomly with a length of \\$.+\\$|accordingly)\\. $"																													\
+					).format(functionName, className), s																																							\
+				)																																															\
+				or findall("^{0}: The variable \\$.+\\$ should be an element(?: of \\$\\\\\\\\mathbb\\{{Z\\}}_p\\^\\*\\$)? but it is not\\, which has been generated randomly\\. $".format(functionName), s)												\
+			):
+				return True
+			else:
+				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
+				print("\"{0}\" ({1}): {2} (in Function ``{3}`` of Class ``{4}``)".format(filePath, idx, convertEscaped(s), functionName, className))
+				try:
+					sleep(sleepingTime)
+				except KeyboardInterrupt:
+					print()
+				except BaseException:
+					pass
+				return False
+		elif isinstance(className, str) and className.isalnum() and functionName is None:
+			if "Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. " == s:
+				return True
+			else:
+				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
+				print("\"{0}\" ({1}): {2} (in Function ``{3}``)".format(filePath, idx, convertEscaped(s), functionName))
+				try:
+					sleep(sleepingTime)
+				except KeyboardInterrupt:
+					print()
+				except BaseException:
+					pass
+				return False
+		elif className is None and functionName is None and (
+			s in (																											\
+				"", "Cannot compute the memory via ``psutil.Process``. ", "Decrypted:", "Derived:", 										\
+				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 					\
+				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 					\
+				"Is the system valid? No. {0}. ", "Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", 							\
+				"Memory:", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 						\
+				"Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ", 				\
+				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
+				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 				\
+				"Results: \\n{0}\\n\\nThe overwriting is canceled by users. ", 															\
+				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Size:", 					\
+				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", 													\
+				"Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 												\
+				"The environment of the ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 						\
+				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", 		\
+				"\\nThe experiments were interrupted by users. The program will try to save the results collected. ", 							\
+				"curveType =", "curveType = Unknown", "k =", "l =", "m =", "n =", "round =", "secparam ="								\
+			) or findall("^Is the system valid\\? No\\. The parameters? \\$.+\\$ should be .+ positive integers? satisfying \\$.+\\$\\. $", s)			\
 		):
 			return True
-		elif findall("^{0}: The variable \\$.+\\$ should be an element of \\$\\\\\\\\mathbb\\{{Z\\}}_p\\^\\*\\$ but it is not, which has been generated randomly. $".format(functionName), s):
-			return True
-		elif findall("^{0}: The variable \\$.+\\$ is generated correspondingly. $".format(functionName), s):
-			return True
 		else:
-			print("\"{0}\" ({1}): \"{2}\" (in Function ``{3}``)".format(filePath, idx, s.replace("\\", "\\\\").replace("\"", "\\\""), functionName))
+			print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
+			print("\"{0}\" ({1}): {2}".format(filePath, idx, convertEscaped(s)))
 			try:
 				sleep(sleepingTime)
-			except:
+			except KeyboardInterrupt:
+				print()
+			except BaseException:
 				pass
 			return False
 	else:
-		return None
+		print("** Warning: An unofficial statement detected or an unofficial generator is used, please check whether official Python scripts are used. **")
+		try:
+			sleep(sleepingTime)
+		except KeyboardInterrupt:
+			print()
+		except BaseException:
+			pass
+		return False
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -80,17 +158,24 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 					startTime = time()
 					with open(os.path.join(folderPath, fileName), "w", encoding = "utf-8") as f:
 						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\\usepackage{bm}\n\n\\begin{document}\n\n")
-						classFlag, functionFlag, schemeFlag, doubleSeparatorFlag, printFlag, buffer = None, None, False, True, False, ""
+						className, functionName, schemeFlag, doubleSeparatorFlag, printFlag, bucketCount, buffer, warningCount = None, None, False, True, 0, 0, "", 0
 						for idx, line in enumerate(content.splitlines()):
 							if line.startswith("class Scheme"):
-								classFlag = line[6:].strip()
-								f.write("\\section{{{0}}}\n\n".format(classFlag))
-							elif classFlag and line.startswith("\tdef ") and "(self:object" in line and "): # " in line:
-								f.write("\\subsection{" + line[line.index("): # ") + 5:].strip() + "}\n\n")
-								functionFlag = line[5:line.index("(self:object")]
-							elif classFlag and functionFlag and "\t\t# Scheme #" == line:
+								className = findall("^[0-9A-Za-z]+", line[6:])
+								if className:
+									className = className[0]
+									if len(className) >= 7:
+										f.write("\\section{{{0}}}\n\n".format(className))
+									else:
+										className = None
+								else:
+									className = None
+							elif className is not None and line.startswith("\tdef ") and "(self:object" in line and ") -> " in line and ": # " in line:
+								f.write("\\subsection{" + line[line.index(": # ") + 4:].strip() + "}\n\n")
+								functionName = line[5:line.index("(self:object")]
+							elif className is not None and functionName is not None and "\t\t# Scheme #" == line:
 								schemeFlag = True
-							elif classFlag and functionFlag and schemeFlag and line.count("#") == 1 and "#" in line:
+							elif className is not None and functionName is not None and schemeFlag and line.count("#") == 1 and "#" in line:
 								prompt = line[line.index("#") + 1:].strip()
 								if "$" == prompt:
 									doubleSeparatorFlag = not doubleSeparatorFlag # invert the double separator switch
@@ -99,23 +184,91 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 								elif not prompt.startswith("$") and prompt.endswith("$"):
 									doubleSeparatorFlag = True # enable the double separator switch
 								f.write(prompt + ("\n\n" if doubleSeparatorFlag else "\n"))
+								if line.startswith("\t\treturn "):
+									functionName, schemeFlag = None, False
 							elif line.strip() and not line.startswith("\t") and not line.lstrip().startswith("#"):
-								classFlag, functionFlag, schemeFlag, doubleSeparatorFlag = False, False, False, True # reset
-							if functionFlag and schemeFlag and line.startswith("\t\treturn "):
-								functionFlag, schemeFlag = False, False
-							if "print(\"" in line and "\")" in line:
-								fetchPrompts(pythonFilePath, idx, functionFlag, line[line.index("print(\"") + 7:line.rindex("\")")])
-							elif "print(" in line:
-								printFlag = True
-							elif printFlag:
-								buffer += line.strip()
-								if ")" in line:
-									fetchPrompts(pythonFilePath, idx, functionFlag, buffer)
-									printFlag = False
+								className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True # reset
+							
+							# Official Check #
+							if line.lstrip().startswith("print(") or printFlag:
+								printFlag, escapeFlag, stringFlag = idx + 1, False, 0
+								for ch in line if printFlag else line[line.index("print(") + 5:]: # include the '('
+									if '\\' == ch:
+										if escapeFlag and stringFlag:
+											buffer += "\\\\"
+										escapeFlag = not escapeFlag
+									elif '\"' == ch:
+										if 2== stringFlag:
+											if escapeFlag: # "XXX\"XXX"
+												buffer += "\\\""
+												escapeFlag = False
+											else: # "XXX"
+												stringFlag = 0
+										elif 1 == stringFlag: # "'"
+											buffer += "\""
+											escapeFlag = False
+										elif escapeFlag:
+											escapeFlag = False
+										else:
+											stringFlag = 2
+									elif '\'' == ch:
+										if 2 == stringFlag: # '"'
+											buffer += "\'"
+											escapeFlag = False
+										elif 1 == stringFlag:
+											if escapeFlag: # 'XXX\'XXX'
+												buffer += "\\\'"
+												escapeFlag = False
+											else: # 'XXX'
+												stringFlag = 0
+										elif escapeFlag:
+											escapeFlag = False
+										else:
+											stringFlag = 1
+									elif '#' == ch:
+										if stringFlag:
+											if escapeFlag:
+												buffer += "\\#"
+												escapeFlag = False
+											else:
+												buffer += "#"
+										else:
+											escapeFlag = False
+											break
+									elif '(' == ch:
+										if stringFlag:
+											if escapeFlag:
+												buffer += "\\("
+												escapeFlag = False
+											else:
+												buffer += "("
+										else:
+											escapeFlag = False
+											bucketCount += 1
+									elif ')' == ch:
+										if stringFlag:
+											if escapeFlag:
+												buffer += "\\)"
+												escapeFlag = False
+											else:
+												buffer += ")"
+										else:
+											bucketCount -= 1
+											if bucketCount <= 0:
+												if not fetchPrompts(pythonFilePath, printFlag if idx + 1 == printFlag else "from {0} to {1}".format(printFlag, idx + 1), buffer, className, functionName):
+													warningCount += 1
+												printFlag, buffer, escapeFlag = 0, "", False
+												break
+									elif stringFlag:
+										if escapeFlag:
+											buffer += "\\" + ch
+											escapeFlag = False
+										else:
+											buffer += ch
 						f.write("\\end{document}")
 					endTime = time()
 					generationTimeDelta = endTime - startTime
-					print("The LaTeX generation for \"{0}\" finished in {1:.9f} second(s). ".format(pythonFilePath, generationTimeDelta))
+					print("The LaTeX generation for \"{0}\" finished in {1:.9f} second(s) with {2} warning(s). ".format(pythonFilePath, generationTimeDelta, warningCount))
 					
 					# LaTeX Compilation #
 					try:

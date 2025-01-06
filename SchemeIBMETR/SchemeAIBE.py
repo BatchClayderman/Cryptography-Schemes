@@ -5,7 +5,7 @@ try:
 	from psutil import Process
 except:
 	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install psutil via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
 	print("Please press the enter key to exit. ")
 	input()
 	exit(-1)
@@ -155,7 +155,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
-			print("Round =", round)
+			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
@@ -165,7 +165,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
-		print("Round =", round)
+		print("round =", round)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -205,6 +205,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	# End #
 	sizeRecords = [getsizeof(Pvk_Id), getsizeof(CT)]
 	del schemeAIBE
+	print("Original:", message)
+	print("Decrypted:", M)
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
 	print("Memory:", memoryRecords)
