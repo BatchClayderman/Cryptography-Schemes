@@ -52,7 +52,18 @@ This is the implementation of the IBMECH scheme (``Identity-Based Matchmaking En
 
 ##### SchemeIBME.py
 
-This is the implementation of the IBME scheme based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
+This is the implementation of the IBME scheme (``Match me if you can: Matchmaking encryption and its applications``) based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
+
+```
+@inproceedings{ateniese2019match,
+  title={Match me if you can: Matchmaking encryption and its applications},
+  author={Ateniese, Giuseppe and Francati, Danilo and Nunez, David and Venturi, Daniele},
+  booktitle={Advances in Cryptology--CRYPTO 2019: 39th Annual International Cryptology Conference, Santa Barbara, CA, USA, August 18--22, 2019, Proceedings, Part II 39},
+  pages={701--731},
+  year={2019},
+  organization={Springer}
+}
+```
 
 ##### Others
 
