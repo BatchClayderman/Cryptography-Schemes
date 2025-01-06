@@ -50,6 +50,10 @@ This is the implementation of the IBMECH scheme (``Identity-Based Matchmaking En
 }
 ```
 
+##### SchemeIBME.py
+
+This is the implementation of the IBME scheme based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
+
 ##### Others
 
 Please also consider testing the Python scripts in [https://github.com/xuehuan-yang/PSME/tree/main/src](https://github.com/xuehuan-yang/PSME/tree/main/src) as the baselines if necessary. 

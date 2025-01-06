@@ -5,7 +5,7 @@
 
 \begin{document}
 
-\section{Scheme}
+\section{SchemeIBMECH(IBEnc):}
 
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
@@ -29,14 +29,8 @@ $g_T \gets e(g_1, g_2)$
 
 $\textit{mpk} \gets (g_T^{\alpha \times \mathbf{1}_{\mathbb{Z}_p^*}}, g_T^{\eta \times \mathbf{1}_{\mathbb{Z}_p^*}}, D_1, D_2)$
 
-$\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*$)
-$\textbf{return }(\textit{mpk}, \textit{msk})$
-\subsection{$\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$}
+$\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*)$
 
-generate $s, s_1, s_2 \in \mathbb{Z}_p^*$ randomly
-$k_1 \gets \{g_2^{\bm{d}_{1, i} \cdot (\alpha + s_1 \rho) - s_1 \bm{d}_{2, i} + s \bm{d}_{3, i}}, \forall i \in \{1, 2, \cdots, 8\}\}$
-$k_2 \gets \{g_2^{s_2 \cdot (\rho * \bm{d}_{1, i} - \bm{d}_{2, i}) + s \bm{d}_{4, i}}, \forall i \in \{1, 2, \cdots, 8\}\}$
-$k_3 \gets (g_T^\eta)^s$
-$\textit{dk}_\rho \gets (k_1, k_2, k_3)$
-$\mathbb{return }\textit{dk}_\rho$
+$\textbf{return }(\textit{mpk}, \textit{msk})$
+
 \end{document}

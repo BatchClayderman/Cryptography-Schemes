@@ -79,11 +79,12 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 				try:
 					startTime = time()
 					with open(os.path.join(folderPath, fileName), "w", encoding = "utf-8") as f:
-						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\\usepackage{bm}\n\n\\begin{document}\n\n\\section{Scheme}\n\n")
-						classFlag, functionFlag, schemeFlag, doubleSeparatorFlag, printFlag, buffer = False, None, False, True, False, ""
+						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\\usepackage{bm}\n\n\\begin{document}\n\n")
+						classFlag, functionFlag, schemeFlag, doubleSeparatorFlag, printFlag, buffer = None, None, False, True, False, ""
 						for idx, line in enumerate(content.splitlines()):
 							if line.startswith("class Scheme"):
-								classFlag = True
+								classFlag = line[6:].strip()
+								f.write("\\section{{{0}}}\n\n".format(classFlag))
 							elif classFlag and line.startswith("\tdef ") and "(self:object" in line and "): # " in line:
 								f.write("\\subsection{" + line[line.index("): # ") + 5:].strip() + "}\n\n")
 								functionFlag = line[5:line.index("(self:object")]
@@ -107,9 +108,9 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 							elif "print(" in line:
 								printFlag = True
 							elif printFlag:
-								buffer += line
+								buffer += line.strip()
 								if ")" in line:
-									fetchPrompts(pythonFilePath, idx, functionFlag, line[line.index("print(\"") + 7:line.rindex("\")")])
+									fetchPrompts(pythonFilePath, idx, functionFlag, buffer)
 									printFlag = False
 						f.write("\\end{document}")
 					endTime = time()
