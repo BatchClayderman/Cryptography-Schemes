@@ -99,7 +99,8 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"Is the system valid? No. {0}. ", "Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", 							\
 				"Memory:", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 						\
 				"Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ", 				\
-				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
+				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 	\
+				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 		\
 				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 				\
 				"Results: \\n{0}\\n\\nThe overwriting is canceled by users. ", 															\
 				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Size:", 					\
