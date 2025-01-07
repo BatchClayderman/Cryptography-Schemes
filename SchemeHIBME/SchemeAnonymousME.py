@@ -1,6 +1,6 @@
 import os
 from sys import argv, exit, getsizeof
-from time import time
+from time import perf_counter, sleep
 try:
 	from psutil import Process
 except:
@@ -272,41 +272,41 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	timeRecords, memoryRecords = [], []
 	
 	# Setup #
-	startTime = time()
+	startTime = perf_counter()
 	mpk, msk = schemeAnonymousME.Setup(l)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# KGen #
-	startTime = time()
+	startTime = perf_counter()
 	ID_k = tuple(group.random(ZR) for i in range(k))
 	sk_ID_k = schemeAnonymousME.KGen(ID_k)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# DerivedKGen #
-	startTime = time()
+	startTime = perf_counter()
 	sk_ID_kMinus1 = schemeAnonymousME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
 	sk_ID_kDerived = schemeAnonymousME.DerivedKGen(sk_ID_kMinus1, ID_k)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
-	startTime = time()
+	startTime = perf_counter()
 	message = group.random(GT)
 	CT = schemeAnonymousME.Enc(ID_k, message)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Dec #
-	startTime = time()
+	startTime = perf_counter()
 	M = schemeAnonymousME.Dec(sk_ID_k,  CT)
 	MDerived = schemeAnonymousME.Dec(sk_ID_kDerived, CT)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	

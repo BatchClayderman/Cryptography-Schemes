@@ -1,7 +1,7 @@
 import os
 from sys import argv, exit, getsizeof
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
-from time import sleep, time
+from time import perf_counter, sleep
 try:
 	from psutil import Process
 except:
@@ -303,54 +303,54 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords, memoryRecords = [], []
 	
 	# Setup #
-	startTime = time()
+	startTime = perf_counter()
 	mpk, msk = schemeIBMETR.Setup()
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# EKGen #
-	startTime = time()
+	startTime = perf_counter()
 	id_S = group.random(ZR)
 	ek_id_S = schemeIBMETR.EKGen(id_S)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# DKGen #
-	startTime = time()
+	startTime = perf_counter()
 	id_R = group.random(ZR)
 	dk_id_R = schemeIBMETR.DKGen(id_R)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# TKGen #
-	startTime = time()
+	startTime = perf_counter()
 	tk_id_R = schemeIBMETR.TKGen(id_R)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
-	startTime = time()
+	startTime = perf_counter()
 	message = int.from_bytes(b"SchemeIBMETR", byteorder = "big")
 	ct = schemeIBMETR.Enc(ek_id_S, id_R, message)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Dec #
-	startTime = time()
+	startTime = perf_counter()
 	m = schemeIBMETR.Dec(dk_id_R, id_R, id_S, ct)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# TVerify #
-	startTime = time()
+	startTime = perf_counter()
 	bRet = schemeIBMETR.TVerify(tk_id_R, ct)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	

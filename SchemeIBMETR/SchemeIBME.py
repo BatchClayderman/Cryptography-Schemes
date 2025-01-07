@@ -1,7 +1,6 @@
 import os
 from sys import argv, exit, getsizeof
-from base64 import b64encode, b64decode
-from time import sleep, time
+from time import perf_counter, sleep
 try:
 	from psutil import Process
 except:
@@ -219,40 +218,40 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords, memoryRecords = [], []
 
 	# Setup #
-	startTime = time()
+	startTime = perf_counter()
 	mpk, msk = schemeIBME.Setup()
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# SKGen #
-	startTime = time()
+	startTime = perf_counter()
 	S = group.random(ZR)
 	ek_S = schemeIBME.SKGen(S)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# RKGen #
-	startTime = time()
+	startTime = perf_counter()
 	R = group.random(ZR)
 	dk_R = schemeIBME.RKGen(R)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
-	startTime = time()
+	startTime = perf_counter()
 	message = int.from_bytes(b"SchemeIBME", byteorder = "big")
 	C = schemeIBME.Enc(ek_S, R, message)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Dec #
-	startTime = time()
+	startTime = perf_counter()
 	M = schemeIBME.Dec(dk_R, S, C)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	

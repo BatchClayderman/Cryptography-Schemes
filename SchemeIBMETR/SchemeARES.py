@@ -1,6 +1,6 @@
 import os
 from sys import argv, exit, getsizeof
-from time import sleep, time
+from time import perf_counter, sleep
 try:
 	from psutil import Process
 except:
@@ -230,46 +230,46 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords, memoryRecords = [], []
 	
 	# Setup #
-	startTime = time()
+	startTime = perf_counter()
 	mpk, msk = schemeARES.Setup()
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Extract #
-	startTime = time()
+	startTime = perf_counter()
 	Id = group.random(ZR)
 	Pvk_Id = schemeARES.Extract(Id)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# TSK #
-	startTime = time()
+	startTime = perf_counter()
 	Pvk_IdTraced = schemeARES.TSK(Id)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Encrypt #
-	startTime = time()
+	startTime = perf_counter()
 	message = group.random(GT)
 	CT = schemeARES.Encrypt(Id, message)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Decrypt #
-	startTime = time()
+	startTime = perf_counter()
 	M = schemeARES.Decrypt(Pvk_Id, CT)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# TVerify #
-	startTime = time()
+	startTime = perf_counter()
 	bRet = schemeARES.TVerify(Pvk_IdTraced, CT)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	

@@ -1,7 +1,7 @@
 import os
 from sys import exit, getsizeof
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
-from time import time
+from time import perf_counter, sleep
 try:
 	from psutil import Process
 except:
@@ -494,58 +494,58 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	timeRecords, memoryRecords = [], []
 	
 	# Setup #
-	startTime = time()
+	startTime = perf_counter()
 	mpk, msk = schemeHIBME.Setup(l)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# EKGen #
-	startTime = time()
+	startTime = perf_counter()
 	ID_Snd = tuple(group.random(ZR) for i in range(n))
 	ek_ID_S = schemeHIBME.EKGen(ID_Snd)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# DerivedEKGen #
-	startTime = time()
+	startTime = perf_counter()
 	ek_ID_SMinus1 = schemeHIBME.EKGen(ID_Snd[:-1]) # remove the last one to generate the ek_ID_SMinus1
 	ek_ID_SDerived = schemeHIBME.DerivedEKGen(ek_ID_SMinus1, ID_Snd)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# DKGen #
-	startTime = time()
+	startTime = perf_counter()
 	ID_Rev = tuple(group.random(ZR) for i in range(m))
 	dk_ID_R = schemeHIBME.DKGen(ID_Rev)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# DerivedDKGen #
-	startTime = time()
+	startTime = perf_counter()
 	dk_ID_RMinus1 = schemeHIBME.DKGen(ID_Rev[:-1]) # remove the last one to generate the dk_ID_RMinus1
 	dk_ID_RDerived = schemeHIBME.DerivedDKGen(dk_ID_RMinus1, ID_Rev)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
-	startTime = time()
+	startTime = perf_counter()
 	message = int.from_bytes(b"SchemeHIBME", byteorder = "big")
 	CT = schemeHIBME.Enc(ek_ID_S, ID_Snd, ID_Rev, message)
 	CTDerived = schemeHIBME.Enc(ek_ID_SDerived, ID_Snd, ID_Rev, message)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
 	# Dec #
-	startTime = time()
+	startTime = perf_counter()
 	M = schemeHIBME.Dec(dk_ID_R, ID_Rev, ID_Snd, CT)
 	MDerived = schemeHIBME.Dec(dk_ID_RDerived, ID_Rev, ID_Snd, CT)
-	endTime = time()
+	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	memoryRecords.append(process.memory_info().rss)
 	
