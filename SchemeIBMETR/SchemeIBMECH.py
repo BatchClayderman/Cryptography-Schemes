@@ -11,7 +11,6 @@ except:
 	exit(-1)
 try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
-	from charm.toolbox.IBEnc import IBEnc
 	from charm.toolbox.matrixops import GaussEliminationinGroups
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
@@ -28,8 +27,8 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeIBMECH(IBEnc):
-	def __init__(self:object, group:None|PairingGroup = None) -> object:
+class SchemeIBMECH:
+	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		super().__init__()
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -189,7 +188,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 				group = PairingGroup(curveType[0])
 		else:
 			group = PairingGroup(curveType)
-	except:
+	except BaseException as e:
 		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 			print("curveType =", curveType[0])
 			if curveType[1] >= 1:
@@ -200,8 +199,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
-			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13																																	\
+			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
+			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 15																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -253,7 +252,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(ek_sigma), getsizeof(dk_rho), getsizeof(ct)]
+	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(ek_sigma), getsizeof(dk_rho), getsizeof(ct)]
 	del schemeIBMECH
 	print("Original:", message)
 	print("Decrypted:", m)
@@ -298,14 +297,14 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBMECH.xlsx"
 	columns = [													\
 		"curveType", "secparam", "roundCount", 						\
 		"isSystemValid", "isSchemeCorrect", 							\
 		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 		\
 		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 		\
-		"ek_sigma (B)", "dk_rho (B)", "CT (B)"						\
+		"mpk (B)", "msk (B)", "ek_sigma (B)", "dk_rho (B)", "CT (B)"		\
 	]
 	
 	# Scheme #
@@ -319,10 +318,10 @@ def main() -> int:
 				for idx in range(3, 5):
 					average[idx] += result[idx]
 				for idx in range(6, length):
-					average[idx] = -1 if -1 == average[idx] or -1 == result[idx] else average[idx] + result[idx]
+					average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 			average[2] = roundCount
 			for idx in range(5, length):
-				average[idx] = -1 if -1 == average[idx] else average[idx] / roundCount
+				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")

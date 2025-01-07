@@ -27,7 +27,7 @@ EOF = (-1)
 
 
 class SchemeAnonymousME:
-	def __init__(self, group:None|PairingGroup = None) -> object:
+	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -234,7 +234,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 					group = PairingGroup(curveType[0])
 			else:
 				group = PairingGroup(curveType)
-		except:
+		except BaseException as e:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				print("curveType =", curveType[0])
 				if curveType[1] >= 1:
@@ -250,13 +250,13 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 			print("Is the system valid? No. {0}. ".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 13																													\
+				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 15																													\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 13																	\
+			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 15																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -311,7 +311,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
+	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del schemeAnonymousME
 	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
@@ -362,7 +362,7 @@ def main() -> int:
 		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 				\
 		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 		\
 		"Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", 		\
-		"SK (B)", "SK' (B)", "CT (B)"									\
+		"mpk (B)", "msk (B)", "SK (B)", "SK' (B)", "CT (B)"					\
 	]
 	
 	# Scheme #
@@ -378,10 +378,10 @@ def main() -> int:
 						for idx in range(5, 8):
 							average[idx] += result[idx]
 						for idx in range(8, length):
-							average[idx] = -1 if -1 == average[idx] or -1 == result[idx] else average[idx] + result[idx]
+							average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 					average[4] = roundCount
 					for idx in range(8, length):
-						average[idx] = -1 if -1 == average[idx] else average[idx] / roundCount
+						average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 					results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")

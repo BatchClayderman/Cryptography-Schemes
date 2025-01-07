@@ -28,8 +28,13 @@ EOF = (-1)
 
 
 class SchemeIBMETR:
-	def __init__(self:object, group:None|PairingGroup = None) -> object:
+	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
+		try:
+			pair(self.__group.random(G1), self.__group.random(G1))
+		except:
+			self.__group = PairingGroup("SS512", secparam = self.__group.secparam)
+			print("Init: This scheme is only applicable to symmetric groups of prime orders. The curve type has been defaulted to \"SS512\". ")
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
@@ -271,7 +276,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 				group = PairingGroup(curveType[0])
 		else:
 			group = PairingGroup(curveType)
-	except:
+		pair(group.random(G1), group.random(G1))
+	except BaseException as e:
 		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 			print("curveType =", curveType[0])
 			if curveType[1] >= 1:
@@ -282,8 +288,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 			print("round =", round)
 		print("Is the system valid? No. {0}. ".format(e))
 		return (																																														\
-			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 18																																	\
+			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
+			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 20																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -349,7 +355,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(ek_id_S), getsizeof(dk_id_R), getsizeof(tk_id_R), getsizeof(ct)]
+	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(ek_id_S), getsizeof(dk_id_R), getsizeof(tk_id_R), getsizeof(ct)]
 	del schemeIBMETR
 	print("Original:", message)
 	print("Decrypted:", m)
@@ -401,7 +407,7 @@ def main() -> int:
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", "isTracingVerified", 	\
 		"Setup (s)", "EKGen (s)", "DKGen (s)", "TKGen (s)", "Enc (s)", "Dec (s)", "TVerify (s)", 				\
 		"Setup (B)", "EKGen (B)", "DKGen (B)", "TKGen (B)", "Enc (B)", "Dec (B)", "TVerify (B)", 			\
-		"EK (B)", "DK (B)", "TK' (B)", "CT (B)"													\
+		"mpk (B)", "msk (B)", "EK (B)", "DK (B)", "TK' (B)", "CT (B)"									\
 	]
 	
 	# Scheme #
@@ -415,10 +421,10 @@ def main() -> int:
 				for idx in range(3, 6):
 					average[idx] += result[idx]
 				for idx in range(6, length):
-					average[idx] = -1 if -1 == average[idx] or -1 == result[idx] else average[idx] + result[idx]
+					average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 			average[2] = roundCount
 			for idx in range(6, length):
-				average[idx] = -1 if -1 == average[idx] else average[idx] / roundCount
+				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")

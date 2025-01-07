@@ -40,13 +40,13 @@ generate $r \in \mathbb{Z}_p^*$ randomly
 $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 
 $\textit{sk}_{\textit{ID}_k} \gets (
-g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r,
-g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r,
-g^r,
-h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},
-h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},
-h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}},
-h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}},
+g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r, 
+g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r, 
+g^r, 
+h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
+h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
+h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
+h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}}, 
 \textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
 )$
 
@@ -57,13 +57,13 @@ $\textbf{return }\textit{sk}_{\textit{ID}_k}$
 generate $t \in \mathbb{Z}_p^*$ randomly
 
 $\textit{sk}_{\textit{ID}_k} \gets (
-a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t,
-a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t,
-b \cdot g^t,
-c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t,
-c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t,
-d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l},
-d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l},
+a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t, 
+a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t, 
+b \cdot g^t, 
+c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t, 
+c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t, 
+d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l}, 
+d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l}, 
 f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 )$
 
@@ -74,9 +74,9 @@ $\textbf{return }\textit{sk}_{\textit{ID}_k}$
 generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
 
 $\textit{CT} \gets (
-e(g_1, g_2)^{s_1 + s_2} \cdot M,
-\bar{g}^{s_1},
-\tilde{g}^{s_2},
+e(g_1, g_2)^{s_1 + s_2} \cdot M, 
+\bar{g}^{s_1}, 
+\tilde{g}^{s_2}, 
 (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
 )$
 

@@ -7,6 +7,8 @@
 
 \section{SchemeHIBME}
 
+This scheme is applicable to symmetric and asymmetric groups of prime orders. 
+
 \subsection{$\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$}
 
 generate $g \in \mathbb{G}_1$ randomly
@@ -86,11 +88,11 @@ $a_1 \gets g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \til
 $A_k \gets \prod\limits_{j = 1}^k a_j$
 
 $\textit{dk}_1 \gets (
-a_0, a_1, g^r,\allowbreak
-h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},\allowbreak
-h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_2}}, \cdots, h_l^{\frac{r}{b_2}},\allowbreak
-h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}},\allowbreak
-h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}},\allowbreak
+a_0, a_1, g^r,\allowbreak 
+h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}},\allowbreak 
+h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_2}}, \cdots, h_l^{\frac{r}{b_2}},\allowbreak 
+h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}},\allowbreak 
+h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_2^{b_1^{-1}},\allowbreak 
 \textit{HI}^{\frac{1}{b_1}}, \textit{HI}^{\frac{1}{b_2}}
 )$
 
@@ -113,11 +115,11 @@ $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{
 $a'_1 \gets a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
 
 $\textit{dk}'_1 \gets (
-a'_0, a'_1, b \cdot g^t,
-c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t,
-c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t,
-d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l},
-d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l},
+a'_0, a'_1, b \cdot g^t, 
+c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t, 
+c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t, 
+d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l}, 
+d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l}, 
 f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 )$
 
@@ -188,7 +190,7 @@ $T' = \cfrac{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}{e(\textit{dk}
 If $m = n$:
 
 $K' \gets
-\prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
+\prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i}) 
 \cdot e(C_5, \prod\limits_{i = 1}^n H_2(I'_i))
 $
 

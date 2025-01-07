@@ -28,7 +28,7 @@ EOF = (-1)
 
 
 class SchemeHIBME:
-	def __init__(self:object, group:None|PairingGroup = None) -> object:
+	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -454,7 +454,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 					group = PairingGroup(curveType[0])
 			else:
 				group = PairingGroup(curveType)
-		except:
+		except BaseException as e:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				print("curveType =", curveType[0])
 				if curveType[1] >= 1:
@@ -470,14 +470,14 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 				print("round =", round)
 			print("Is the system valid? No. {0}. ".format(e))
 			return (																																														\
-				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, m, n, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																												\
+				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
+				+ [l, m, n, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 21																												\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$, $m$, and $n$ should be three positive integers satisfying $2 \\leqslant m < l \\land 2 \\leqslant n < l$. ")
 		return (																																														\
-			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, m if isinstance(m, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19											\
+			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
+			+ [l if isinstance(l, int) else None, m if isinstance(m, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 21											\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -550,7 +550,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(ek_ID_S), getsizeof(ek_ID_SDerived), getsizeof(dk_ID_R), getsizeof(dk_ID_RDerived), getsizeof(CT)]
+	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(ek_ID_S), getsizeof(ek_ID_SDerived), getsizeof(dk_ID_R), getsizeof(dk_ID_RDerived), getsizeof(CT)]
 	del schemeHIBME
 	print("Original:", message)
 	print("Derived:", MDerived)
@@ -603,7 +603,7 @@ def main() -> int:
 		"curveType", "secparam", "l", "m", "n", "roundCount", "isSystemValid", "isDeriverPassed", "isSchemeCorrect", 	\
 		"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 		\
 		"Setup (B)", "EKGen (B)", "DerivedEKGen (B)", "DKGen (B)", "DerivedDKGen (B)", "Enc (B)", "Dec (B)", 	\
-		"EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"													\
+		"mpk (B)", "msk (B)", "EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"								\
 	]
 	
 	# Scheme #
@@ -620,10 +620,10 @@ def main() -> int:
 							for idx in range(6, 9):
 								average[idx] += result[idx]
 							for idx in range(9, length):
-								average[idx] = -1 if -1 == average[idx] or -1 == result[idx] else average[idx] + result[idx]
+								average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 						average[5] = roundCount
 						for idx in range(9, length):
-							average[idx] = -1 if -1 == average[idx] else average[idx] / roundCount
+							average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 						results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")

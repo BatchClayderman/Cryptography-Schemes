@@ -79,7 +79,10 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 					pass
 				return False
 		elif isinstance(className, str) and className.isalnum() and functionName is None:
-			if "Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. " == s:
+			if s in (																										\
+				"Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ", 						\
+				"Init: This scheme is only applicable to symmetric groups of prime orders. The curve type has been defaulted to \\\"SS512\\\". "	\
+			):
 				return True
 			else:
 				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
@@ -159,35 +162,41 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 					startTime = time()
 					with open(os.path.join(folderPath, fileName), "w", encoding = "utf-8") as f:
 						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\\usepackage{bm}\n\n\\begin{document}\n\n")
-						className, functionName, schemeFlag, doubleSeparatorFlag, printFlag, bucketCount, buffer, warningCount = None, None, False, True, 0, 0, "", 0
+						className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True
+						printFlag, bucketCount, buffer, warningCount = 0, 0, "", 0
 						for idx, line in enumerate(content.splitlines()):
-							if line.startswith("class Scheme"):
+							if line.startswith("class Scheme"): # class SchemeXXX
 								className = findall("^[0-9A-Za-z]+", line[6:])
 								if className:
 									className = className[0]
 									if len(className) >= 7:
 										f.write("\\section{{{0}}}\n\n".format(className))
+										functionName, schemeFlag, doubleSeparatorFlag = None, False, True
 									else:
-										className = None
+										className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True
 								else:
-									className = None
-							elif className is not None and line.startswith("\tdef ") and "(self:object" in line and ") -> " in line and ": # " in line:
-								f.write("\\subsection{" + line[line.index(": # ") + 4:].strip() + "}\n\n")
-								functionName = line[5:line.index("(self:object")]
-							elif className is not None and functionName is not None and "\t\t# Scheme #" == line:
-								schemeFlag = True
-							elif className is not None and functionName is not None and schemeFlag and line.count("#") == 1 and "#" in line:
-								prompt = line[line.index("#") + 1:].strip()
-								if "$" == prompt:
+									className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True
+							elif className is not None and line.startswith("\tdef ") and "(self:object" in line and ") -> " in line and ": # " in line: # def XXX
+								functionName, schemeFlag, doubleSeparatorFlag = line[5:line.index("(self:object")].strip(), False, True
+								if "__init__" == functionName:
+									f.write(line[line.index(": # ") + 4:] + "\n\n")
+									functionName = None
+								else:
+									f.write("\\subsection{" + line[line.index(": # ") + 4:].strip() + "}\n\n")
+							elif className is not None and functionName is not None and "\t\t# Scheme #" == line: # XXX # Scheme # XXX
+								schemeFlag, doubleSeparatorFlag = True, True
+							elif className is not None and functionName is not None and schemeFlag and " # " in line:
+								prompt = line[line.index(" # ") + 3:]
+								if "$" == prompt.strip():
 									doubleSeparatorFlag = not doubleSeparatorFlag # invert the double separator switch
-								elif prompt.startswith("$") and not prompt.endswith("$"):
+								elif prompt.lstrip().startswith("$") and not prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = False # disable the double separator switch
-								elif not prompt.startswith("$") and prompt.endswith("$"):
+								elif not prompt.lstrip().startswith("$") and prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = True # enable the double separator switch
 								f.write(prompt + ("\n\n" if doubleSeparatorFlag else "\n"))
 								if line.startswith("\t\treturn "):
-									functionName, schemeFlag = None, False
-							elif line.strip() and not line.startswith("\t") and not line.lstrip().startswith("#"):
+									functionName, schemeFlag, doubleSeparatorFlag = None, False, True
+							elif not line.startswith("\t") and line.strip() and not line.lstrip().startswith("#"): # Reset
 								className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True # reset
 							
 							# Official Check #

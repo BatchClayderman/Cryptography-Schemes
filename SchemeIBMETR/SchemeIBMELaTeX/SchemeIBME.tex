@@ -7,6 +7,8 @@
 
 \section{SchemeIBME}
 
+This scheme is only applicable to symmetric groups of prime orders. 
+
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
 generate $r, s \in \mathbb{Z}_p^*$ randomly
@@ -63,7 +65,7 @@ $V \gets M \oplus k_R \oplus k_S$
 
 $C \gets (T, U, V)$
 
-$\textbf{return }C$
+$\textbf{return }C$	
 
 \subsection{$\textbf{Dec}(\textit{dk}_R, S, C) \rightarrow M$}
 
