@@ -13,7 +13,7 @@ Vectors, arrays, or lists in theory are stored as Python ``tuple`` objects in pr
 - avoid modifying variables inside a class from outside the class as much as possible; 
 - make the memory computation of an object of a series datum type as exact as possible; 
 - reduce the time consumption since the index lookup is faster compared with the key-value pair one (especially in large dictionaries); and 
-- perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix accelebration computation. 
+- perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix acceleration computation. 
 
 When there are hash functions, the following rules will be applied. 
 
@@ -51,6 +51,46 @@ For developers, this script will check the style of the Python scripts.
 - [PBC-0.5.14](https://crypto.stanford.edu/pbc/download.html)
 - OpenSSL library 3.0.13 (``sudo apt-get install libssl-dev``)
 - [Python charm library](https://github.com/EliusSolis/charm)
+
+#### Git issues
+
+If you wish to clone the project, try to use the following command lines. 
+
+```
+cd ~
+git clone https://github.com/BatchClayderman/Cryptography-Schemes.git
+```
+
+If you wish to synchronize this project to the local machine after cloning, try to use the following command lines. 
+
+```
+cd ~/Cryptography-Schemes
+git pull
+```
+
+If you wish to contribute to this project, try to use the following command lines after forking this project to your own GitHub account, where the ``XXX`` stands for your account. 
+
+- **Clone**: 
+```
+cd ~
+git clone https://github.com/XXX/Cryptography-Schemes.git
+```
+
+- **Pull**: 
+```
+cd ~/Cryptography-Schemes
+git pull
+```
+
+- **Push**
+```
+cd ~/Cryptography-Schemes
+git add .
+git commit -m Update
+git push
+```
+
+Eventually, submit a Pull Request (PR) after pushing. If you are required to login during pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
 
 ## SchemeHIBME
 
