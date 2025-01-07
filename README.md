@@ -28,8 +28,8 @@ Otherwise, all the objects during the algebraic operations should belong to the 
 
 The following command lines can be useful for executing one-stop testing. 
 
-- Execute ``find . -maxdepth 1 -type f -name "*.py" -exec python {} Y 0 \;`` in a Linux terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts. 
-- Execute ``find . -maxdepth 2 -type f -name "*.py" -exec python {} Y 0 \;`` in a Linux terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
+- Execute ``find . -maxdepth 1 -type f -name "*.py" -exec python {} Y 0 \;`` in a non-Windows terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts. 
+- Execute ``find . -maxdepth 2 -type f -name "*.py" -exec python {} Y 0 \;`` in a non-Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
 - Execute ``for %f in (*.py) do python "%f"`` in a Windows terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts.
 - Execute ``for /r %f in (*.py) do python "%f"`` in a Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
 
