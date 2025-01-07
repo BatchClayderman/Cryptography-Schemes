@@ -313,6 +313,9 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	# End #
 	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del schemeAnonymousME
+	print("Original:", message)
+	print("Derived:", MDerived)
+	print("Decrypted:", M)
 	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)

@@ -276,6 +276,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	# End #
 	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(Pvk_Id), getsizeof(Pvk_IdTraced), getsizeof(CT)]
 	del schemeARES
+	print("Original:", message)
+	print("Decrypted:", M)
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Is the tracing verified? {0}. ".format("Yes" if bRet else "No"))
 	print("Time:", timeRecords)
