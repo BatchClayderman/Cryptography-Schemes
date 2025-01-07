@@ -26,10 +26,12 @@ When there are hash functions, the following rules will be applied.
 
 Otherwise, all the objects during the algebraic operations should belong to the ``Element`` type. 
 
-For Linux developers and testers, the following command lines can be useful. 
+The following command lines can be useful for executing one-stop testing. 
 
 - Execute ``find . -maxdepth 1 -type f -name "*.py" -exec python {} Y 0 \;`` in a Linux terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts. 
-- Execute ``find . -maxdepth 2 -type f -name "*.py" -exec python {} Y 0 \;`` in a Linux terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all the Python scripts. 
+- Execute ``find . -maxdepth 2 -type f -name "*.py" -exec python {} Y 0 \;`` in a Linux terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
+- Execute ``for %f in (*.py) do python "%f"`` in a Windows terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts.
+- Execute ``for /r %f in (*.py) do python "%f"`` in a Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
 
 Additionally, a Python script for generating LaTeX files of schemes from Python scripts is provided here. A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. If you are a Chinese beginner, [https://blog.csdn.net/weixin_45726033/article/details/144822018](https://blog.csdn.net/weixin_45726033/article/details/144822018) may be helpful. 
 
