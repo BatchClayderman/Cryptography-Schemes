@@ -1,7 +1,7 @@
 import os
-from sys import exit, getsizeof
+from sys import argv, exit, getsizeof
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
-from time import time
+from time import sleep, time
 try:
 	from psutil import Process
 except:
@@ -361,6 +361,25 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print()
 	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == m, bRet] + timeRecords + memoryRecords + sizeRecords
 
+def parseCL(vec:list) -> tuple:
+	owOption, sleepingTime = 0, None
+	for arg in vec:
+		if isinstance(arg, str):
+			if arg.upper() in ("Y", "YES", "TRUE"):
+				owOption = 2
+			elif arg.upper() in ("N", "NO", "FALSE"):
+				owOption = 1
+			elif arg.upper() in ("C", "CANCEL"):
+				owOption = -1
+			elif arg.upper() in ("Q", "QUESTION", "A", "ASK", "NONE"):
+				owOption = 0
+			else:
+				try:
+					sleepingTime = float(arg)
+				except:
+					pass
+	return (owOption, sleepingTime)
+
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
 	if not folder:
@@ -407,17 +426,28 @@ def main() -> int:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
+	owOption, sleepingTime = parseCL(argv[1:])
 	print()
 	if results:
-		if handleFolder(os.path.split(filePath)[0]):
-			flag = False # write to the file or not
+		if -1 == owOption:
+			print("Results: \n{0}\n".format(results))
+		elif handleFolder(os.path.split(filePath)[0]):
+			# Writing Preparation #
 			if os.path.isfile(filePath):
-				try:
-					flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(filePath)).upper() in ("Y", "YES", "TRUE", "1")
-				except:
-					print()
+				if 1 == owOption:
+					flag = False # write to the file or not
+				elif 2 == owOption:
+					flag = True
+				else:
+					try:
+						flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(filePath)).upper() in ("Y", "YES", "TRUE", "1")
+					except:
+						flag = False
+						print()
 			else:
 				flag = True
+			
+			# Writing Handling #
 			if flag:
 				try:
 					df = __import__("pandas").DataFrame(results, columns = columns)
@@ -442,9 +472,13 @@ def main() -> int:
 	
 	# End #
 	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:6]] + [r > 0 for r in result[6:length]]) for result in results]) else EXIT_FAILURE
-	print("Please press the enter key to exit ({0}). ".format(iRet))
 	try:
-		input()
+		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
+			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))
+			sleep(sleepingTime)
+		else:
+			print("Please press the enter key to exit ({0}). ".format(iRet))
+			input()
 	except:
 		print()
 	return iRet

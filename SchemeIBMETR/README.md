@@ -1,6 +1,6 @@
 ## SchemeIBMETR
 
-This is the implementation of the IBMETR scheme, with AIBE, ARES, IBMECH, etc. as the baselines. 
+This is the implementation of the IBMETR scheme, with AIBE, ARES, IBME, IBMECH, etc. as the baselines. 
 
 #### SchemeIBMETR.py
 
@@ -35,21 +35,6 @@ This is the implementation of the ARES scheme (``Anonymous identity based encryp
 }
 ```
 
-##### SchemeIBMECH.py
-
-This is the implementation of the IBMECH scheme (``Identity-Based Matchmaking Encryption from Standard Assumptions``) based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py](https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py). 
-
-```
-@inproceedings{chen2022identity,
-  title={Identity-based matchmaking encryption from standard assumptions},
-  author={Chen, Jie and Li, Yu and Wen, Jinming and Weng, Jian},
-  booktitle={International Conference on the Theory and Application of Cryptology and Information Security},
-  pages={394--422},
-  year={2022},
-  organization={Springer}
-}
-```
-
 ##### SchemeIBME.py
 
 This is the implementation of the IBME scheme (``Match me if you can: Matchmaking encryption and its applications``) based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
@@ -61,6 +46,21 @@ This is the implementation of the IBME scheme (``Match me if you can: Matchmakin
   booktitle={Advances in Cryptology--CRYPTO 2019: 39th Annual International Cryptology Conference, Santa Barbara, CA, USA, August 18--22, 2019, Proceedings, Part II 39},
   pages={701--731},
   year={2019},
+  organization={Springer}
+}
+```
+
+##### SchemeIBMECH.py
+
+This is the implementation of the IBMECH scheme (``Identity-Based Matchmaking Encryption from Standard Assumptions``) based on the Python programming language, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py](https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py). 
+
+```
+@inproceedings{chen2022identity,
+  title={Identity-based matchmaking encryption from standard assumptions},
+  author={Chen, Jie and Li, Yu and Wen, Jinming and Weng, Jian},
+  booktitle={International Conference on the Theory and Application of Cryptology and Information Security},
+  pages={394--422},
+  year={2022},
   organization={Springer}
 }
 ```
