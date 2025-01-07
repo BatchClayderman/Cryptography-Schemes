@@ -377,7 +377,9 @@ def main() -> int:
 						result = Scheme(curveType, l, k, round)
 						for idx in range(5, 8):
 							average[idx] += result[idx]
-						for idx in range(8, length):
+						for idx in range(8, 13):
+							average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
+						for idx in range(13, length):
 							average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 					average[4] = roundCount
 					for idx in range(8, length):
