@@ -26,6 +26,12 @@ When there are hash functions, the following rules will be applied.
 
 Otherwise, all the objects during the algebraic operations should belong to the ``Element`` type. 
 
+Here are the statements related to inputs and outputs, where the default round count is ``20`` and the default output file path corresponds to the Python file path. 
+
+- If a scheme is applicable to symmetric and asymmetric groups of prime orders, curve types and security parameters in tuple ``("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 512))`` will be tested. 
+- If a scheme is only applicable to symmetric groups of prime orders, curve types and security parameters in tuple ``(("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))`` will be tested. 
+- The output files in the three-line table or plain text form should contain the input parameters, correctness-related counts, procedure time consumption, program memory consumption, storing sizes of elements from different fields, and storing sizes of important variables. 
+
 The following command lines can be useful for executing one-stop testing. 
 
 - Execute ``find . -maxdepth 1 -type f -name "*.py" -exec python {} Y 0 \;`` in a non-Windows terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts. 

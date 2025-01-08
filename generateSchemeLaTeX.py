@@ -99,7 +99,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"", "Cannot compute the memory via ``psutil.Process``. ", "Decrypted:", "Derived:", 										\
 				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 					\
 				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 					\
-				"Is the system valid? No. {0}. ", "Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", 							\
+				"Is the system valid? No. \\n\\t{0}", "Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", 						\
 				"Memory:", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 						\
 				"Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ", 				\
 				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 	\

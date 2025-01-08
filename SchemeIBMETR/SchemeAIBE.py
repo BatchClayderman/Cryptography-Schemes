@@ -162,10 +162,10 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
 			print("round =", round)
-		print("Is the system valid? No. {0}. ".format(e))
+		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 12																														\
+			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 16																														\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -209,7 +209,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(Pvk_Id), getsizeof(CT)]
+	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(Pvk_Id), getsizeof(CT)]
 	del schemeAIBE
 	print("Original:", message)
 	print("Decrypted:", M)
@@ -260,6 +260,7 @@ def main() -> int:
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
 		"Setup (s)", "Extract (s)", "Encrypt (s)", "Decrypt (s)", 						\
 		"Setup (B)", "Extract (B)", "Encrypt (B)", "Decrypt (B)", 						\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
 		"mpk (B)", "msk (B)", "Pvk_Id (B)", "CT (B)"								\
 	]
 	

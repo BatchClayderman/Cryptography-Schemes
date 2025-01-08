@@ -201,10 +201,10 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
 			print("round =", round)
-		print("Is the system valid? No. {0}. ".format(e))
+		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 15																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 19																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -256,7 +256,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(ek_S), getsizeof(dk_R), getsizeof(C)]
+	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(ek_S), getsizeof(dk_R), getsizeof(C)]
 	del schemeIBME
 	print("Original:", message)
 	print("Decrypted:", M)
@@ -303,12 +303,12 @@ def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBME.xlsx"
-	columns = [															\
-		"curveType", "secparam", "roundCount", 								\
-		"isSystemValid", "isSchemeCorrect", 									\
-		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 				\
-		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 				\
-		"mpk (B)", "msk (B)", "ek_S (B)", "dk_R (B)", "C (B)"					\
+	columns = [																\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
+		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 					\
+		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 					\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
+		"mpk (B)", "msk (B)", "ek_S (B)", "dk_R (B)", "C (B)"						\
 	]
 	
 	# Scheme #

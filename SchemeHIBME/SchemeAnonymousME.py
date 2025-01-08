@@ -247,16 +247,16 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 			print("k =", k)
 			if isinstance(round, int) and round >= 0:
 				print("round =", round)
-			print("Is the system valid? No. {0}. ".format(e))
+			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 15																													\
+				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 15																	\
+			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -311,7 +311,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
+	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
 	del schemeAnonymousME
 	print("Original:", message)
 	print("Derived:", MDerived)
@@ -360,12 +360,13 @@ def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
 	roundCount, filePath = 20, "SchemeAnonymousME.xlsx"
-	columns = [														\
-		"curveType", "secparam", "l", "k", "roundCount", 					\
-		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 				\
-		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 		\
-		"Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", 		\
-		"mpk (B)", "msk (B)", "SK (B)", "SK' (B)", "CT (B)"					\
+	columns = [																	\
+		"curveType", "secparam", "l", "k", "roundCount", 								\
+		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 							\
+		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 					\
+		"Setup (B)", "KGen (B)", "DerivedKGen (B)", "Enc (B)", "Dec (B)", 					\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 		\
+		"mpk (B)", "msk (B)", "SK (B)", "SK' (B)", "CT (B)"								\
 	]
 	
 	# Scheme #

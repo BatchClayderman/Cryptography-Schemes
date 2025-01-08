@@ -197,10 +197,10 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 			print("curveType =", curveType)
 		if isinstance(round, int) and round >= 0:
 			print("round =", round)
-		print("Is the system valid? No. {0}. ".format(e))
+		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 15																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 19																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -252,7 +252,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(mpk), getsizeof(msk), getsizeof(ek_sigma), getsizeof(dk_rho), getsizeof(ct)]
+	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(ek_sigma), getsizeof(dk_rho), getsizeof(ct)]
 	del schemeIBMECH
 	print("Original:", message)
 	print("Decrypted:", m)
@@ -297,14 +297,14 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBMECH.xlsx"
-	columns = [													\
-		"curveType", "secparam", "roundCount", 						\
-		"isSystemValid", "isSchemeCorrect", 							\
-		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 		\
-		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 		\
-		"mpk (B)", "msk (B)", "ek_sigma (B)", "dk_rho (B)", "CT (B)"		\
+	columns = [																\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
+		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 					\
+		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 					\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
+		"mpk (B)", "msk (B)", "ek_sigma (B)", "dk_rho (B)", "CT (B)"					\
 	]
 	
 	# Scheme #
