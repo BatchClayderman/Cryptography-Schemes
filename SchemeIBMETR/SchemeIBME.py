@@ -1,5 +1,5 @@
 import os
-from sys import argv, exit, getsizeof
+from sys import argv, exit
 from time import perf_counter, sleep
 try:
 	from psutil import Process
@@ -179,6 +179,18 @@ class SchemeIBME:
 		
 		# Return #
 		return M # $\textbf{return }M$
+	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
+		if isinstance(obj, Element):
+			return len(self.__group.serialize(obj))
+		elif isinstance(obj, (tuple, list, set)):
+			sizes = tuple(self.getLengthOf(o) for o in obj)
+			return -1 if -1 in sizes else sum(sizes)
+		elif isinstance(obj, bytes):
+			return len(obj)
+		elif isinstance(obj, int) or callable(obj):
+			return self.__group.secparam >> 3
+		else:
+			return -1
 
 
 def Scheme(curveType:tuple|list|str, round:int = None) -> list:
@@ -256,7 +268,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(ek_S), getsizeof(dk_R), getsizeof(C)]
+	sizeRecords = [schemeIBME.getLengthOf(group.random(ZR)), schemeIBME.getLengthOf(group.random(G1)), schemeIBME.getLengthOf(group.random(G2)), schemeIBME.getLengthOf(group.random(GT)), schemeIBME.getLengthOf(mpk), schemeIBME.getLengthOf(msk), schemeIBME.getLengthOf(ek_S), schemeIBME.getLengthOf(dk_R), schemeIBME.getLengthOf(C)]
 	del schemeIBME
 	print("Original:", message)
 	print("Decrypted:", M)

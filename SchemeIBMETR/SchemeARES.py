@@ -1,5 +1,5 @@
 import os
-from sys import argv, exit, getsizeof
+from sys import argv, exit
 from time import perf_counter, sleep
 try:
 	from psutil import Process
@@ -191,6 +191,18 @@ class SchemeARES:
 		
 		# Return #
 		return pair(C0, d0) * pair(C1, d1) * pair(C2, d2) * pair(C3, d3) * pair(C4, d4) == self.__group.init(GT) # $\textbf{return }e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4) = 1 (\mathbb{G}_T)$
+	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
+		if isinstance(obj, Element):
+			return len(self.__group.serialize(obj))
+		elif isinstance(obj, (tuple, list, set)):
+			sizes = tuple(self.getLengthOf(o) for o in obj)
+			return -1 if -1 in sizes else sum(sizes)
+		elif isinstance(obj, bytes):
+			return len(obj)
+		elif isinstance(obj, int) or callable(obj):
+			return self.__group.secparam >> 3
+		else:
+			return -1
 
 
 def Scheme(curveType:tuple|list|str, round:int = None) -> list:
@@ -274,7 +286,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(Pvk_Id), getsizeof(Pvk_IdTraced), getsizeof(CT)]
+	sizeRecords = [schemeARES.getLengthOf(group.random(ZR)), schemeARES.getLengthOf(group.random(G1)), schemeARES.getLengthOf(group.random(G2)), schemeARES.getLengthOf(group.random(GT)), schemeARES.getLengthOf(mpk), schemeARES.getLengthOf(msk), schemeARES.getLengthOf(Pvk_Id), schemeARES.getLengthOf(Pvk_IdTraced), schemeARES.getLengthOf(CT)]
 	del schemeARES
 	print("Original:", message)
 	print("Decrypted:", M)

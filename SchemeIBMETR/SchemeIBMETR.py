@@ -1,5 +1,5 @@
 import os
-from sys import argv, exit, getsizeof
+from sys import argv, exit
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 from time import perf_counter, sleep
 try:
@@ -264,6 +264,18 @@ class SchemeIBMETR:
 		
 		# Return #
 		return V == pair(tk1, ct1) * pair(tk2, ct2) * pair(tk3, ct3) # $\textbf{return }V = e(\textit{tk}_1, \textit{ct}_1) \cdot e(\textit{tk}_2, \textit{ct}_2) \cdot e(\textit{tk}_3, \textit{ct}_3)$
+	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
+		if isinstance(obj, Element):
+			return len(self.__group.serialize(obj))
+		elif isinstance(obj, (tuple, list, set)):
+			sizes = tuple(self.getLengthOf(o) for o in obj)
+			return -1 if -1 in sizes else sum(sizes)
+		elif isinstance(obj, bytes):
+			return len(obj)
+		elif isinstance(obj, int) or callable(obj):
+			return self.__group.secparam >> 3
+		else:
+			return -1
 
 
 def Scheme(curveType:tuple|list|str, round:int = None) -> list:
@@ -355,7 +367,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(ek_id_S), getsizeof(dk_id_R), getsizeof(tk_id_R), getsizeof(ct)]
+	sizeRecords = [schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(G2)), schemeIBMETR.getLengthOf(group.random(GT)), schemeIBMETR.getLengthOf(mpk), schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)]
 	del schemeIBMETR
 	print("Original:", message)
 	print("Decrypted:", m)
