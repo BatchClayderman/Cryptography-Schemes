@@ -1,5 +1,5 @@
 import os
-from sys import argv, exit, getsizeof
+from sys import argv, exit
 from time import perf_counter, sleep
 try:
 	from psutil import Process
@@ -221,6 +221,18 @@ class SchemeAnonymousME:
 		
 		# Return #
 		return M # $\textbf{return }M$
+	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
+		if isinstance(obj, Element):
+			return len(self.__group.serialize(obj))
+		elif isinstance(obj, (tuple, list, set)):
+			sizes = tuple(self.getLengthOf(o) for o in obj)
+			return -1 if -1 in sizes else sum(sizes)
+		elif isinstance(obj, bytes):
+			return len(obj)
+		elif isinstance(obj, int) or callable(obj):
+			return self.__group.secparam >> 3
+		else:
+			return -1
 
 
 def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
@@ -311,7 +323,10 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [getsizeof(group.random(ZR)), getsizeof(group.random(G1)), getsizeof(group.random(G2)), getsizeof(group.random(GT)), getsizeof(mpk), getsizeof(msk), getsizeof(sk_ID_k), getsizeof(sk_ID_kDerived), getsizeof(CT)]
+	sizeRecords = [																																													\
+		schemeAnonymousME.getLengthOf(group.random(ZR)), schemeAnonymousME.getLengthOf(group.random(G1)), schemeAnonymousME.getLengthOf(group.random(G2)), schemeAnonymousME.getLengthOf(group.random(GT)), 	\
+		schemeAnonymousME.getLengthOf(mpk), schemeAnonymousME.getLengthOf(msk), schemeAnonymousME.getLengthOf(sk_ID_k), schemeAnonymousME.getLengthOf(sk_ID_kDerived), schemeAnonymousME.getLengthOf(CT)	\
+	]
 	del schemeAnonymousME
 	print("Original:", message)
 	print("Derived:", MDerived)

@@ -367,7 +367,10 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(G2)), schemeIBMETR.getLengthOf(group.random(GT)), schemeIBMETR.getLengthOf(mpk), schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)]
+	sizeRecords = [																																													\
+		schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(G2)), schemeIBMETR.getLengthOf(group.random(GT)), 						\
+		schemeIBMETR.getLengthOf(mpk), schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)	\
+	]
 	del schemeIBMETR
 	print("Original:", message)
 	print("Decrypted:", m)
