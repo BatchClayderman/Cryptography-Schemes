@@ -65,13 +65,13 @@ from time import perf_counter
 startTime = perf_counter()
 # Your codes
 endTime = perf_counter()
-timeDelta = endTime - startTime
+timeDelta = endTime - startTime # second(s)
 ```
 
 To test the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. 
 
 ```
-def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int:
+def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)
 	if isinstance(obj, Element):
 		return len(group.serialize(obj))
 	elif isinstance(obj, (tuple, list, set)):
@@ -90,7 +90,7 @@ To test the memory consumption (space complexity) of a variable for engineering 
 ```
 from sys import getsizeof
 
-s = getsizeof(group.random(ZR))
+s = getsizeof(group.random(ZR)) # Byte(s)
 ```
 
 To test the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. 
@@ -107,7 +107,7 @@ except:
 	exit(-1)
 
 process = Process(os.getpid())
-memory = process.memory_info().rss
+memory = process.memory_info().rss # Byte(s)
 ```
 
 ### 1.3 Git issues
