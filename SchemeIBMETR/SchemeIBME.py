@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from secrets import randbelow
 from time import perf_counter, sleep
 try:
 	from psutil import Process
@@ -49,9 +50,9 @@ class SchemeIBME:
 		r, s = self.__group.random(ZR), self.__group.random(ZR) # generate $r, s \in \mathbb{Z}_p^*$ randomly
 		P = self.__group.random(G1) # generate $P \in \mathbb{G}_1$ randomly
 		P0 = r * P # $P_0 \gets r \cdot P$
-		H = lambda x:self.__group.hash(x, G1) # $H_1:\mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
-		mask = bytes.fromhex("ed27dbfb02752e0e16bc4502d6c732bc5f1cc92ba19b2d93a4e95c597ca42753e93550b52f82b6c13fb8cc0c2fc64487")
-		HPrime = lambda x:self.__group.hash(bytes([ a ^ b for (a, b) in zip(self.__group.serialize(x), mask)]), G1) # $H':\mathbb{Z}_p^* \oplus \textit{mask} \rightarrow \mathbb{G}_1$
+		H = lambda x:self.__group.hash(x, G1) # $H_1: \mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
+		mask = bytes([randbelow(256) for _ in range(len(self.__group.serialize(self.__group.random(ZR))))]) # generate $\textit{mask}, \|\textit{mask}\| \gets \|e\|, e \in \mathbb{Z}_p^*$ randomly
+		HPrime = lambda x:self.__group.hash(bytes([a ^ b for a, b in zip(self.__group.serialize(x), mask)]), G1) # $H': \mathbb{Z}_p^* \oplus \textit{mask} \rightarrow \mathbb{G}_1$
 		self.__mpk = (P, P0, H, HPrime) # $\textit{mpk} \gets (P, P_0, H, H')$
 		self.__msk = (r, s) # $\textit{msk} \gets (r, s)$
 		
