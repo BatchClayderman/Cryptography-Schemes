@@ -2,6 +2,8 @@
 
 Two proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
 
+## 1. Introduction
+
 To test the Python charm environment initially, try to execute ``from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element`` in Python, which is also how all the Python scripts in this project import the necessary libraries. 
 
 The rules of exit codes are as follows. 
@@ -43,7 +45,7 @@ The following command lines can be useful for executing one-stop testing.
 
 Additionally, a Python script for generating LaTeX files of schemes from Python scripts is provided here. A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. If you are a Chinese beginner, [https://blog.csdn.net/weixin_45726033/article/details/144822018](https://blog.csdn.net/weixin_45726033/article/details/144822018) may be helpful. 
 
-#### generateSchemeLaTeX.py
+### 1.1 generateSchemeLaTeX.py
 
 This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
 
@@ -53,16 +55,62 @@ Usually, it will succeed if ``pdflatex`` is available and on the path.
 
 For developers, this script will check the style of the Python scripts. 
 
-#### Environment details
+### 1.2 Measurements
 
-- [Ubuntu 24.04.1 LTS (WSL)](https://learn.microsoft.com/windows/wsl/install)
-- [Python 3.12.3](https://www.python.org/)
-- [GMP-6.3.0](https://gmplib.org/)
-- [PBC-0.5.14](https://crypto.stanford.edu/pbc/download.html)
-- OpenSSL library 3.0.13 (``sudo apt-get install libssl-dev``)
-- [Python charm library](https://github.com/EliusSolis/charm)
+To test the time consumption (time complexity) of a set of codes, please refer to the following codes. 
 
-#### Git issues
+```
+from time import perf_counter
+
+startTime = perf_counter()
+# Your codes
+endTime = perf_counter()
+timeDelta = endTime - startTime
+```
+
+To test the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. 
+
+```
+def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int:
+	if isinstance(obj, Element):
+		return len(group.serialize(obj))
+	elif isinstance(obj, (tuple, list, set)):
+		sizes = tuple(getLengthOf(o) for o in obj)
+		return -1 if -1 in sizes else sum(sizes)
+	elif isinstance(obj, bytes):
+		return len(obj)
+	elif isinstance(obj, int) or callable(obj):
+		return group.secparam >> 3
+	else:
+		return -1
+```
+
+To test the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following codes. 
+
+```
+from sys import getsizeof
+
+s = getsizeof(group.random(ZR))
+```
+
+To test the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. 
+
+```
+import os
+try:
+	from psutil import Process
+except:
+	print("Cannot compute the memory via ``psutil.Process``. ")
+	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
+	print("Please press the enter key to exit. ")
+	input()
+	exit(-1)
+
+process = Process(os.getpid())
+memory = process.memory_info().rss
+```
+
+### 1.3 Git issues
 
 If you wish to clone the project, try to use the following command lines. 
 
@@ -92,7 +140,7 @@ cd ~/Cryptography-Schemes
 git pull
 ```
 
-- **Push**
+- **Push**: 
 ```
 cd ~/Cryptography-Schemes
 git add .
@@ -102,15 +150,19 @@ git push
 
 Eventually, submit a Pull Request (PR) after pushing. If you are required to login during pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
 
-## SchemeHIBME
+## 2. SchemeFEPPCT
+
+Click [here](./SchemeFEPPCT/README.md) to view details. 
+
+## 3. SchemeHIBME
 
 Click [here](./SchemeHIBME/README.md) to view details. 
 
-## SchemeIBMETR
+## 4. SchemeIBMETR
 
 Click [here](./SchemeIBMETR/README.md) to view details. 
 
-## Others
+## 5. Others
 
 Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
 
@@ -121,3 +173,19 @@ Here are some links to my other implemented cryptography schemes, which are in P
 Here is a link to my other implemented cryptography scheme, which is in Java programming language based on the JPBC library. 
 
 - GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
+
+By the way, this is not a main academic author of the schemes mentioned in this section. Please only query here about the practical implementations. Thanks. 
+
+## 6. Acknowledgment
+
+The experimental environment details are as follows. Thanks to the developers for their hard work. 
+
+- [Ubuntu 24.04.1 LTS (WSL)](https://learn.microsoft.com/windows/wsl/install)
+- [Python 3.12.3](https://www.python.org/)
+- [GMP-6.3.0](https://gmplib.org/)
+- [PBC-0.5.14](https://crypto.stanford.edu/pbc/download.html)
+- [OpenSSL library 3.0.13](https://www.openssl.org/) (``sudo apt-get install libssl-dev``)
+- [Official Python charm library](https://github.com/JHUISI/charm)
+- [Python charm library adapted to Python 3.12.x](https://github.com/EliusSolis/charm)
+
+Thanks to [Department of Computer Science](https://www.cs.hku.hk/), [School of Computing and Data Science](https://www.cds.hku.hk/), [The University of Hong Kong](https://www.hku.hk/). 
