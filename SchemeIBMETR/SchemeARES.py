@@ -2,14 +2,6 @@ import os
 from sys import argv, exit
 from time import perf_counter, sleep
 try:
-	from psutil import Process
-except:
-	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
-	print("Please press the enter key to exit. ")
-	input()
-	exit(-1)
-try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
@@ -228,9 +220,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 20																														\
+			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 14																														\
 		)
-	process = Process(os.getpid())
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
@@ -239,14 +230,13 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Initialization #
 	schemeARES = SchemeARES(group)
-	timeRecords, memoryRecords = [], []
+	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
 	mpk, msk = schemeARES.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Extract #
 	startTime = perf_counter()
@@ -254,14 +244,12 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	Pvk_Id = schemeARES.Extract(Id)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# TSK #
 	startTime = perf_counter()
 	Pvk_IdTraced = schemeARES.TSK(Id)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Encrypt #
 	startTime = perf_counter()
@@ -269,24 +257,21 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	CT = schemeARES.Encrypt(Id, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Decrypt #
 	startTime = perf_counter()
 	M = schemeARES.Decrypt(Pvk_Id, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# TVerify #
 	startTime = perf_counter()
 	bRet = schemeARES.TVerify(Pvk_IdTraced, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																																			\
+	spaceRecords = [																																			\
 		schemeARES.getLengthOf(group.random(ZR)), schemeARES.getLengthOf(group.random(G1)), schemeARES.getLengthOf(group.random(GT)), 								\
 		schemeARES.getLengthOf(mpk), schemeARES.getLengthOf(msk), schemeARES.getLengthOf(Pvk_Id), schemeARES.getLengthOf(Pvk_IdTraced), schemeARES.getLengthOf(CT)	\
 	]
@@ -296,10 +281,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Is the tracing verified? {0}. ".format("Yes" if bRet else "No"))
 	print("Time:", timeRecords)
-	print("Memory:", memoryRecords)
-	print("Size:", sizeRecords)
+	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M, bRet] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M, bRet] + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
@@ -340,7 +324,6 @@ def main() -> int:
 	columns = [																				\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", "isTracingVerified", 	\
 		"Setup (s)", "Extract (s)", "TSK (s)", "Encrypt (s)", "Decrypt (s)", "TVerify (s)", 					\
-		"Setup (B)", "Extract (B)", "TSK (B)", "Encrypt (B)", "Decrypt (B)", "TVerify (B)", 				\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfGT (B)", 									\
 		"mpk (B)", "msk (B)", "Pvk_Id (B)", "Pvk_IdTraced (B)", "CT (B)"								\
 	]
@@ -355,10 +338,8 @@ def main() -> int:
 				result = Scheme(curveType, round)
 				for idx in range(3, 6):
 					average[idx] += result[idx]
-				for idx in range(6, 12):
+				for idx in range(6, length):
 					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-				for idx in range(12, length):
-					average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 			average[2] = roundCount
 			for idx in range(6, length):
 				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount

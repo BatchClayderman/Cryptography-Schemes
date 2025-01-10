@@ -3,14 +3,6 @@ from sys import argv, exit
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 from time import perf_counter, sleep
 try:
-	from psutil import Process
-except:
-	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
-	print("Please press the enter key to exit. ")
-	input()
-	exit(-1)
-try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
@@ -301,9 +293,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 23																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 16																																	\
 		)
-	process = Process(os.getpid())
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
@@ -312,14 +303,13 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Initialization #
 	schemeIBMETR = SchemeIBMETR(group)
-	timeRecords, memoryRecords = [], []
+	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
 	mpk, msk = schemeIBMETR.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# EKGen #
 	startTime = perf_counter()
@@ -327,7 +317,6 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	ek_id_S = schemeIBMETR.EKGen(id_S)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# DKGen #
 	startTime = perf_counter()
@@ -335,14 +324,12 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	dk_id_R = schemeIBMETR.DKGen(id_R)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# TKGen #
 	startTime = perf_counter()
 	tk_id_R = schemeIBMETR.TKGen(id_R)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
 	startTime = perf_counter()
@@ -350,24 +337,21 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	ct = schemeIBMETR.Enc(ek_id_S, id_R, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Dec #
 	startTime = perf_counter()
 	m = schemeIBMETR.Dec(dk_id_R, id_R, id_S, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# TVerify #
 	startTime = perf_counter()
 	bRet = schemeIBMETR.TVerify(tk_id_R, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																																						\
+	spaceRecords = [																																						\
 		schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(GT)), schemeIBMETR.getLengthOf(mpk), 		\
 		schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)	\
 	]
@@ -377,10 +361,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Is the scheme correct (message == m)? {0}. ".format("Yes" if message == m else "No"))
 	print("Is the tracing verified? {0}. ".format("Yes" if bRet else "No"))
 	print("Time:", timeRecords)
-	print("Memory:", memoryRecords)
-	print("Size:", sizeRecords)
+	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == m, bRet] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == m, bRet] + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
@@ -421,7 +404,6 @@ def main() -> int:
 	columns = [																				\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", "isTracingVerified", 	\
 		"Setup (s)", "EKGen (s)", "DKGen (s)", "TKGen (s)", "Enc (s)", "Dec (s)", "TVerify (s)", 				\
-		"Setup (B)", "EKGen (B)", "DKGen (B)", "TKGen (B)", "Enc (B)", "Dec (B)", "TVerify (B)", 			\
 		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 								\
 		"mpk (B)", "msk (B)", "EK (B)", "DK (B)", "TK' (B)", "CT (B)"									\
 	]
@@ -436,10 +418,8 @@ def main() -> int:
 				result = Scheme(curveType, round)
 				for idx in range(3, 6):
 					average[idx] += result[idx]
-				for idx in range(6, 13):
+				for idx in range(6, length):
 					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-				for idx in range(13, length):
-					average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 			average[2] = roundCount
 			for idx in range(6, length):
 				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount

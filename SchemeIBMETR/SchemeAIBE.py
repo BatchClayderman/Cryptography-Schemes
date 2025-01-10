@@ -2,14 +2,6 @@ import os
 from sys import argv, exit
 from time import perf_counter, sleep
 try:
-	from psutil import Process
-except:
-	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
-	print("Please press the enter key to exit. ")
-	input()
-	exit(-1)
-try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
@@ -177,9 +169,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 15																														\
+			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 11																														\
 		)
-	process = Process(os.getpid())
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	if isinstance(round, int) and round >= 0:
@@ -188,14 +179,13 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Initialization #
 	schemeAIBE = SchemeAIBE(group)
-	timeRecords, memoryRecords = [], []
+	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
 	mpk, msk = schemeAIBE.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Extract #
 	startTime = perf_counter()
@@ -203,7 +193,6 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	Pvk_Id = schemeAIBE.Extract(Id)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Encrypt #
 	startTime = perf_counter()
@@ -211,17 +200,15 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	CT = schemeAIBE.Encrypt(Id, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Decrypt #
 	startTime = perf_counter()
 	M = schemeAIBE.Decrypt(Pvk_Id, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																												\
+	spaceRecords = [																												\
 		schemeAIBE.getLengthOf(group.random(ZR)), schemeAIBE.getLengthOf(group.random(G1)), schemeAIBE.getLengthOf(group.random(GT)), 		\
 		schemeAIBE.getLengthOf(mpk), schemeAIBE.getLengthOf(msk), schemeAIBE.getLengthOf(Pvk_Id), schemeAIBE.getLengthOf(CT)			\
 	]
@@ -230,10 +217,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Decrypted:", M)
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
-	print("Memory:", memoryRecords)
-	print("Size:", sizeRecords)
+	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M] + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
@@ -274,7 +260,6 @@ def main() -> int:
 	columns = [																\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
 		"Setup (s)", "Extract (s)", "Encrypt (s)", "Decrypt (s)", 						\
-		"Setup (B)", "Extract (B)", "Encrypt (B)", "Decrypt (B)", 						\
 		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 				\
 		"mpk (B)", "msk (B)", "Pvk_Id (B)", "CT (B)"								\
 	]
@@ -289,10 +274,8 @@ def main() -> int:
 				result = Scheme(curveType, round)
 				for idx in range(3, 5):
 					average[idx] += result[idx]
-				for idx in range(5, 9):
+				for idx in range(5, length):
 					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-				for idx in range(9, length):
-					average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 			average[2] = roundCount
 			for idx in range(5, length):
 				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
