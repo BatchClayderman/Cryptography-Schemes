@@ -3,14 +3,6 @@ from sys import argv, exit
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 from time import perf_counter, sleep
 try:
-	from psutil import Process
-except:
-	print("Cannot compute the memory via ``psutil.Process``. ")
-	print("Please try to install the ``psutil`` library via ``python -m pip install psutil`` or ``apt-get install python3-psutil``. ")
-	print("Please press the enter key to exit. ")
-	input()
-	exit(-1)
-try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the ``charm`` library is not handled correctly. ")
@@ -483,15 +475,14 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-				+ [l, m, n, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 25																												\
+				+ [l, m, n, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 17																												\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$, $m$, and $n$ should be three positive integers satisfying $2 \\leqslant m < l \\land 2 \\leqslant n < l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [l if isinstance(l, int) else None, m if isinstance(m, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 25											\
+			+ [l if isinstance(l, int) else None, m if isinstance(m, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 17											\
 		)
-	process = Process(os.getpid())
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	print("l =", l)
@@ -503,14 +494,13 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	
 	# Initialization #
 	schemeHIBME = SchemeHIBME(group)
-	timeRecords, memoryRecords = [], []
+	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
 	mpk, msk = schemeHIBME.Setup(l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# EKGen #
 	startTime = perf_counter()
@@ -518,7 +508,6 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	ek_ID_S = schemeHIBME.EKGen(ID_Snd)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# DerivedEKGen #
 	startTime = perf_counter()
@@ -526,7 +515,6 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	ek_ID_SDerived = schemeHIBME.DerivedEKGen(ek_ID_SMinus1, ID_Snd)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# DKGen #
 	startTime = perf_counter()
@@ -534,7 +522,6 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	dk_ID_R = schemeHIBME.DKGen(ID_Rev)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# DerivedDKGen #
 	startTime = perf_counter()
@@ -542,7 +529,6 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	dk_ID_RDerived = schemeHIBME.DerivedDKGen(dk_ID_RMinus1, ID_Rev)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Enc #
 	startTime = perf_counter()
@@ -551,7 +537,6 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	CTDerived = schemeHIBME.Enc(ek_ID_SDerived, ID_Snd, ID_Rev, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# Dec #
 	startTime = perf_counter()
@@ -559,10 +544,9 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	MDerived = schemeHIBME.Dec(dk_ID_RDerived, ID_Rev, ID_Snd, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
-	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																																	\
+	spaceRecords = [																																	\
 		schemeHIBME.getLengthOf(group.random(ZR)), schemeHIBME.getLengthOf(group.random(G1)), schemeHIBME.getLengthOf(group.random(G2)), 					\
 		schemeHIBME.getLengthOf(group.random(GT)), schemeHIBME.getLengthOf(mpk), schemeHIBME.getLengthOf(msk), schemeHIBME.getLengthOf(ek_ID_S), 			\
 		schemeHIBME.getLengthOf(ek_ID_SDerived), schemeHIBME.getLengthOf(dk_ID_R), schemeHIBME.getLengthOf(dk_ID_RDerived), schemeHIBME.getLengthOf(CT)	\
@@ -574,10 +558,9 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
 	print("Time:", timeRecords)
-	print("Memory:", memoryRecords)
-	print("Size:", sizeRecords)
+	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, l, m, n, round if isinstance(round, int) else None, True, message == MDerived, message == M] + timeRecords + memoryRecords + sizeRecords
+	return [group.groupType(), group.secparam, l, m, n, round if isinstance(round, int) else None, True, message == MDerived, message == M] + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
@@ -618,7 +601,6 @@ def main() -> int:
 	columns = [																						\
 		"curveType", "secparam", "l", "m", "n", "roundCount", "isSystemValid", "isDeriverPassed", "isSchemeCorrect", 	\
 		"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 		\
-		"Setup (B)", "EKGen (B)", "DerivedEKGen (B)", "DKGen (B)", "DerivedDKGen (B)", "Enc (B)", "Dec (B)", 	\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 							\
 		"mpk (B)", "msk (B)", "EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"								\
 	]
@@ -636,10 +618,8 @@ def main() -> int:
 							result = Scheme(curveType, l, m, n, round)
 							for idx in range(6, 9):
 								average[idx] += result[idx]
-							for idx in range(9, 16):
+							for idx in range(9, length):
 								average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-							for idx in range(16, length):
-								average[idx] = -1 if average[idx] <= 0 or result[idx] <= 0 else average[idx] + result[idx]
 						average[5] = roundCount
 						for idx in range(9, length):
 							average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount

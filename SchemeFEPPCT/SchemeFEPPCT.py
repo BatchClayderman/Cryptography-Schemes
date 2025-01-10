@@ -18,7 +18,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeAnonymousME:
+class SchemeFEPPCT:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -254,13 +254,13 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 14																													\
+				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 14																	\
+			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -271,49 +271,49 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeAnonymousME = SchemeAnonymousME(group)
+	schemeFEPPCT = SchemeFEPPCT(group)
 	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeAnonymousME.Setup(l)
+	mpk, msk = schemeFEPPCT.Setup(l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# KGen #
 	startTime = perf_counter()
 	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeAnonymousME.KGen(ID_k)
+	sk_ID_k = schemeFEPPCT.KGen(ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# DerivedKGen #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeAnonymousME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeAnonymousME.DerivedKGen(sk_ID_kMinus1, ID_k)
+	sk_ID_kMinus1 = schemeFEPPCT.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
+	sk_ID_kDerived = schemeFEPPCT.DerivedKGen(sk_ID_kMinus1, ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeAnonymousME.Enc(ID_k, message)
+	CT = schemeFEPPCT.Enc(ID_k, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec #
 	startTime = perf_counter()
-	M = schemeAnonymousME.Dec(sk_ID_k,  CT)
-	MDerived = schemeAnonymousME.Dec(sk_ID_kDerived, CT)
+	M = schemeFEPPCT.Dec(sk_ID_k,  CT)
+	MDerived = schemeFEPPCT.Dec(sk_ID_kDerived, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	spaceRecords = [																																													\
-		schemeAnonymousME.getLengthOf(group.random(ZR)), schemeAnonymousME.getLengthOf(group.random(G1)), schemeAnonymousME.getLengthOf(group.random(G2)), schemeAnonymousME.getLengthOf(group.random(GT)), 	\
-		schemeAnonymousME.getLengthOf(mpk), schemeAnonymousME.getLengthOf(msk), schemeAnonymousME.getLengthOf(sk_ID_k), schemeAnonymousME.getLengthOf(sk_ID_kDerived), schemeAnonymousME.getLengthOf(CT)	\
+		schemeFEPPCT.getLengthOf(group.random(ZR)), schemeFEPPCT.getLengthOf(group.random(G1)), schemeFEPPCT.getLengthOf(group.random(G2)), schemeFEPPCT.getLengthOf(group.random(GT)), 	\
+		schemeFEPPCT.getLengthOf(mpk), schemeFEPPCT.getLengthOf(msk), schemeFEPPCT.getLengthOf(sk_ID_k), schemeFEPPCT.getLengthOf(sk_ID_kDerived), schemeFEPPCT.getLengthOf(CT)	\
 	]
-	del schemeAnonymousME
+	del schemeFEPPCT
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
@@ -359,7 +359,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
-	roundCount, filePath = 20, "SchemeAnonymousME.xlsx"
+	roundCount, filePath = 20, "SchemeFEPPCT.xlsx"
 	columns = [																	\
 		"curveType", "secparam", "l", "k", "roundCount", 								\
 		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 							\
