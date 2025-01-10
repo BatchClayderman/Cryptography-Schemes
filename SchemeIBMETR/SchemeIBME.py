@@ -77,8 +77,8 @@ class SchemeIBME:
 		ek_S = s * HPrime(S) # $\textit{ek}_S \gets s \cdot H'(S)$
 		
 		# Return #
-		return ek_S # $textbf{return }\textit{ek}_S$
-	def RKGen(self:object, receiver:Element) -> Element: # $\textbf{SKGen}(S) \rightarrow \textit{dk}_R$
+		return ek_S # $\textbf{return }\textit{ek}_S$
+	def RKGen(self:object, receiver:Element) -> Element: # $\textbf{RKGen}(S) \rightarrow \textit{dk}_R$
 		# Check #
 		if not self.__flag:
 			self.Setup()
@@ -101,7 +101,7 @@ class SchemeIBME:
 		dk_R = (dk1, dk2, dk3) # $\textit{dk}_R \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3)$
 		
 		# Return #
-		return dk_R # $textbf{return }\textit{dk}_R$
+		return dk_R # $\textbf{return }\textit{dk}_R$
 	def Enc(self:object, ekS:Element, receiver:Element, message:int|bytes) -> tuple: # $\textbf{Enc}(\textit{ek}_S, R, M) \rightarrow C$
 		# Check #
 		if not self.__flag:
@@ -216,7 +216,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 19																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 18																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -268,9 +268,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																																						\
-		schemeIBME.getLengthOf(group.random(ZR)), schemeIBME.getLengthOf(group.random(G1)), schemeIBME.getLengthOf(group.random(G2)), schemeIBME.getLengthOf(group.random(GT)), 		\
-		schemeIBME.getLengthOf(mpk), schemeIBME.getLengthOf(msk), schemeIBME.getLengthOf(ek_S), schemeIBME.getLengthOf(dk_R), schemeIBME.getLengthOf(C)							\
+	sizeRecords = [																																	\
+		schemeIBME.getLengthOf(group.random(ZR)), schemeIBME.getLengthOf(group.random(G1)), schemeIBME.getLengthOf(group.random(GT)), 						\
+		schemeIBME.getLengthOf(mpk), schemeIBME.getLengthOf(msk), schemeIBME.getLengthOf(ek_S), schemeIBME.getLengthOf(dk_R), schemeIBME.getLengthOf(C)		\
 	]
 	del schemeIBME
 	print("Original:", message)
@@ -322,7 +322,7 @@ def main() -> int:
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
 		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 					\
 		"Setup (B)", "SKGen (B)", "RKGen (B)", "Enc (B)", "Dec (B)", 					\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
+		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 				\
 		"mpk (B)", "msk (B)", "ek_S (B)", "dk_R (B)", "C (B)"						\
 	]
 	

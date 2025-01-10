@@ -301,7 +301,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 24																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 23																																	\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -367,9 +367,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																																													\
-		schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(G2)), schemeIBMETR.getLengthOf(group.random(GT)), 						\
-		schemeIBMETR.getLengthOf(mpk), schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)	\
+	sizeRecords = [																																						\
+		schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(GT)), schemeIBMETR.getLengthOf(mpk), 		\
+		schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)	\
 	]
 	del schemeIBMETR
 	print("Original:", message)
@@ -422,7 +422,7 @@ def main() -> int:
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", "isTracingVerified", 	\
 		"Setup (s)", "EKGen (s)", "DKGen (s)", "TKGen (s)", "Enc (s)", "Dec (s)", "TVerify (s)", 				\
 		"Setup (B)", "EKGen (B)", "DKGen (B)", "TKGen (B)", "Enc (B)", "Dec (B)", "TVerify (B)", 			\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 					\
+		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 								\
 		"mpk (B)", "msk (B)", "EK (B)", "DK (B)", "TK' (B)", "CT (B)"									\
 	]
 	

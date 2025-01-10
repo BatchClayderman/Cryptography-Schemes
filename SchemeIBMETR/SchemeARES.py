@@ -228,7 +228,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 21																														\
+			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 20																														\
 		)
 	process = Process(os.getpid())
 	print("curveType =", group.groupType())
@@ -286,9 +286,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	memoryRecords.append(process.memory_info().rss)
 	
 	# End #
-	sizeRecords = [																																						\
-		schemeARES.getLengthOf(group.random(ZR)), schemeARES.getLengthOf(group.random(G1)), schemeARES.getLengthOf(group.random(G2)), schemeARES.getLengthOf(group.random(GT)), 	\
-		schemeARES.getLengthOf(mpk), schemeARES.getLengthOf(msk), schemeARES.getLengthOf(Pvk_Id), schemeARES.getLengthOf(Pvk_IdTraced), schemeARES.getLengthOf(CT)				\
+	sizeRecords = [																																			\
+		schemeARES.getLengthOf(group.random(ZR)), schemeARES.getLengthOf(group.random(G1)), schemeARES.getLengthOf(group.random(GT)), 								\
+		schemeARES.getLengthOf(mpk), schemeARES.getLengthOf(msk), schemeARES.getLengthOf(Pvk_Id), schemeARES.getLengthOf(Pvk_IdTraced), schemeARES.getLengthOf(CT)	\
 	]
 	del schemeARES
 	print("Original:", message)
@@ -341,7 +341,7 @@ def main() -> int:
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", "isTracingVerified", 	\
 		"Setup (s)", "Extract (s)", "TSK (s)", "Encrypt (s)", "Decrypt (s)", "TVerify (s)", 					\
 		"Setup (B)", "Extract (B)", "TSK (B)", "Encrypt (B)", "Decrypt (B)", "TVerify (B)", 				\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 					\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfGT (B)", 									\
 		"mpk (B)", "msk (B)", "Pvk_Id (B)", "Pvk_IdTraced (B)", "CT (B)"								\
 	]
 	
