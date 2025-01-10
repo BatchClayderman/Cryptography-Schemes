@@ -109,3 +109,15 @@ Click [here](./SchemeHIBME/README.md) to view details.
 ## SchemeIBMETR
 
 Click [here](./SchemeIBMETR/README.md) to view details. 
+
+## Others
+
+Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
+
+1) LB-PEAKS: [https://github.com/BatchClayderman/LB-PEAKS](https://github.com/BatchClayderman/LB-PEAKS)
+2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
+3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
+
+Here is a link to my other implemented cryptography scheme, which is in Java programming language based on the JPBC library. 
+
+- GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
