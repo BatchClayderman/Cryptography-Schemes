@@ -1,6 +1,6 @@
 # Cryptography Schemes
 
-Two proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
+Some proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
 
 ## 1. Introduction
 
@@ -45,7 +45,7 @@ The following command lines can be useful for executing one-stop testing.
 
 Additionally, a Python script for generating LaTeX files of schemes from Python scripts is provided here. A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. If you are a Chinese beginner, [https://blog.csdn.net/weixin_45726033/article/details/144822018](https://blog.csdn.net/weixin_45726033/article/details/144822018) may be helpful. 
 
-### 1.1 generateSchemeLaTeX.py
+### 1.1 ``generateSchemeLaTeX.py``
 
 This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
 
@@ -148,7 +148,7 @@ git commit -m Update
 git push
 ```
 
-Eventually, submit a Pull Request (PR) after pushing. If you are required to login during pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
+Eventually, submit a Pull Request (PR) after pushing. If you are required to log in during pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
 
 ## 2. SchemeFEPPCT
 
@@ -164,17 +164,32 @@ Click [here](./SchemeIBMETR/README.md) to view details.
 
 ## 5. Others
 
-Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
+Here are some links to my other implemented cryptography schemes, which do not involve the Python charm library. 
 
-1) LB-PEAKS: [https://github.com/BatchClayderman/LB-PEAKS](https://github.com/BatchClayderman/LB-PEAKS)
-2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
-3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
+By the way, this is not one of the major academic authors of the schemes mentioned in this section. Please only query here about the practical implementations. Thanks. 
+
+### 5.1 C/C++
+
+Here are some links to my other implemented cryptography schemes, which are in C/C++ programming language. 
+
+1) OPSI-CA-ull: [https://github.com/BatchClayderman/OPSI-CA-ull](https://github.com/BatchClayderman/OPSI-CA-ull)
+2) PSI-CA-ull: [https://github.com/BatchClayderman/PSI-CA-ull](https://github.com/BatchClayderman/PSI-CA-ull)
+3) SPSI-CA-ull: [https://github.com/BatchClayderman/SPSI-CA-ull](https://github.com/BatchClayderman/SPSI-CA-ull)
+4) VPSI-CA-ull: [https://github.com/BatchClayderman/VPSI-CA-ull](https://github.com/BatchClayderman/VPSI-CA-ull)
+
+### 5.2 Java
 
 Here is a link to my other implemented cryptography scheme, which is in Java programming language based on the JPBC library. 
 
 - GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
 
-By the way, this is not a main academic author of the schemes mentioned in this section. Please only query here about the practical implementations. Thanks. 
+### 5.3 Python
+
+Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
+
+1) LB-PEAKS: [https://github.com/BatchClayderman/LB-PEAKS](https://github.com/BatchClayderman/LB-PEAKS)
+2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
+3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
 
 ## 6. Acknowledgment
 
