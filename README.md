@@ -154,6 +154,16 @@ Eventually, submit a Pull Request (PR) after pushing. If you are required to log
 
 Click [here](./SchemeFEPPCT/README.md) to view details. 
 
+Here are the equivalent Java implementations based on the JPBC library. 
+
+- Baselines
+  - Version 1: [https://github.com/BatchClayderman/FEPPCT](https://github.com/BatchClayderman/FEPPCT)
+  - Version 2: [https://github.com/BatchClayderman/CA-NI-PSI](https://github.com/BatchClayderman/CA-NI-PSI)
+
+- Proposed
+  - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
+  - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
+
 ## 3. SchemeHIBME
 
 Click [here](./SchemeHIBME/README.md) to view details. 
