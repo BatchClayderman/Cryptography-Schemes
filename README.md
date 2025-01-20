@@ -154,7 +154,7 @@ Eventually, submit a Pull Request (PR) after pushing. If you are required to log
 
 Click [here](./SchemeFEPPCT/README.md) to view details. 
 
-Here are the equivalent Java implementations based on the JPBC library. 
+Here are the equivalent implementations in Java programming language based on the JPBC library. 
 
 - Baselines
   - Version 1: [https://github.com/BatchClayderman/FEPPCT](https://github.com/BatchClayderman/FEPPCT)
@@ -163,6 +163,8 @@ Here are the equivalent Java implementations based on the JPBC library.
 - Proposed
   - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
+
+Anyway, it is still encouraged to use the codes in Python programming language. 
 
 ## 3. SchemeHIBME
 
