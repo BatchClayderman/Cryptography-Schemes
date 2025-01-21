@@ -57,7 +57,7 @@ For developers, this script will check the style of the Python scripts.
 
 ### 1.2 Measurements
 
-To test the time consumption (time complexity) of a set of codes, please refer to the following codes. 
+To compute the time consumption (time complexity) of a set of codes, please refer to the following codes. 
 
 ```
 from time import perf_counter
@@ -68,7 +68,7 @@ endTime = perf_counter()
 timeDelta = endTime - startTime # second(s)
 ```
 
-To test the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. 
+To compute the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. 
 
 ```
 def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)
@@ -85,7 +85,7 @@ def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # By
 		return -1
 ```
 
-To test the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following codes. 
+To compute the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following codes. 
 
 ```
 from sys import getsizeof
@@ -93,7 +93,7 @@ from sys import getsizeof
 s = getsizeof(group.random(ZR)) # Byte(s)
 ```
 
-To test the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. 
+To compute the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. 
 
 ```
 import os
@@ -164,7 +164,7 @@ Here are the equivalent implementations in Java programming language based on th
   - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
 
-Anyway, it is still encouraged to use the codes in Python programming language. 
+Anyway, it is still encouraging to use the implementations in Python programming language. 
 
 ## 3. SchemeHIBME
 
