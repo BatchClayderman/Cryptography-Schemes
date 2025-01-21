@@ -18,7 +18,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeFEPPCT:
+class SchemeCANIFPPCT:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -278,49 +278,49 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeFEPPCT = SchemeFEPPCT(group)
+	schemeCANIFPPCT = SchemeCANIFPPCT(group)
 	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeFEPPCT.Setup(l)
+	mpk, msk = schemeCANIFPPCT.Setup(l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# KGen #
 	startTime = perf_counter()
 	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeFEPPCT.KGen(ID_k)
+	sk_ID_k = schemeCANIFPPCT.KGen(ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# DerivedKGen #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeFEPPCT.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeFEPPCT.DerivedKGen(sk_ID_kMinus1, ID_k)
+	sk_ID_kMinus1 = schemeCANIFPPCT.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
+	sk_ID_kDerived = schemeCANIFPPCT.DerivedKGen(sk_ID_kMinus1, ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeFEPPCT.Enc(ID_k, message)
+	CT = schemeCANIFPPCT.Enc(ID_k, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec #
 	startTime = perf_counter()
-	M = schemeFEPPCT.Dec(sk_ID_k,  CT)
-	MDerived = schemeFEPPCT.Dec(sk_ID_kDerived, CT)
+	M = schemeCANIFPPCT.Dec(sk_ID_k,  CT)
+	MDerived = schemeCANIFPPCT.Dec(sk_ID_kDerived, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	spaceRecords = [																																													\
-		schemeFEPPCT.getLengthOf(group.random(ZR)), schemeFEPPCT.getLengthOf(group.random(G1)), schemeFEPPCT.getLengthOf(group.random(G2)), schemeFEPPCT.getLengthOf(group.random(GT)), 	\
-		schemeFEPPCT.getLengthOf(mpk), schemeFEPPCT.getLengthOf(msk), schemeFEPPCT.getLengthOf(sk_ID_k), schemeFEPPCT.getLengthOf(sk_ID_kDerived), schemeFEPPCT.getLengthOf(CT)	\
+		schemeCANIFPPCT.getLengthOf(group.random(ZR)), schemeCANIFPPCT.getLengthOf(group.random(G1)), schemeCANIFPPCT.getLengthOf(group.random(G2)), schemeCANIFPPCT.getLengthOf(group.random(GT)), 	\
+		schemeCANIFPPCT.getLengthOf(mpk), schemeCANIFPPCT.getLengthOf(msk), schemeCANIFPPCT.getLengthOf(sk_ID_k), schemeCANIFPPCT.getLengthOf(sk_ID_kDerived), schemeCANIFPPCT.getLengthOf(CT)	\
 	]
-	del schemeFEPPCT
+	del schemeCANIFPPCT
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
@@ -366,7 +366,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
-	roundCount, filePath = 20, "SchemeFEPPCT.xlsx"
+	roundCount, filePath = 20, "SchemeCANIFPPCT.xlsx"
 	columns = [																	\
 		"curveType", "secparam", "l", "k", "roundCount", 								\
 		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 							\

@@ -5,31 +5,37 @@
 
 \begin{document}
 
-\section{SchemeFEPPCT}
+\section{SchemeCANIFPPCT}
 
 \subsection{$\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$}
 
-generate $g \in \mathbb{G}_1$ randomly
+$p \gets \|\mathbb{G}\|$
 
-generate $\alpha, b_1, b_2, \in \mathbb{Z}_p^*$ randomly
+generate $g_1, g_3 \in \mathbb{G}_1$ randomly
 
-generate $g_2, g_3 \in \mathbb{G}_2$ randomly
+generate $g_2 \in \mathbb{G}_2$ randomly
 
-generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)
+generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_p^*$ randomly
 
-$g_1 \gets g^\alpha$
+$R \gets g_1^r$
 
-$\bar{g} \gets g^{b_1}$
+$S \gets g_2^s$
 
-$\tilde{g} \gets g^{b_2}$
+$T \gets g_1^t$
 
-$\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
+$\Omega \gets e(g_1, g_2)^{t_1 t_2 \omega}$
 
-$\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
+$v_1 \gets g_2^{t_1}$
 
-$\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l)$
+$v_2 \gets g_2^{t_2}$
 
-$\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
+$v_3 \gets g_2^{t_3}$
+
+$v_4 \gets g_2^{t_4}$
+
+$ \textit{mpk} \gets (g_1, g_2, p, g_3, H_1, H_2, H_3, H_4, R, S, T, \Omega, v_1, v_2, v_3, v_4)$
+
+$\textit{msk} \gets (r, s, t, \omega, t_1, t_2, t_3, t_4)$
 
 $\textbf{return }(\textit{mpk}, \textit{msk})$
 

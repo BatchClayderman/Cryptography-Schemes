@@ -150,9 +150,9 @@ git push
 
 Eventually, submit a Pull Request (PR) after pushing. If you are required to log in during pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
 
-## 2. SchemeFEPPCT
+## 2. SchemeCANIFPPCT
 
-Click [here](./SchemeFEPPCT/README.md) to view details. 
+Click [here](./SchemeCANIFPPCT/README.md) to view details. 
 
 Here are the equivalent implementations in Java programming language based on the JPBC library. 
 
