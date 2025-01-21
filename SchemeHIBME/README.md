@@ -1,11 +1,11 @@
 ## SchemeHIBME
 
-This is the implementation of the proposed HIB-ME scheme, with the anonymous ME scheme as the baseline. 
+This is the category of the proposed HIB-ME cryptography scheme, which outperforms the baseline, the AnonymousME cryptography scheme. 
 
-#### SchemeAnonymousME.py
+#### ``SchemeHIBME.py``
 
-This is the implementation of the ``Anonymous Hierarchical Identity-based Encryption`` (AnonymousME) scheme based on the Python programming language. 
+This is the official implementation of the HIB-ME cryptography scheme in Python programming language based on the Python charm library. 
 
-#### SchemeHIBME.py
+#### ``SchemeAnonymousME.py``
 
-This is the implementation of the HIB-ME scheme based on the Python programming language. 
+This is the official implementation of the AnonymousME cryptography scheme (``Anonymous Hierarchical Identity-based Encryption``) in Python programming language based on the Python charm library. 
