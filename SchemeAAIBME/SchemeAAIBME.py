@@ -18,7 +18,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeAnonymousME:
+class SchemeAAIBME:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -46,22 +46,29 @@ class SchemeAnonymousME:
 			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
-		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
-		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2, \in \mathbb{Z}_p^*$ randomly
-		g2, g3 = self.__group.random(G2), self.__group.random(G2) # generate $g_2, g_3 \in \mathbb{G}_2$ randomly
-		h = tuple(self.__group.random(G2) for _ in range(self.__l)) # generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)
-		g1 = g ** alpha # $g_1 \gets g^\alpha$
-		gBar = g ** b1 # $\bar{g} \gets g^{b_1}$
-		gTilde = g ** b2 # $\tilde{g} \gets g^{b_2}$
-		g3Bar = g3 ** (1 / b1) # $\bar{g}_3 \gets g_3^{\frac{1}{b_1}}$
-		g3Tilde = g3 ** (1 / b2) # $\tilde{g}_3 \gets g_3^{\frac{1}{b_2}}$
-		self.__mpk = (g, g1, g2, g3, gBar, gTilde, g3Bar, g3Tilde) + h # $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_3, h_1, h_2, \cdots, h_l)$
-		self.__msk = (g2 ** alpha, b1, b2) # $\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
+		p = self.__group.order() # $p \gets \|\mathbb{G}\|$
+		g1, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_1, g_3 \in \mathbb{G}_1$ randomly
+		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
+		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_p^*$
+		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_p^*$
+		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_p^*$
+		r, s, t, omega, t1, t2, t3, t4 = self.__group.random(ZR, 8) # generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_p^*$ randomly
+		R = g1 ** r # $R \gets g_1^r$
+		S = g2 ** s # $S \gets g_2^s$
+		T = g1 ** t # $T \gets g_1^t$
+		Omega = pair(g1, g2) ** (t1 * t2 * omega) # $\Omega \gets e(g_1, g_2)^{t_1 t_2 \omega}$
+		v1 = g2 ** t1 # $v_1 \gets g_2^{t_1}$
+		v2 = g2 ** t2 # $v_2 \gets g_2^{t_2}$
+		v3 = g2 ** t3 # $v_3 \gets g_2^{t_3}$
+		v4 = g2 ** t4 # $v_4 \gets g_2^{t_4}$
+		self.__mpk = (g1, g2, p, g3, H1, H2, H3, H4, R, S, T, Omega, v1, v2, v3, v4) # $ \textit{mpk} \gets (g_1, g_2, p, g_3, H_1, H_2, H_3, H_4, R, S, T, \Omega, v_1, v_2, v_3, v_4)$
+		self.__msk = (r, s, t, omega, t1, t2, t3, t4) # $\textit{msk} \gets (r, s, t, \omega, t_1, t_2, t_3, t_4)$
 		
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def KGen(self:object, IDk:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
+	def KGen(self:object, IDi:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
@@ -78,12 +85,16 @@ class SchemeAnonymousME:
 			)
 		
 		# Unpack #
-		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
-		g2ToThePowerOfAlpha, b1, b2 = self.__msk
-		k = len(ID_k)
+		g1 = self.__mpk[0]
 		
 		# Scheme #
-		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
+		k_i, x_i = self.__group.random(ZR), self.__group.random(ZR) # generate $k_i, x_i \in \mathbb{Z}_p^*$ randomly
+		z_i = (r - x_i) * (s * x_i) ** (-1) # $z_i \gets (r - x_i)(s x_i)^{-1} \in \mathbb{Z}_p^*$
+		Z_i = g1 ** z_i # $Z_i \gets g_1^{z_i} \in \mathbb{G}_1$
+		sk_ID_i = k_i # $\textit{sk}_{\textit{ID}_i} \gets k_i$
+		ek_ID_i = (x_i, Z_i) # $\textit{ek}_{\textit{ID}_i} \gets (x_i, Z_i)$
+		
+		
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
@@ -254,13 +265,13 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 14																													\
+				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 14																	\
+			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -271,49 +282,49 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeAnonymousME = SchemeAnonymousME(group)
+	schemeAAIBME = SchemeAAIBME(group)
 	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeAnonymousME.Setup(l)
+	mpk, msk = schemeAAIBME.Setup(l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# KGen #
 	startTime = perf_counter()
 	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeAnonymousME.KGen(ID_k)
+	sk_ID_k = schemeAAIBME.KGen(ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# DerivedKGen #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeAnonymousME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeAnonymousME.DerivedKGen(sk_ID_kMinus1, ID_k)
+	sk_ID_kMinus1 = schemeAAIBME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
+	sk_ID_kDerived = schemeAAIBME.DerivedKGen(sk_ID_kMinus1, ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeAnonymousME.Enc(ID_k, message)
+	CT = schemeAAIBME.Enc(ID_k, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec #
 	startTime = perf_counter()
-	M = schemeAnonymousME.Dec(sk_ID_k,  CT)
-	MDerived = schemeAnonymousME.Dec(sk_ID_kDerived, CT)
+	M = schemeAAIBME.Dec(sk_ID_k,  CT)
+	MDerived = schemeAAIBME.Dec(sk_ID_kDerived, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	spaceRecords = [																																													\
-		schemeAnonymousME.getLengthOf(group.random(ZR)), schemeAnonymousME.getLengthOf(group.random(G1)), schemeAnonymousME.getLengthOf(group.random(G2)), schemeAnonymousME.getLengthOf(group.random(GT)), 	\
-		schemeAnonymousME.getLengthOf(mpk), schemeAnonymousME.getLengthOf(msk), schemeAnonymousME.getLengthOf(sk_ID_k), schemeAnonymousME.getLengthOf(sk_ID_kDerived), schemeAnonymousME.getLengthOf(CT)	\
+		schemeAAIBME.getLengthOf(group.random(ZR)), schemeAAIBME.getLengthOf(group.random(G1)), schemeAAIBME.getLengthOf(group.random(G2)), schemeAAIBME.getLengthOf(group.random(GT)), 	\
+		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(sk_ID_k), schemeAAIBME.getLengthOf(sk_ID_kDerived), schemeAAIBME.getLengthOf(CT)	\
 	]
-	del schemeAnonymousME
+	del schemeAAIBME
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
@@ -359,7 +370,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
-	roundCount, filePath = 20, "SchemeAnonymousME.xlsx"
+	roundCount, filePath = 20, "SchemeAAIBME.xlsx"
 	columns = [																	\
 		"curveType", "secparam", "l", "k", "roundCount", 								\
 		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 							\

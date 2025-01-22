@@ -5,7 +5,7 @@ from time import perf_counter, sleep
 try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
 except:
-	print("The environment of the ``charm`` library is not handled correctly. ")
+	print("The environment of the Python ``charm`` library is not handled correctly. ")
 	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
 	print("Please press the enter key to exit. ")
 	input()

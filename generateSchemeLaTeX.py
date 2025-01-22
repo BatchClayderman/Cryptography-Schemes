@@ -13,19 +13,17 @@ EOF = (-1)
 STARTUP_COMMAND_FORMAT = "START \"\" \"{0}\" \"{1}\" \"{2}\"" if __import__("platform").system().upper() == "WINDOWS" else "\"{0}\" \"{1}\" \"{2}\" &"
 
 
-def getTxt(filePath:str, index:int = 0) -> str: # get .txt content
-	coding = ("utf-8", "gbk", "utf-16") # codings
-	if 0 <= index < len(coding): # in the range
+def getTxt(filePath:str) -> str|None: # get ``*.txt`` content
+	for coding in ("utf-8", "ANSI", "utf-16", "gbk"): # codings (add more codings here if necessary)
 		try:
-			with open(filePath, "r", encoding = coding[index]) as f:
+			with open(filePath, "r", encoding = coding) as f:
 				content = f.read()
 			return content[1:] if content.startswith("\ufeff") else content # if utf-8 with BOM, remove BOM
 		except (UnicodeError, UnicodeDecodeError):
-			return getTxt(filePath, index + 1) # recursion
+			continue
 		except:
 			return None
-	else:
-		return None # out of range
+	return None
 
 def convertEscaped(string:str) -> str:
 	if isinstance(string, str):
@@ -108,7 +106,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Space:", 					\
 				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", 													\
 				"Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 												\
-				"The environment of the ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 						\
+				"The environment of the Python ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 				\
 				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", 		\
 				"\\nThe experiments were interrupted by users. The program will try to save the results collected. ", 							\
 				"curveType =", "curveType = Unknown", "k =", "l =", "m =", "n =", "round =", "secparam ="								\
