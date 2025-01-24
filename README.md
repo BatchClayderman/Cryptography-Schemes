@@ -225,6 +225,6 @@ The experimental environment details are as follows. Thanks to the developers fo
 - [PBC-0.5.14](https://crypto.stanford.edu/pbc/download.html)
 - [OpenSSL library 3.0.13](https://www.openssl.org/) (``sudo apt-get install libssl-dev``)
 - [Official Python charm library](https://github.com/JHUISI/charm)
-- [Python charm library adapted to Python 3.12.x](https://github.com/EliusSolis/charm)
+- [Python charm library adapted to Python 3.12.x](https://github.com/EliusSolis/charm) (merged to the official one on January 23rd)
 
 Thanks to [Department of Computer Science](https://www.cs.hku.hk/), [School of Computing and Data Science](https://www.cds.hku.hk/), [The University of Hong Kong](https://www.hku.hk/). 
