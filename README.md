@@ -85,7 +85,7 @@ def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # By
 		return -1
 ```
 
-To compute the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following codes. 
+To compute the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following codes. These codes are not used in the official implementations of the cryptography schemes here. Please adjust the codes in your own repositories if you wish to compute this measurement. 
 
 ```
 from sys import getsizeof
@@ -93,7 +93,7 @@ from sys import getsizeof
 s = getsizeof(group.random(ZR)) # Byte(s)
 ```
 
-To compute the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. 
+To compute the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. These codes are not used in the official implementations of the cryptography schemes here. Please adjust the codes in your own repositories if you wish to compute this measurement. 
 
 ```
 import os
@@ -162,6 +162,8 @@ Here are the equivalent implementations in Java programming language based on th
 - Proposed:
   - [https://github.com/BatchClayderman/AA-IB-ME](https://github.com/BatchClayderman/AA-IB-ME)
 
+Regardless, using the implementations in Python programming language is more encouraging. 
+
 ## 3. SchemeCANIFPPCT
 
 Click [here](./SchemeCANIFPPCT/README.md) to view details. 
@@ -176,7 +178,7 @@ Here are the equivalent implementations in Java programming language based on th
   - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
 
-Anyway, it is still encouraging to use the implementations in Python programming language. 
+Regardless, using the implementations in Python programming language is more encouraging. 
 
 ## 4. SchemeHIBME
 
