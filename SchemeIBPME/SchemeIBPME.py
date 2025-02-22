@@ -202,40 +202,102 @@ class SchemeIBPME:
 		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
-		if pair(ct1, g) == pair(h, ct2) and pair(ct1, H5(ct1 + ct2 + ct3 + ct4)) == pair(h, ct5):
-			ct4Prime = ct4 / rk3 # $\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
-			ct7 = pair(rk2, ct2) / pair(ct1, rk1) # $\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
-			ctPrime = (ct2, ct3, ct4Prime, ct6, ct7, N) # $\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
+		if pair(ct1, g) == pair(h, ct2) and pair(ct1, H5(ct1 + ct2 + ct3 + ct4)) == pair(h, ct5): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+			ct4Prime = ct4 / rk3 # \quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
+			ct7 = pair(rk2, ct2) / pair(ct1, rk1) # \quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
+			ctPrime = (ct2, ct3, ct4Prime, ct6, ct7, N) # \quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
 		else:
 			ctPrime = False
 		
 		# Return #
 		return ctPrime # $\textbf{return }\textit{ct}'$
-	def Dec(self:object, skIDk:tuple, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
+	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:Element) -> Element: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
-			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
+			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
 			self.Setup()
-		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= ((self.__l - 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDk]): # hybrid check
-			sk_ID_k = skIDk
+		id2Generated = self.__group.random(ZR)
+		if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
+			dk_id_2 = dkid2
 		else:
-			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
-			print("Dec: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
-		if isinstance(cipher, tuple) and len(cipher) == 4 and all([isinstance(ele, Element) for ele in cipher]):# hybrid check
-			CT = cipher
+			dk_id_2 = self.DKGen(id2Generated)
+			print("Dec1: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
+		if isinstance(id1, Element) and id1.type == ZR: # type check
+			id_1 = id1
 		else:
-			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
-			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated with $M \\in \\mathbb{G}_T$ generated randomly. ")
+			id_1 = self.__group.random(ZR)
+			print("Dec1: The variable $\\textit{id}_1$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
+			ct = cipher
+		else:
+			ct = self.Enc(self.EKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
+			print("Dec1: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
+		del id2Generated
 		
 		# Unpack #
-		A, B, C, D = CT
-		a0, a1, b = sk_ID_k[0], sk_ID_k[1], sk_ID_k[2]
+		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
+		x = self.__msk[0]
+		rk1, rk2, rk3 = rk[1], rk[2], rk[3]
+		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
-		M = pair(b, D) * A / (pair(B, a0) * pair(C, a1)) # $M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
+		if pair(ct1, g) == pair(h, ct2) and pair(ct1, H5(ct1 + ct2 + ct3 + ct4)) == pair(h, ct5): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+			V = pair(dk_id_2[1], H2(id_1)) # \quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
+			etaPrime = ct4 / V # \quad$\eta' \gets \frac{\textit{ct}_4}{V}$
+			r = H3((ct3 ^ H4(pair(dk_id_2[0], ct2)) ^ H4(etaPrime)) + etaPrime) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
+			if g ** r == ct2: # \quad If $g^r = \textit{ct}_2$: 
+				m = True
+			else:
+				m = False
+		else:
+			m = False
 		
 		# Return #
-		return M # $\textbf{return }M$
+		return m # $\textbf{return }m$
+	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, cipherPrime:Element) -> Element: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{ct}') \rightarrow m$
+		# Check #
+		if not self.__flag:
+			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
+			self.Setup()
+		if isinstance(dkid3, tuple) and len(dkid3) == 2 and all([isinstance(ele, Element) for ele in dkid3]): # hybrid check
+			dk_id_3 = dkid3
+		else:
+			dk_id_3 = self.DKGen(self.__group.random(ZR))
+			print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
+		if isinstance(id1, Element) and id1.type == ZR: # type check
+			id_1 = id1
+		else:
+			id_1 = self.__group.random(ZR)
+			print("Dec2: The variable $\\textit{id}_1$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(id2, Element) and id2.type == ZR: # type check
+			id_2 = id2
+		else:
+			id_2 = self.__group.random(ZR)
+			print("Dec2: The variable $\\textit{id}_2$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and all([isinstance(ele, Element) for ele in cipherPrime]): # hybrid check
+			ctPrime = cipherPrime
+		else:
+			ctPrime = self.ReEnc(self.Enc(self.EKGen(self.__group.random(ZR)), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), self.__group.random(ZR), self.__group.random(ZR)))
+			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
+		x = self.__msk[0]
+		rk1, rk2, rk3 = rk[1], rk[2], rk[3]
+		ct2, ct3, ct4Prime, ct6, ct7, N = ctPrime
+		
+		# Scheme #
+		V = pair(dk_id_3[1], H2(id_2)) # $V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
+		etaPrime = ct4Prime * pair(H2(id_1), H7(V + id2 + id3 + N)) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
+		R = ct7 / pair(H6(pair(dk_id_3[0], ct6)), ct2) # $R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
+		r = H3((ct3 ^ H4(R) ^ H4(etaPrime)) + etaPrime) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
+		if g ** r == ct2: # If $g^r = \textit{ct}_2$: 
+			m = True
+		else:
+			m = False
+		
+		# Return #
+		return m # $\textbf{return }m$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
