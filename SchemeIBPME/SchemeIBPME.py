@@ -19,7 +19,7 @@ EOF = (-1)
 
 
 class SchemeIBPME:
-	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
+	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -36,13 +36,13 @@ class SchemeIBPME:
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
 		h = self.__group.random(G1) # generate $h \in \mathbb{G}_1$ randomly
 		x, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $x, \alpha \in \mathbb{Z}_p^*$ randomly
-		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_p^*$
-		H4 = lambda x:self.__group.hash(self.__group.serialize(x), GT) $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_T$
-		H5 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H6 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H7 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_7: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_p^*$
+		H4 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H5 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H6 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H7 = lambda x:self.__group.hash(x, G1) # $H_7: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		y = g ** x # $y \gets g^x$
 		self.__mpk = (g, h, H1, H2, H3, H4, H5, H6, H7, y) # $ \textit{mpk} \gets (G, G_T, q, g, e, h, H_1, H_2, H_3, H_4, H_5, H_6, H_7, y)$
 		self.__msk = (x, alpha) # $\textit{msk} \gets (x, \alpha)$
@@ -92,21 +92,30 @@ class SchemeIBPME:
 		
 		# Return #
 		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
-	def ReEKGen(self:object, ekid2:Element, dkid2:tuple, id1:Element, id3:Element) -> tuple: # $\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_3) \rightarrow \textit{rk}$
+	def ReEKGen(self:object, ekid2:Element, dkid2:tuple, id1:Element, id2:Element, id3:Element) -> tuple: # $\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
 		# Check #
 		if not self.__flag:
 			print("ReEKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReEKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(ekid2, Element): # type check
-			ek_id_2 = ekid2
+		if isinstance(id2, Element) and id2.type == ZR: # type check:
+			id_2 = id2
+			if isinstance(ekid2, Element): # type check
+				ek_id_2 = ekid2
+			else:
+				ek_id_2 = self.EKGen(id_2)
+				print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated accordingly. ")
+			if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
+				dk_id_2 = dkid2
+			else:
+				dk_id_2 = self.DKGen(id_2)
+				print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
 		else:
-			ek_id_2 = self.EKGen(self.__group.random(ZR))
-			print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated randomly. ")
-		if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
-			dk_id_2 = dkid2
-		else:
-			dk_id_2 = self.DKGen(self.__group.random(ZR))
-			print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
+			id_2 = self.__group.random(ZR)
+			print("ReEKGen: The variable $\\textit{id}_2$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			ek_id_2 = self.EKGen(id_2)
+			print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
+			dk_id_2 = self.DKGen(id_2)
+			print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ has been generated accordingly. ")
 		if isinstance(id1, Element) and id1.type == ZR: # type check
 			id_1 = id1
 		else:
@@ -119,7 +128,7 @@ class SchemeIBPME:
 			print("ReEKGen: The variable $\\textit{id}_3$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		H1, H2, H6, H7, y = self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
+		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
 		
 		# Scheme #
 		N = self.__group.random(ZR) # generate $N \in \{0, 1\}^\lambda$ randomly
@@ -127,7 +136,10 @@ class SchemeIBPME:
 		rk1 = g ** xBar # $\textit{rk}_1 \gets g^{\bar{x}}$
 		rk2 = dk_id_2[0] * h ** xBar * H6(pair(y, H1(id_3)) ** xBar) # $\textit{rk}_2 \gets \textit{dk}_{\textit{id}_2, 1} h^{\bar{x}} H_6(e(y, H_1(\textit{id}_3))^{\bar{x}})$
 		K = pair(ek_id_2, H1(id_3)) # $K \gets e(\textit{ek}_{\textit{id}_2}, H_1(\textit{id}_3))$
-		rk3 = pair(H2(id_1), H7(K + id_2 + id_3 + N) * dk_id_2[1]) # $\textit{rk}_3 \gets e(H_2(\textit{id}_1), H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2})$
+		rk3 = pair( # $\textit{rk}_3 \gets e(
+			H2(id_1), # H_2(\textit{id}_1), 
+			H7(self.__group.serialize(K) + self.__group.serialize(id_2) + self.__group.serialize(id_3) + self.__group.serialize(N)) * dk_id_2[1] # H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
+		) # )$
 		rk = (N, rk1, rk2, rk3) # $\textit{rk} \gets (N, \textit{rk}_1, \textit{rk}_2, \textit{rk}_3)$
 		
 		# Return #
@@ -154,17 +166,17 @@ class SchemeIBPME:
 			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		g, h, H1, H3, H4, H5 = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[4], self.__mpk[5], self.__mpk[6]
+		g, h, H1, H3, H4, H5, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[-1]
 		
 		# Scheme #
 		sigma = self.__group.random(G1) # generate $\sigma \in \mathbb{G}_1$ randomly
 		eta = self.__group.random(GT) # generate $\eta \in \mathbb{G}_T$ randomly
-		r = H3(m + sigma + eta) # $r \gets H_3(m || \sigma || \eta)$
+		r = H3(self.__group.serialize(m) + self.__group.serialize(sigma) + self.__group.serialize(eta)) # $r \gets H_3(m || \sigma || \eta)$
 		ct1 = h ** r # $\textit{ct}_1 \gets h^r$
 		ct2 = g ** r # $\textit{ct}_2 \gets g^r$
-		ct3 = (m + sigma) ^ H4(pair(y, H1(id_2)) ** r) ^ H4(eta) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
+		ct3 = (self.__group.serialize(m) + self.__group.serialize(sigma)) ^ H4(pair(y, H1(id_2)) ** r) ^ H4(eta) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
 		ct4 = eta * pair(ek_id_1, H1(id_2)) # $\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
-		ct5 = H5(ct1 + ct2 + ct3 + ct4) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct_3} || \textit{ct}_4)^r$
+		ct5 = H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4)) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct_3} || \textit{ct}_4)^r$
 		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
 		
 		# Return #
@@ -183,7 +195,7 @@ class SchemeIBPME:
 		if isinstance(reKey, tuple) and len(reKey) == 4 and all([isinstance(ele, Element) for ele in reKey]): # hybrid check
 			rk = reKey
 		else:
-			rk = self.ReEKGen(self.EKGen(id2Generated), self.DKGen(id2Generated), self.__group.random(ZR), self.__group.random(ZR))
+			rk = self.ReEKGen(self.EKGen(id2Generated), self.DKGen(id2Generated), self.__group.random(ZR), id2Generated, self.__group.random(ZR))
 			print("ReEnc: The variable $\\textit{rk}$ should be a tuple containing 4 elements but it is not, which has been generated randomly. ")
 		del id2Generated
 		
@@ -194,7 +206,10 @@ class SchemeIBPME:
 		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
-		if pair(ct1, g) == pair(h, ct2) and pair(ct1, H5(ct1 + ct2 + ct3 + ct4)) == pair(h, ct5): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+		if (																															\
+			pair(ct1, g) == pair(h, ct2)																									\
+			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4))) == pair(h, ct5)	\
+		): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
 			ct4Prime = ct4 / rk3 # \quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
 			ct7 = pair(rk2, ct2) / pair(ct1, rk1) # \quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
 			ctPrime = (ct2, ct3, ct4Prime, ct6, ct7, N) # \quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
@@ -233,10 +248,13 @@ class SchemeIBPME:
 		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
-		if pair(ct1, g) == pair(h, ct2) and pair(ct1, H5(ct1 + ct2 + ct3 + ct4)) == pair(h, ct5): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+		if (																															\
+			pair(ct1, g) == pair(h, ct2)																									\
+			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4))) == pair(h, ct5)	\
+		): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
 			V = pair(dk_id_2[1], H2(id_1)) # \quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
 			etaPrime = ct4 / V # \quad$\eta' \gets \frac{\textit{ct}_4}{V}$
-			r = H3((ct3 ^ H4(pair(dk_id_2[0], ct2)) ^ H4(etaPrime)) + etaPrime) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
+			r = H3(self.__group.serialize(ct3 ^ H4(pair(dk_id_2[0], ct2)) ^ H4(etaPrime)) + self.__group.serialize(etaPrime)) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
 			if g ** r == ct2: # \quad If $g^r = \textit{ct}_2$: 
 				m = True
 			else:
@@ -270,7 +288,7 @@ class SchemeIBPME:
 		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and all([isinstance(ele, Element) for ele in cipherPrime]): # hybrid check
 			ctPrime = cipherPrime
 		else:
-			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id3Generated))
+			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id_2, id3Generated))
 			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -281,9 +299,9 @@ class SchemeIBPME:
 		
 		# Scheme #
 		V = pair(dk_id_3[1], H2(id_2)) # $V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
-		etaPrime = ct4Prime * pair(H2(id_1), H7(V + id2 + id3 + N)) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
+		etaPrime = ct4Prime * pair(H2(id_1), H7(self.__group.serialize(V) + self.__group.serialize(id2) + self.__group.serialize(id3) + self.__group.serialize(N))) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
 		R = ct7 / pair(H6(pair(dk_id_3[0], ct6)), ct2) # $R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
-		r = H3((ct3 ^ H4(R) ^ H4(etaPrime)) + etaPrime) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
+		r = H3(self.__group.serialize(ct3 ^ H4(R) ^ H4(etaPrime)) + self.__group.serialize(etaPrime)) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
 		if g ** r == ct2: # If $g^r = \textit{ct}_2$: 
 			m = True
 		else:
@@ -342,7 +360,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeIBPME.Setup(l)
+	mpk, msk = schemeIBPME.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -365,7 +383,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# ReEKGen #
 	startTime = perf_counter()
-	rk = schemeIBPME.ReEKGen(ek_id_2, dk_id_2, id_1, id_3)
+	rk = schemeIBPME.ReEKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -447,36 +465,34 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
+	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBPME.xlsx"
-	columns = [																	\
-		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 	\
+	columns = [																							\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 		\
 		"Setup (s)", "DKGen (s)", "EKGen (s)", "ReEKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 			\
-		"ek_id_1 (B)", "ek_id_2 (B)", "ek_id_3 (B)", "dk_id_1 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"			\
+		"ek_id_1 (B)", "ek_id_2 (B)", "ek_id_3 (B)", "dk_id_1 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"		\
 	]
 	
 	# Scheme #
 	length, results = len(columns), []
-	try:
+	if True:#try:
 		roundCount = max(1, roundCount)
 		for curveType in curveTypes:
-			for l in (5, 10, 15, 20, 25, 30):
-				for k in range(5, l, 5):
-					average = Scheme(curveType, l, k, 0)
-					for round in range(1, roundCount):
-						result = Scheme(curveType, l, k, round)
-						for idx in range(5, 8):
-							average[idx] += result[idx]
-						for idx in range(8, length):
-							average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-					average[4] = roundCount
-					for idx in range(8, length):
-						average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
-					results.append(average)
-	except KeyboardInterrupt:
+			average = Scheme(curveType, 0)
+			for round in range(1, roundCount):
+				result = Scheme(curveType, round)
+				for idx in range(3, 7):
+					average[idx] += result[idx]
+				for idx in range(7, length):
+					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
+			average[2] = roundCount
+			for idx in range(7, length):
+				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
+			results.append(average)
+	#except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	except BaseException as e:
+	#except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
