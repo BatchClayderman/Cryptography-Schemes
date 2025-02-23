@@ -255,6 +255,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	
 	# End #
+	booleans = [True, message == M]
 	spaceRecords = [																																	\
 		schemeIBME.getLengthOf(group.random(ZR)), schemeIBME.getLengthOf(group.random(G1)), schemeIBME.getLengthOf(group.random(GT)), 						\
 		schemeIBME.getLengthOf(mpk), schemeIBME.getLengthOf(msk), schemeIBME.getLengthOf(ek_S), schemeIBME.getLengthOf(dk_R), schemeIBME.getLengthOf(C)		\
@@ -262,11 +263,11 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	del schemeIBME
 	print("Original:", message)
 	print("Decrypted:", M)
-	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
+	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[1] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M] + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None

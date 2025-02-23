@@ -27,14 +27,6 @@ class SchemeIBPME:
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
-	def __product(self:object, vec:tuple|list|set) -> Element:
-		if isinstance(vec, (tuple, list, set)) and vec:
-			element = vec[0]
-			for ele in vec[1:]:
-				element *= ele
-			return element
-		else:
-			return self.__group.init(ZR, 1)
 	def Setup(self:object) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
@@ -259,10 +251,11 @@ class SchemeIBPME:
 		if not self.__flag:
 			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
 			self.Setup()
+		id3Generated = self.__group.random(ZR)
 		if isinstance(dkid3, tuple) and len(dkid3) == 2 and all([isinstance(ele, Element) for ele in dkid3]): # hybrid check
 			dk_id_3 = dkid3
 		else:
-			dk_id_3 = self.DKGen(self.__group.random(ZR))
+			dk_id_3 = self.DKGen(id3Generated)
 			print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
 		if isinstance(id1, Element) and id1.type == ZR: # type check
 			id_1 = id1
@@ -277,7 +270,7 @@ class SchemeIBPME:
 		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and all([isinstance(ele, Element) for ele in cipherPrime]): # hybrid check
 			ctPrime = cipherPrime
 		else:
-			ctPrime = self.ReEnc(self.Enc(self.EKGen(self.__group.random(ZR)), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), self.__group.random(ZR), self.__group.random(ZR)))
+			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id3Generated))
 			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -312,45 +305,33 @@ class SchemeIBPME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	# Begin #
-	if isinstance(l, int) and isinstance(k, int) and 2 <= k < l:
-		try:
-			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
-				if curveType[1] >= 1:
-					group = PairingGroup(curveType[0], secparam = curveType[1])
-				else:
-					group = PairingGroup(curveType[0])
+	try:
+		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
+			if curveType[1] >= 1:
+				group = PairingGroup(curveType[0], secparam = curveType[1])
 			else:
-				group = PairingGroup(curveType)
-		except BaseException as e:
-			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
-				print("curveType =", curveType[0])
-				if curveType[1] >= 1:
-					print("secparam =", curveType[1])
-			elif isinstance(curveType, str):
-				print("curveType =", curveType)
-			else:
-				print("curveType = Unknown")
-			print("l =", l)
-			print("k =", k)
-			if isinstance(round, int) and round >= 0:
-				print("round =", round)
-			print("Is the system valid? No. \n\t{0}".format(e))
-			return (																																														\
-				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
-			)
-	else:
-		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
+				group = PairingGroup(curveType[0])
+		else:
+			group = PairingGroup(curveType)
+		pair(group.random(G1), group.random(G1))
+	except BaseException as e:
+		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
+			print("curveType =", curveType[0])
+			if curveType[1] >= 1:
+				print("secparam =", curveType[1])
+		elif isinstance(curveType, str):
+			print("curveType =", curveType)
+		if isinstance(round, int) and round >= 0:
+			print("round =", round)
+		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
-			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
+			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
+			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 22																																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
-	print("l =", l)
-	print("k =", k)
 	if isinstance(round, int) and round >= 0:
 		print("round =", round)
 	print("Is the system valid? Yes. ")
@@ -365,49 +346,72 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# KGen #
+	# DKGen #
 	startTime = perf_counter()
-	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeIBPME.KGen(ID_k)
+	id_2 = group.random(ZR)
+	id_3 = group.random(ZR)
+	dk_id_2 = schemeIBPME.DKGen(id_2)
+	dk_id_3 = schemeIBPME.DKGen(id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# DerivedKGen #
+	# EKGen #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeIBPME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeIBPME.DerivedKGen(sk_ID_kMinus1, ID_k)
+	id_1 = group.random(ZR)
+	ek_id_1 = schemeIBPME.EKGen(id_1)
+	ek_id_2 = schemeIBPME.EKGen(id_2)
+	endTime = perf_counter()
+	timeRecords.append(endTime - startTime)
+	
+	# ReEKGen #
+	startTime = perf_counter()
+	rk = schemeIBPME.ReEKGen(ek_id_2, dk_id_2, id_1, id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeIBPME.Enc(ID_k, message)
+	ct = schemeIBPME.Enc(ek_id_1, id_2, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# Dec #
+	# ReEnc #
 	startTime = perf_counter()
-	M = schemeIBPME.Dec(sk_ID_k,  CT)
-	MDerived = schemeIBPME.Dec(sk_ID_kDerived, CT)
+	ctPrime = schemeIBPME.ReEnc(ct, rk)
+	endTime = perf_counter()
+	timeRecords.append(endTime - startTime)
+	
+	# Dec1 #
+	startTime = perf_counter()
+	m = schemeIBPME.Dec(dk_id_2, id_1, ct)
+	endTime = perf_counter()
+	timeRecords.append(endTime - startTime)
+	
+	# Dec2 #
+	startTime = perf_counter()
+	mPrime = schemeIBPME.Dec(dk_id_3, id_1, id_2, ctPrime)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
+	booleans = [True, isinstance(ctPrime, Element), isinstance(m, Element) and message == m, isinstance(mPrime, Element) and message == mPrime]
 	spaceRecords = [																																													\
 		schemeIBPME.getLengthOf(group.random(ZR)), schemeIBPME.getLengthOf(group.random(G1)), schemeIBPME.getLengthOf(group.random(G2)), schemeIBPME.getLengthOf(group.random(GT)), 	\
-		schemeIBPME.getLengthOf(mpk), schemeIBPME.getLengthOf(msk), schemeIBPME.getLengthOf(sk_ID_k), schemeIBPME.getLengthOf(sk_ID_kDerived), schemeIBPME.getLengthOf(CT)	\
+		schemeIBPME.getLengthOf(mpk), schemeIBPME.getLengthOf(msk), schemeIBPME.getLengthOf(ek_id_1), schemeIBPME.getLengthOf(ek_id_2), schemeIBPME.getLengthOf(ek_id_3), 			\
+		schemeIBPME.getLengthOf(dk_id_1), schemeIBPME.getLengthOf(dk_id_2), schemeIBPME.getLengthOf(dk_id_3), schemeIBPME.getLengthOf(ct), schemeIBPME.getLengthOf(ctPrime)		\
 	]
 	del schemeIBPME
 	print("Original:", message)
-	print("Derived:", MDerived)
-	print("Decrypted:", M)
-	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
-	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
+	print("Dec1:", m)
+	print("Dec2:", mPrime)
+	print("Is ``ReEnc`` passed? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Is ``Dec1`` passed (m == message)? {0}. ".format("Yes" if booleans[2] else "No"))
+	print("Is ``Dec2`` passed (m\' == message)? {0}. ".format("Yes" if booleans[3] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, l, k, round if isinstance(round, int) else None, True, message == MDerived, message == M] + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
@@ -446,11 +450,10 @@ def main() -> int:
 	curveTypes = ("MNT159", "MNT201", "MNT224", ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBPME.xlsx"
 	columns = [																	\
-		"curveType", "secparam", "l", "k", "roundCount", 								\
-		"isSystemValid", "isDeriverPassed", "isSchemeCorrect", 							\
-		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 					\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 		\
-		"mpk (B)", "msk (B)", "SK (B)", "SK' (B)", "CT (B)"								\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 	\
+		"Setup (s)", "DKGen (s)", "EKGen (s)", "ReEKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 			\
+		"ek_id_1 (B)", "ek_id_2 (B)", "ek_id_3 (B)", "dk_id_1 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"			\
 	]
 	
 	# Scheme #
