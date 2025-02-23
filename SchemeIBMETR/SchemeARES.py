@@ -271,6 +271,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	
 	# End #
+	booleans = [True, message == M, bRet]
 	spaceRecords = [																																			\
 		schemeARES.getLengthOf(group.random(ZR)), schemeARES.getLengthOf(group.random(G1)), schemeARES.getLengthOf(group.random(GT)), 								\
 		schemeARES.getLengthOf(mpk), schemeARES.getLengthOf(msk), schemeARES.getLengthOf(Pvk_Id), schemeARES.getLengthOf(Pvk_IdTraced), schemeARES.getLengthOf(CT)	\
@@ -278,12 +279,12 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	del schemeARES
 	print("Original:", message)
 	print("Decrypted:", M)
-	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
-	print("Is the tracing verified? {0}. ".format("Yes" if bRet else "No"))
+	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Is the tracing verified? {0}. ".format("Yes" if booleans[2] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == M, bRet] + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None

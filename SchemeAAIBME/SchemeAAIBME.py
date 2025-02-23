@@ -320,6 +320,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	
 	# End #
+	booleans = [True, message == MDerived, message == M]
 	spaceRecords = [																																													\
 		schemeAAIBME.getLengthOf(group.random(ZR)), schemeAAIBME.getLengthOf(group.random(G1)), schemeAAIBME.getLengthOf(group.random(G2)), schemeAAIBME.getLengthOf(group.random(GT)), 	\
 		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(sk_ID_k), schemeAAIBME.getLengthOf(sk_ID_kDerived), schemeAAIBME.getLengthOf(CT)	\
@@ -328,12 +329,12 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
-	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
-	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
+	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[2] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, l, k, round if isinstance(round, int) else None, True, message == MDerived, message == M] + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, l, k, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None

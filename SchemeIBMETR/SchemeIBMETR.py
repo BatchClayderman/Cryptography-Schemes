@@ -351,6 +351,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	
 	# End #
+	booleans = [True, message == m, bRet]
 	spaceRecords = [																																						\
 		schemeIBMETR.getLengthOf(group.random(ZR)), schemeIBMETR.getLengthOf(group.random(G1)), schemeIBMETR.getLengthOf(group.random(GT)), schemeIBMETR.getLengthOf(mpk), 		\
 		schemeIBMETR.getLengthOf(msk), schemeIBMETR.getLengthOf(ek_id_S), schemeIBMETR.getLengthOf(dk_id_R), schemeIBMETR.getLengthOf(tk_id_R), schemeIBMETR.getLengthOf(ct)	\
@@ -358,12 +359,12 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	del schemeIBMETR
 	print("Original:", message)
 	print("Decrypted:", m)
-	print("Is the scheme correct (message == m)? {0}. ".format("Yes" if message == m else "No"))
-	print("Is the tracing verified? {0}. ".format("Yes" if bRet else "No"))
+	print("Is the scheme correct (message == m)? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Is the tracing verified? {0}. ".format("Yes" if booleans[2] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None, True, message == m, bRet] + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None

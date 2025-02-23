@@ -546,6 +546,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	timeRecords.append(endTime - startTime)
 	
 	# End #
+	booleans = [True, message == MDerived, message == M]
 	spaceRecords = [																																	\
 		schemeHIBME.getLengthOf(group.random(ZR)), schemeHIBME.getLengthOf(group.random(G1)), schemeHIBME.getLengthOf(group.random(G2)), 					\
 		schemeHIBME.getLengthOf(group.random(GT)), schemeHIBME.getLengthOf(mpk), schemeHIBME.getLengthOf(msk), schemeHIBME.getLengthOf(ek_ID_S), 			\
@@ -555,12 +556,12 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
-	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if message == MDerived else "No"))
-	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if message == M else "No"))
+	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[2] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, l, m, n, round if isinstance(round, int) else None, True, message == MDerived, message == M] + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, l, m, n, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
