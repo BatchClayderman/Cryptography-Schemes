@@ -100,13 +100,17 @@ $\textbf{return }\textit{ct}$
 
 \subsection{$\textbf{ReEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$}
 
-If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+\textbf{If} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 
 \quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
 
 \quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
 
 \quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
+
+\textbf{else}
+
+\quad$\textit{ct}' \gets \perp$
 
 $\textbf{return }\textit{ct}'$
 

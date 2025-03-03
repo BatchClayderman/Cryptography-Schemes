@@ -324,24 +324,25 @@ class SchemeHIBME:
 		# Scheme #
 		s1, s2, eta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, \eta \in \mathbb{Z}_p^*$ randomly
 		T = A ** (s1 + s2) # $T \gets A^{s_1 + s_2}$
-		if m == n: # If $m = n$:
-			K = self.__product(tuple(pair(g ** eta * ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # $K \gets \prod_{i = 1}^n e(g^{\eta} \cdot \textit{ek}_{1, i}, H_2(I'_i))$
-		elif m > n: # If $m > n$:
-			An = self.__product(tuple(a[i] for i in range(n))) # $A_n \gets \prod\limits_{i = 1}^n a_i$
-			Bmn = self.__product(tuple(a[i] for i in range(n, m))) # $B_n^m \gets \prod\limits_{i = n + 1}^m a_i$
-			K = ( # $K \gets
+		if m == n: # \textbf{if} $m = n$ \textbf{then}
+			K = self.__product(tuple(pair(g ** eta * ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # \quad$K \gets \prod_{i = 1}^n e(g^{\eta} \cdot \textit{ek}_{1, i}, H_2(I'_i))$
+		elif m > n: # \textbf{else if} $m > n$ \textbf{then}
+			An = self.__product(tuple(a[i] for i in range(n))) # \quad$A_n \gets \prod\limits_{i = 1}^n a_i$
+			Bmn = self.__product(tuple(a[i] for i in range(n, m))) # \quad$B_n^m \gets \prod\limits_{i = n + 1}^m a_i$
+			K = ( # \quad$K \gets
 				( # (
 					self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # \prod\limits_{i = 1}^n e(\textit{ek}_{1, i}, H_2(I'_i))
 					* self.__product(tuple(pair(H1(ID_Snd[n - 1]), H2(ID_Rev[i])) ** (a[i] * An) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{\alpha_i A_n}
 				) ** Bmn # )^{B_n^m}
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
-		else: # If $m < n$
-			K = ( # $K \gets
+		else: # \textbf{else if} $m < n$ \textbf{then}
+			K = ( # \quad$K \gets
 				self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(m))) # \prod\limits_{i = 1}^m e(\textit{ek}_{1, i}, H_2(I'_i))
 				* self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[m - 1])) for i in range(m, n))) # \prod\limits_{i = m + 1}^n e(\textit{ek}_{1, i}, H_2(I'_m))
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
+		# \textbf{end}
 		C1 = M ^ HHat(T) ^ HHat(K) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
 		C3 = gTilde ** s2 # $C_3 \gets \tilde{g}^{s_2}$
@@ -408,27 +409,28 @@ class SchemeHIBME:
 		
 		# Scheme #
 		TPrime = (pair(C2, dk1[0]) * pair(C3, dk1[1])) / pair(dk1[2], C4) # $T' = \cfrac{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}{e(\textit{dk}_{1, 3}, C_4)}$
-		if m == n: # If $m = n$:
-			KPrime = ( # $K' \gets
+		if m == n: # \textbf{if} $m = n$ \textbf{then}
+			KPrime = ( # \quad$K' \gets
 				self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i}) 
 				 * pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(n)))) # \cdot e(C_5, \prod\limits_{i = 1}^n H_2(I'_i))
 			) # $
-		elif m > n: # If $m > n$:
-			KPrime = ( # $K' \gets
+		elif m > n: # \textbf{else if} $m > n$ \textbf{then}
+			KPrime = ( # \quad$K' \gets
 				self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i})
 				* self.__product(tuple(pair(H1(ID_Snd[n - 1]), dk2[i]) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), \textit{dk}_{2, i})
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
-		else: # If $m < n$
-			Am = self.__product(tuple(a[i] for i in range(m))) # $A_m \gets \prod\limits_{i = 1}^m a_i$
-			Bnm = self.__product(tuple(a[i] for i in range(m, n))) # $B_n^m \gets \prod\limits_{i = m + 1}^n a_i$
-			KPrime = ( # $K' \gets
+		else: # \textbf{else if} $m < n$ \textbf{then}
+			Am = self.__product(tuple(a[i] for i in range(m))) # \quad$A_m \gets \prod\limits_{i = 1}^m a_i$
+			Bnm = self.__product(tuple(a[i] for i in range(m, n))) # \quad$B_n^m \gets \prod\limits_{i = m + 1}^n a_i$
+			KPrime = ( # \quad$K' \gets
 				( # (
 					self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(m))) # \prod\limits_{i = 1}^m e(H_1(I_i), \textit{dk}_{2, i})
 					* self.__product(tuple(pair(H1(ID_Snd[i]), H2(ID_Rev[m - 1])) ** (a[i] * Am) for i in range(m, n))) # \cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{\alpha_i A_m}
 				) ** Bnm # )^{B_m^n}
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
+		# \textbf{end if}
 		M = C1 ^ HHat(TPrime) ^ HHat(KPrime) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #

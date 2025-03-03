@@ -216,12 +216,13 @@ class SchemeIBPME:
 		if (																															\
 			pair(ct1, g) == pair(h, ct2)																									\
 			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4))) == pair(h, ct5)	\
-		): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+		): # \textbf{If} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 			ct4Prime = ct4 / rk3 # \quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
 			ct7 = pair(rk2, ct2) / pair(ct1, rk1) # \quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
 			ctPrime = (ct2, ct3, ct4Prime, ct6, ct7, N) # \quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
-		else:
-			ctPrime = False
+		else: # \textbf{else}
+			ctPrime = False # \quad$\textit{ct}' \gets \perp$
+		# \textbf{end if}
 		
 		# Return #
 		return ctPrime # $\textbf{return }\textit{ct}'$

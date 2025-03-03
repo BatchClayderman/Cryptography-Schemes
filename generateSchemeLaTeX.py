@@ -188,7 +188,7 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 								prompt = line[line.index(" # ") + 3:]
 								if "$" == prompt.strip():
 									doubleSeparatorFlag = not doubleSeparatorFlag # invert the double separator switch
-								elif prompt.lstrip().startswith("$") and not prompt.rstrip().endswith("$"):
+								elif (prompt.lstrip().startswith("$") or prompt.lstrip().startswith("\\quad$")) and not prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = False # disable the double separator switch
 								elif not prompt.lstrip().startswith("$") and prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = True # enable the double separator switch
