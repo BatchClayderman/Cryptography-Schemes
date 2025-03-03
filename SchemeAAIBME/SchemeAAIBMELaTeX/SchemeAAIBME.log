@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.1.6)  22 JAN 2025 17:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.1.6)  4 MAR 2025 04:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -117,7 +117,7 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count273
 \l__pdf_internal_box=\box53
 )
-No file SchemeAAIBME.aux.
+(./SchemeAAIBME.aux)
 \openout1 = `SchemeAAIBME.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 6.
@@ -136,11 +136,10 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 6.
 LaTeX Font Info:    ... okay on input line 6.
 LaTeX Font Info:    Trying to load font information for U+msa on input line 10.
 
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+ (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
 LaTeX Font Info:    Trying to load font information for U+msb on input line 10.
-
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
@@ -169,10 +168,10 @@ L3 programming layer <2024-01-22>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 1821 strings out of 476182
- 25134 string characters out of 5795596
+ 1824 strings out of 476182
+ 25197 string characters out of 5795596
  1941975 words of memory out of 5000000
- 23837 multiletter control sequences out of 15000+600000
+ 23838 multiletter control sequences out of 15000+600000
  572665 words of font info for 88 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  56i,5n,65p,266b,162s stack positions out of 10000i,1000n,20000p,200000b,200000s

@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from secrets import randbelow
 from time import perf_counter, sleep
 try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
@@ -36,12 +37,12 @@ class SchemeIBPME:
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
 		h = self.__group.random(G1) # generate $h \in \mathbb{G}_1$ randomly
 		x, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $x, \alpha \in \mathbb{Z}_p^*$ randomly
-		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H2 = lambda x:self.__group.hash(x, G1) # $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_p^*$
-		H4 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H5 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H6 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H4 = lambda x:self.__group.hash(x, G1) # $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1^2$
+		H5 = lambda x:self.__group.hash(x, G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H6 = lambda x:self.__group.hash(x, G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H7 = lambda x:self.__group.hash(x, G1) # $H_7: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		y = g ** x # $y \gets g^x$
 		self.__mpk = (g, h, H1, H2, H3, H4, H5, H6, H7, y) # $ \textit{mpk} \gets (G, G_T, q, g, e, h, H_1, H_2, H_3, H_4, H_5, H_6, H_7, y)$
@@ -50,16 +51,16 @@ class SchemeIBPME:
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def DKGen(self:object, idR:Element) -> tuple: # $\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
+	def DKGen(self:object, idR:bytes) -> tuple: # $\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
 			print("DKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(idR, Element) and idR.type == ZR: # type check
+		if isinstance(idR, bytes): # type check
 			id_R = idR
 		else:
-			id_R = self.__group.random(ZR)
-			print("DKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			id_R = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
+			print("DKGen: The variable $\\textit{id}_R$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		H1 = self.__mpk[2]
@@ -72,16 +73,16 @@ class SchemeIBPME:
 		
 		# Return #
 		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
-	def EKGen(self:object, idS:Element) -> Element: # $\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
+	def EKGen(self:object, idS:bytes) -> Element: # $\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
 		# Check #
 		if not self.__flag:
 			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(idS, Element) and idS.type == ZR: # type check
+		if isinstance(idS, bytes): # type check
 			id_S = idS
 		else:
-			id_S = self.__group.random(ZR)
-			print("EKGen: The variable $\\textit{id}_S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			id_S = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
+			print("EKGen: The variable $\\textit{id}_S$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		H2 = self.__mpk[3]
@@ -92,12 +93,12 @@ class SchemeIBPME:
 		
 		# Return #
 		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
-	def ReEKGen(self:object, ekid2:Element, dkid2:tuple, id1:Element, id2:Element, id3:Element) -> tuple: # $\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
+	def ReEKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
 		# Check #
 		if not self.__flag:
 			print("ReEKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReEKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(id2, Element) and id2.type == ZR: # type check:
+		if isinstance(id2, bytes): # type check:
 			id_2 = id2
 			if isinstance(ekid2, Element): # type check
 				ek_id_2 = ekid2
@@ -111,21 +112,21 @@ class SchemeIBPME:
 				print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
 		else:
 			id_2 = self.__group.random(ZR)
-			print("ReEKGen: The variable $\\textit{id}_2$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("ReEKGen: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 			ek_id_2 = self.EKGen(id_2)
 			print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
 			dk_id_2 = self.DKGen(id_2)
 			print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ has been generated accordingly. ")
-		if isinstance(id1, Element) and id1.type == ZR: # type check
+		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
 			id_1 = self.__group.random(ZR)
-			print("ReEKGen: The variable $\\textit{id}_1$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
-		if isinstance(id3, Element) and id3.type == ZR: # type check
+			print("ReEKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+		if isinstance(id3, bytes): # type check
 			id_3 = id3
 		else:
 			id_3 = self.__group.random(ZR)
-			print("ReEKGen: The variable $\\textit{id}_3$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("ReEKGen: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
@@ -138,7 +139,7 @@ class SchemeIBPME:
 		K = pair(ek_id_2, H1(id_3)) # $K \gets e(\textit{ek}_{\textit{id}_2}, H_1(\textit{id}_3))$
 		rk3 = pair( # $\textit{rk}_3 \gets e(
 			H2(id_1), # H_2(\textit{id}_1), 
-			H7(self.__group.serialize(K) + self.__group.serialize(id_2) + self.__group.serialize(id_3) + self.__group.serialize(N)) * dk_id_2[1] # H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
+			H7(self.__group.serialize(K)[2:] + id_2 + id_3 + self.__group.serialize(N)[2:]) * dk_id_2[1] # H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
 		) # )$
 		rk = (N, rk1, rk2, rk3) # $\textit{rk} \gets (N, \textit{rk}_1, \textit{rk}_2, \textit{rk}_3)$
 		
@@ -154,11 +155,11 @@ class SchemeIBPME:
 		else:
 			ek_id_1 = self.EKGen(self.__group.random(ZR))
 			print("Enc: The variable $\\textit{ek}_{\\textit{id}_1}$ should be an element but it is not, which has been generated randomly. ")
-		if isinstance(id2, Element) and id2.type == ZR: # type check
+		if isinstance(id2, bytes): # type check
 			id_2 = id2
 		else:
 			id_2 = self.__group.random(ZR)
-			print("Enc: The variable $\\textit{id}_2$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(message, Element) and message.type == GT: # type check
 			m = message
 		else:
@@ -174,9 +175,15 @@ class SchemeIBPME:
 		r = H3(self.__group.serialize(m) + self.__group.serialize(sigma) + self.__group.serialize(eta)) # $r \gets H_3(m || \sigma || \eta)$
 		ct1 = h ** r # $\textit{ct}_1 \gets h^r$
 		ct2 = g ** r # $\textit{ct}_2 \gets g^r$
-		ct3 = (self.__group.serialize(m) + self.__group.serialize(sigma)) ^ H4(pair(y, H1(id_2)) ** r) ^ H4(eta) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
+		ct3 = self.__group.init(
+			ZR, (
+				int.from_bytes(self.__group.serialize(m)[2:] + self.__group.serialize(sigma)[2:], byteorder = "big")
+				^ int.from_bytes(self.__group.serialize(H4(pair(y, H1(id_2)) ** r))[2:], byteorder = "big")
+				^ int.from_bytes(self.__group.serialize(H4(eta))[2:], byteorder = "big")
+			)
+		) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
 		ct4 = eta * pair(ek_id_1, H1(id_2)) # $\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
-		ct5 = H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4)) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct_3} || \textit{ct}_4)^r$
+		ct5 = H5(self.__group.serialize(ct1)[2:] + self.__group.serialize(ct2)[2:] + self.__group.serialize(ct3)[2:] + self.__group.serialize(ct4)[2:]) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
 		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
 		
 		# Return #
@@ -200,7 +207,7 @@ class SchemeIBPME:
 		del id2Generated
 		
 		# Unpack #
-		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
+		g, h, H1, H2, H5, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[6], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
 		x = self.__msk[0]
 		rk1, rk2, rk3 = rk[1], rk[2], rk[3]
 		ct1, ct2, ct3, ct4, ct5 = ct
@@ -218,7 +225,7 @@ class SchemeIBPME:
 		
 		# Return #
 		return ctPrime # $\textbf{return }\textit{ct}'$
-	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:Element) -> Element: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
+	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
@@ -229,11 +236,11 @@ class SchemeIBPME:
 		else:
 			dk_id_2 = self.DKGen(id2Generated)
 			print("Dec1: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
-		if isinstance(id1, Element) and id1.type == ZR: # type check
+		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
 			id_1 = self.__group.random(ZR)
-			print("Dec1: The variable $\\textit{id}_1$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec1: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
 			ct = cipher
 		else:
@@ -242,9 +249,8 @@ class SchemeIBPME:
 		del id2Generated
 		
 		# Unpack #
-		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
+		g, h, H1, H2, H5, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[6], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
 		x = self.__msk[0]
-		rk1, rk2, rk3 = rk[1], rk[2], rk[3]
 		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
@@ -264,7 +270,7 @@ class SchemeIBPME:
 		
 		# Return #
 		return m # $\textbf{return }m$
-	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, cipherPrime:Element) -> Element: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{ct}') \rightarrow m$
+	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, cipherPrime:tuple|bool) -> Element|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{ct}') \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
@@ -275,18 +281,20 @@ class SchemeIBPME:
 		else:
 			dk_id_3 = self.DKGen(id3Generated)
 			print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
-		if isinstance(id1, Element) and id1.type == ZR: # type check
+		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
 			id_1 = self.__group.random(ZR)
-			print("Dec2: The variable $\\textit{id}_1$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
-		if isinstance(id2, Element) and id2.type == ZR: # type check
+			print("Dec2: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+		if isinstance(id2, bytes): # type check
 			id_2 = id2
 		else:
 			id_2 = self.__group.random(ZR)
-			print("Dec2: The variable $\\textit{id}_2$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec2: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and all([isinstance(ele, Element) for ele in cipherPrime]): # hybrid check
 			ctPrime = cipherPrime
+		elif isinstance(cipherPrime, bool):
+			return False
 		else:
 			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id_2, id3Generated))
 			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
@@ -346,7 +354,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 22																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 20																																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -366,8 +374,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# DKGen #
 	startTime = perf_counter()
-	id_2 = group.random(ZR)
-	id_3 = group.random(ZR)
+	id_2 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
+	id_3 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
 	dk_id_2 = schemeIBPME.DKGen(id_2)
 	dk_id_3 = schemeIBPME.DKGen(id_3)
 	endTime = perf_counter()
@@ -375,7 +383,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# EKGen #
 	startTime = perf_counter()
-	id_1 = group.random(ZR)
+	id_1 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
 	ek_id_1 = schemeIBPME.EKGen(id_1)
 	ek_id_2 = schemeIBPME.EKGen(id_2)
 	endTime = perf_counter()
@@ -402,22 +410,23 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Dec1 #
 	startTime = perf_counter()
-	m = schemeIBPME.Dec(dk_id_2, id_1, ct)
+	m = schemeIBPME.Dec1(dk_id_2, id_1, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec2 #
 	startTime = perf_counter()
-	mPrime = schemeIBPME.Dec(dk_id_3, id_1, id_2, ctPrime)
+	mPrime = schemeIBPME.Dec2(dk_id_3, id_1, id_2, ctPrime)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	booleans = [True, isinstance(ctPrime, Element), isinstance(m, Element) and message == m, isinstance(mPrime, Element) and message == mPrime]
-	spaceRecords = [																																													\
-		schemeIBPME.getLengthOf(group.random(ZR)), schemeIBPME.getLengthOf(group.random(G1)), schemeIBPME.getLengthOf(group.random(G2)), schemeIBPME.getLengthOf(group.random(GT)), 	\
-		schemeIBPME.getLengthOf(mpk), schemeIBPME.getLengthOf(msk), schemeIBPME.getLengthOf(ek_id_1), schemeIBPME.getLengthOf(ek_id_2), schemeIBPME.getLengthOf(ek_id_3), 			\
-		schemeIBPME.getLengthOf(dk_id_1), schemeIBPME.getLengthOf(dk_id_2), schemeIBPME.getLengthOf(dk_id_3), schemeIBPME.getLengthOf(ct), schemeIBPME.getLengthOf(ctPrime)		\
+	spaceRecords = [																													\
+		schemeIBPME.getLengthOf(group.random(ZR)), schemeIBPME.getLengthOf(group.random(G1)), 												\
+		schemeIBPME.getLengthOf(group.random(G2)), schemeIBPME.getLengthOf(group.random(GT)), 											\
+		schemeIBPME.getLengthOf(mpk), schemeIBPME.getLengthOf(msk), schemeIBPME.getLengthOf(ek_id_1), schemeIBPME.getLengthOf(ek_id_2), 		\
+		schemeIBPME.getLengthOf(dk_id_2), schemeIBPME.getLengthOf(dk_id_3), schemeIBPME.getLengthOf(ct), schemeIBPME.getLengthOf(ctPrime)	\
 	]
 	del schemeIBPME
 	print("Original:", message)
@@ -471,12 +480,12 @@ def main() -> int:
 		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 		\
 		"Setup (s)", "DKGen (s)", "EKGen (s)", "ReEKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 			\
-		"ek_id_1 (B)", "ek_id_2 (B)", "ek_id_3 (B)", "dk_id_1 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"		\
+		"ek_id_1 (B)", "ek_id_2 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"									\
 	]
 	
 	# Scheme #
 	length, results = len(columns), []
-	if True:#try:
+	try:
 		roundCount = max(1, roundCount)
 		for curveType in curveTypes:
 			average = Scheme(curveType, 0)
@@ -490,9 +499,9 @@ def main() -> int:
 			for idx in range(7, length):
 				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 			results.append(average)
-	#except KeyboardInterrupt:
+	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
+	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
