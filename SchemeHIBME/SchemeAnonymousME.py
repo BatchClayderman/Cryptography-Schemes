@@ -47,7 +47,7 @@ class SchemeAnonymousME:
 		
 		# Scheme #
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
-		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2, \in \mathbb{Z}_p^*$ randomly
+		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2, \in \mathbb{Z}_r$ randomly
 		g2, g3 = self.__group.random(G2), self.__group.random(G2) # generate $g_2, g_3 \in \mathbb{G}_2$ randomly
 		h = tuple(self.__group.random(G2) for _ in range(self.__l)) # generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
@@ -72,7 +72,7 @@ class SchemeAnonymousME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																					\
 				(																																					\
-					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
@@ -83,7 +83,7 @@ class SchemeAnonymousME:
 		k = len(ID_k)
 		
 		# Scheme #
-		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
+		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_r$ randomly
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
@@ -121,7 +121,7 @@ class SchemeAnonymousME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																								\
 				(																																								\
-					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																									\
 				).format(self.__l - 1, self.__l)																																			\
 			)
@@ -136,7 +136,7 @@ class SchemeAnonymousME:
 		c0, c1, d0, d1 = sk_ID_kMinus1[3:3 + lengthPerToken], sk_ID_kMinus1[3 + lengthPerToken:3 + (lengthPerToken << 1)], sk_ID_kMinus1[-2 - (lengthPerToken << 1):-2 - lengthPerToken], sk_ID_kMinus1[-2 - lengthPerToken:-2]
 		
 		# Scheme #
-		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
+		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_r$ randomly
 		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
 				a0 * c0[0] ** ID_k[k - 1] * (f0 * d0[0] ** ID_k[k - 1] * g3Bar) ** t, # a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t, 
@@ -163,7 +163,7 @@ class SchemeAnonymousME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																					\
 				(																																					\
-					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
@@ -178,7 +178,7 @@ class SchemeAnonymousME:
 		k = len(ID_k)
 		
 		# Scheme #
-		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_r$ randomly
 		CT = ( # $\textit{CT} \gets (
 			pair(g1, g2) ** (s1 + s2) * M, # e(g_1, g_2)^{s_1 + s_2} \cdot M, 
 			gBar ** s1, # \bar{g}^{s_1}, 
@@ -309,7 +309,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	
 	# End #
-	booleans = [True, message = MDerived, message == M]
+	booleans = [True, message == MDerived, message == M]
 	spaceRecords = [																																													\
 		schemeAnonymousME.getLengthOf(group.random(ZR)), schemeAnonymousME.getLengthOf(group.random(G1)), schemeAnonymousME.getLengthOf(group.random(G2)), schemeAnonymousME.getLengthOf(group.random(GT)), 	\
 		schemeAnonymousME.getLengthOf(mpk), schemeAnonymousME.getLengthOf(msk), schemeAnonymousME.getLengthOf(sk_ID_k), schemeAnonymousME.getLengthOf(sk_ID_kDerived), schemeAnonymousME.getLengthOf(CT)	\

@@ -67,7 +67,7 @@ class SchemeIBMETR:
 			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest() * ((self.__group.secparam - 1) // 512 + 1), byteorder = "big") & self.__operand # $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
 			print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
-		w, alpha, t1, t2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, alpha, t_1, t_2 \in \mathbb{Z}_p^*$
+		w, alpha, t1, t2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, alpha, t_1, t_2 \in \mathbb{Z}_r$
 		Omega = pair(g, g) ** w # $\Omega \gets e(g, g)^w$
 		v1 = g ** t1 # $v \gets g^{t_1}$
 		v2 = g ** t2 # $v \gets g^{t_2}$
@@ -86,7 +86,7 @@ class SchemeIBMETR:
 			id_S = idS
 		else:
 			id_S = self.__group.random(ZR)
-			print("EKGen: The variable $\\textit{id}_S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("EKGen: The variable $\\textit{id}_S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		H1 = self.__mpk[-3]
@@ -106,14 +106,14 @@ class SchemeIBMETR:
 			id_R = idR
 		else:
 			id_R = self.__group.random(ZR)
-			print("DKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("DKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, g0, g1, H2 = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[-2]
 		w, alpha, t1, t2 = self.__msk
 		
 		# Scheme #
-		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
+		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_r$ randomly
 		dk0 = H2(id_R) ** alpha # $\textit{dk}_0 \gets H_2(\textit{id}_R)^\alpha$
 		dk1 = g ** r # $\textit{dk}_1 \gets g^r$
 		dk2 = g ** (-(w / t1)) * (g0 * g1 ** id_R) ** (-(r / t1)) # $\textit{dk}_2 \gets g^{-\frac{w}{t_1}}(g_0 g_1^{\textit{id}_R})^{-\frac{r}{t_1}}$
@@ -131,14 +131,14 @@ class SchemeIBMETR:
 			id_R = idR
 		else:
 			id_R = self.__group.random(ZR)
-			print("TKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("TKGen: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, g0, g1 = self.__mpk[1], self.__mpk[2], self.__mpk[3]
 		t1, t2 = self.__msk[2], self.__msk[3]
 		
 		# Scheme #
-		k = self.__group.random(ZR) # generate $k \in \mathbb{Z}_p^*$ randomly
+		k = self.__group.random(ZR) # generate $k \in \mathbb{Z}_r$ randomly
 		tk1 = g ** k # $\textit{tk}_1 \gets g^k$
 		tk2 = g ** (1 / t1) * (g0 * g1 ** id_R) ** (-(k / t1)) # $\textit{tk}_2 \gets g^{\frac{1}{t_1}}(g_0 g_1^{\textit{id}_R})^{-\frac{k}{t_1}}$
 		tk3 = g ** (1 / t2) * (g0 * g1 ** id_R) ** (-(k / t2)) # $\textit{tk}_3 \gets g^{\frac{1}{t_2}}(g_0 g_1^{\textit{id}_R})^{-\frac{k}{t_2}}$
@@ -160,7 +160,7 @@ class SchemeIBMETR:
 			id_Rev = idRev
 		else:
 			id_Rev = self.__group.random(ZR)
-			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(message, int): # type check
 			m = message & self.__operand
 			if message != m:
@@ -177,7 +177,7 @@ class SchemeIBMETR:
 		g, g0, g1, v1, v2, Omega, H2, HHat = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[-2], self.__mpk[-1]
 		
 		# Scheme #
-		s1, s2, beta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, beta \in \mathbb{Z}_p^*$ randomly
+		s1, s2, beta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, beta \in \mathbb{Z}_r$ randomly
 		s = s1 + s2 # $s = s_1 + s_2$
 		R = Omega ** -s # $R = \Omega^{-s}$
 		T = g ** beta # $T \gets g^\beta$
@@ -205,14 +205,14 @@ class SchemeIBMETR:
 				print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ should be a tuple containing 4 elements but it is not, which has been generated accordingly. ")
 		else:
 			id_Rev = self.__group.random(ZR)
-			print("Dec: The variable $\\textit{id}_\\textit{Rev}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\\textit{id}_\\textit{Rev}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 			dk_id_R = self.DKGen(id_Rev)
 			print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ has been generated accordingly. ")
 		if isinstance(idSnd, Element) and idSnd.type == ZR: # type check
 			id_Snd = idSnd
 		else:
 			id_Snd = self.__group.random(ZR)
-			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
 			ct = cipher
 		else:

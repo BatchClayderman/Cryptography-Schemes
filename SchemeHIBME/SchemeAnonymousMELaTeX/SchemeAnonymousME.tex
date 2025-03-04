@@ -11,7 +11,7 @@
 
 generate $g \in \mathbb{G}_1$ randomly
 
-generate $\alpha, b_1, b_2, \in \mathbb{Z}_p^*$ randomly
+generate $\alpha, b_1, b_2, \in \mathbb{Z}_r$ randomly
 
 generate $g_2, g_3 \in \mathbb{G}_2$ randomly
 
@@ -35,7 +35,7 @@ $\textbf{return }(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
-generate $r \in \mathbb{Z}_p^*$ randomly
+generate $r \in \mathbb{Z}_r$ randomly
 
 $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
 
@@ -54,7 +54,7 @@ $\textbf{return }\textit{sk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
-generate $t \in \mathbb{Z}_p^*$ randomly
+generate $t \in \mathbb{Z}_r$ randomly
 
 $\textit{sk}_{\textit{ID}_k} \gets (
 a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t, 
@@ -71,7 +71,7 @@ $\textbf{return }\textit{sk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$}
 
-generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+generate $s_1, s_2 \in \mathbb{Z}_r$ randomly
 
 $\textit{CT} \gets (
 e(g_1, g_2)^{s_1 + s_2} \cdot M, 

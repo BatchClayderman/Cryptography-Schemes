@@ -46,14 +46,14 @@ class SchemeIBMECH:
 		g1 = self.__group.random(G1) # generate $g_1 \in \mathbb{G}_1$ randomly
 		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
-		alpha, eta = self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, \eta \in \mathbb{Z}_p^*$ randomly
-		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\textbf{0}_{\mathbb{Z}_p^*}, \textbf{1}_{\mathbb{Z}_p^*} \in \mathbb{Z}_p^*$ randomly
-		B = [[self.__group.random(ZR) for j in range(8)] for i in range(8)] # generate $\bm{B} \gets (\mathbb{Z}_p^*)^{8 \times 8}$ randomly
+		alpha, eta = self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, \eta \in \mathbb{Z}_r$ randomly
+		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\textbf{0}_{\mathbb{Z}_r}, \textbf{1}_{\mathbb{Z}_r} \in \mathbb{Z}_r$ randomly
+		B = [[self.__group.random(ZR) for j in range(8)] for i in range(8)] # generate $\bm{B} \gets (\mathbb{Z}_r)^{8 \times 8}$ randomly
 		D = tuple(tuple(g1 ** B[i][j] for j in range(8)) for i in range(4)) # $\mathbb{D}_{i, j} \gets g_1^{\bm{B}_{i, j}}, \forall i \in \{1, 2, 3, 4\}, \forall j \in \{1, 2, \cdots, 8\}$
 		DStar = tuple(tuple(GaussEliminationinGroups([B[j] + [one if i == j else zero] for j in range(8)])) for i in range(4)) # $\mathbb{D}_i^* \gets \textit{GaussEliminationinGroups}(\bm{B} || [1 = i, 2 = i, \cdots, 8 = i]^\mathrm{T}), \forall i \in \{1, 2, 3, 4\}$
 		del B
 		gT = pair(g1, g2) # $g_T \gets e(g_1, g_2)$
-		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \textbf{1}_{\mathbb{Z}_p^*}}, g_T^{\eta \times \textbf{1}_{\mathbb{Z}_p^*}}, D_1, D_2)$
+		self.__mpk = (gT ** (alpha * one), gT ** (eta * one), D[0], D[1]) # $\textit{mpk} \gets (g_T^{\alpha \times \textbf{1}_{\mathbb{Z}_r}}, g_T^{\eta \times \textbf{1}_{\mathbb{Z}_r}}, D_1, D_2)$
 		self.__msk = (alpha, eta, g1, g2, D[2], D[3], DStar[0], DStar[1], DStar[2], DStar[3]) # $\textit{msk} \gets (\alpha, \eta, g_1, g_2, \bm{d}_3, \bm{d}_4, \bm{d}_1^*, \bm{d}_2^*, \bm{d}_3^*, \bm{d}_4^*)$
 		
 		# Return #
@@ -68,13 +68,13 @@ class SchemeIBMECH:
 			sigma = sender
 		else:
 			sigma = self.__group.random(ZR)
-			print("SKGen: The variable $\\sigma$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("SKGen: The variable $\\sigma$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		eta, d3, d4 = self.__msk[1], self.__msk[4], self.__msk[5]
 		
 		# Scheme #
-		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$
+		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_r$
 		ek_sigma = tuple(d3[i] ** (eta + r * sigma) / d4[i] ** r for i in range(8)) # $\textit{ek}_\sigma \gets \frac{\bm{d}_{3, i}^{\eta + r \sigma}}{\bm{d}_{4, i}^r}, \forall i \in \{1, 2, \cdots, 8\}$
 		
 		# Return #
@@ -88,14 +88,14 @@ class SchemeIBMECH:
 			rho = receiver
 		else:
 			rho = self.__group.random(ZR)
-			print("RKGen: The variable $\\rho$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("RKGen: The variable $\\rho$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		gTToThePowerOfEta = self.__mpk[1]
 		alpha, g2, DStar1, DStar2, DStar3, DStar4 = self.__msk[0], self.__msk[3], self.__msk[6], self.__msk[7], self.__msk[8], self.__msk[9]
 		
 		# Scheme #
-		s, s1, s2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s, s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+		s, s1, s2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s, s_1, s_2 \in \mathbb{Z}_r$ randomly
 		k1 = tuple(g2 ** (DStar1[i] * (alpha + s1 * rho) - s1 * DStar2[i] + s * DStar3[i]) for i in range(8)) # $k_1 \gets \{g_2^{\bm{d}_{1, i} \cdot (\alpha + s_1 \rho) - s_1 \bm{d}_{2, i} + s \bm{d}_{3, i}}, \forall i \in \{1, 2, \cdots, 8\}\}$
 		k2 = tuple(g2 ** (s2 * (rho * DStar1[i] - DStar2[i]) + s * DStar4[i]) for i in range(8)) # $k_2 \gets \{g_2^{s_2 \cdot (\rho * \bm{d}_{1, i} - \bm{d}_{2, i}) + s \bm{d}_{4, i}}, \forall i \in \{1, 2, \cdots, 8\}\}$
 		k3 = gTToThePowerOfEta ** s # $k_3 \gets (g_T^\eta)^s$
@@ -117,7 +117,7 @@ class SchemeIBMECH:
 			rcv = receiver
 		else:
 			rcv = self.__group.random(ZR)
-			print("Enc: The variable $\\textit{rcv}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $\\textit{rcv}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(message, Element) and message.type == GT: # type check
 			m = message
 		else:
@@ -128,7 +128,7 @@ class SchemeIBMECH:
 		gTToThePowerOfAlpha, D1, D2 = self.__mpk[0], self.__mpk[2], self.__mpk[3]
 		
 		# Scheme #
-		z = self.__group.random(ZR) # generate $z \gets \mathbb{Z}_p^*$ randomly
+		z = self.__group.random(ZR) # generate $z \gets \mathbb{Z}_r$ randomly
 		C = tuple(D1[i] ** z * D2[i] ** (z * rcv) * ek_sigma[i] for i in range(8)) # $C \gets \{\bm{d}_{1, i}^z \bm{d}_{2, i}^{z \cdot \textit{rcv}} \cdot (\textit{ek}_\sigma)_i, \forall i \in \{1, 2, \cdots, 8\}\}$
 		C0 = gTToThePowerOfAlpha ** z * m # $C_0 \gets (g_T^\alpha)^z m$
 		ct = (C, C0) # $\textit{ct} \gets (C, C_0)$
@@ -152,7 +152,7 @@ class SchemeIBMECH:
 			snd = sender
 		else:
 			snd = self.__group.random(ZR)
-			print("Dec: The variable $\\textit{snd}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec: The variable $\\textit{snd}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 2 and isinstance(cipher[0], tuple) and len(cipher[0]) == 8 and all([isinstance(ele, Element) for ele in cipher[0]]) and isinstance(cipher[1], Element): # hybrid check
 			ct = cipher
 		else:

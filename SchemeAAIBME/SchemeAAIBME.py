@@ -50,10 +50,10 @@ class SchemeAAIBME:
 		g1, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_1, g_3 \in \mathbb{G}_1$ randomly
 		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
 		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_p^*$
-		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_p^*$
-		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_p^*$
-		r, s, t, omega, t1, t2, t3, t4 = self.__group.random(ZR, 8) # generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_p^*$ randomly
+		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
+		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
+		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
+		r, s, t, omega, t1, t2, t3, t4 = self.__group.random(ZR, 8) # generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
 		R = g1 ** r # $R \gets g_1^r$
 		S = g2 ** s # $S \gets g_2^s$
 		T = g1 ** t # $T \gets g_1^t$
@@ -79,7 +79,7 @@ class SchemeAAIBME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																					\
 				(																																					\
-					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
@@ -88,8 +88,8 @@ class SchemeAAIBME:
 		g1 = self.__mpk[0]
 		
 		# Scheme #
-		k_i, x_i = self.__group.random(ZR), self.__group.random(ZR) # generate $k_i, x_i \in \mathbb{Z}_p^*$ randomly
-		z_i = (r - x_i) * (s * x_i) ** (-1) # $z_i \gets (r - x_i)(s x_i)^{-1} \in \mathbb{Z}_p^*$
+		k_i, x_i = self.__group.random(ZR), self.__group.random(ZR) # generate $k_i, x_i \in \mathbb{Z}_r$ randomly
+		z_i = (r - x_i) * (s * x_i) ** (-1) # $z_i \gets (r - x_i)(s x_i)^{-1} \in \mathbb{Z}_r$
 		Z_i = g1 ** z_i # $Z_i \gets g_1^{z_i} \in \mathbb{G}_1$
 		sk_ID_i = k_i # $\textit{sk}_{\textit{ID}_i} \gets k_i$
 		ek_ID_i = (x_i, Z_i) # $\textit{ek}_{\textit{ID}_i} \gets (x_i, Z_i)$
@@ -132,7 +132,7 @@ class SchemeAAIBME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																								\
 				(																																								\
-					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																									\
 				).format(self.__l - 1, self.__l)																																			\
 			)
@@ -147,7 +147,7 @@ class SchemeAAIBME:
 		c0, c1, d0, d1 = sk_ID_kMinus1[3:3 + lengthPerToken], sk_ID_kMinus1[3 + lengthPerToken:3 + (lengthPerToken << 1)], sk_ID_kMinus1[-2 - (lengthPerToken << 1):-2 - lengthPerToken], sk_ID_kMinus1[-2 - lengthPerToken:-2]
 		
 		# Scheme #
-		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
+		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_r$ randomly
 		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
 			(
 				a0 * c0[0] ** ID_k[k - 1] * (f0 * d0[0] ** ID_k[k - 1] * g3Bar) ** t, # a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t, 
@@ -174,7 +174,7 @@ class SchemeAAIBME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																					\
 				(																																					\
-					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_p^*$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
@@ -189,7 +189,7 @@ class SchemeAAIBME:
 		k = len(ID_k)
 		
 		# Scheme #
-		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_r$ randomly
 		CT = ( # $\textit{CT} \gets (
 			pair(g1, g2) ** (s1 + s2) * M, # e(g_1, g_2)^{s_1 + s_2} \cdot M, 
 			gBar ** s1, # \bar{g}^{s_1}, 

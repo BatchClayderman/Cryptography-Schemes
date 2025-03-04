@@ -60,11 +60,11 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$M \\\\\\\\in \\\\\\\\mathbb{{G}}_T\\$ generated randomly\\. $".format(functionName, className), s)		\
 				or findall(																																														\
 					(																																														\
-						"^{0}: The variable \\$.+\\$ should be a tuple containing \\$.+ = .+\\$ elements(?: of \\$\\\\\\\\mathbb\\{{\\{{Z\\}}\\}}_p\\^\\*\\$)?(?: where the integer \\$.+ \\\\\\\\in .+\\$)? but it is not\\, "										\
+						"^{0}: The variable \\$.+\\$ should be a tuple containing \\$.+ = .+\\$ elements(?: of \\$\\\\\\\\mathbb\\{{\\{{Z\\}}\\}}_r\\$)?(?: where the integer \\$.+ \\\\\\\\in .+\\$)? but it is not\\, "										\
 						+ "which has been generated (?:randomly with a length of \\$.+\\$|accordingly)\\. $"																													\
 					).format(functionName, className), s																																							\
 				)																																															\
-				or findall("^{0}: The variable \\$.+\\$ should be an element(?: of \\$\\\\\\\\mathbb\\{{Z\\}}_p\\^\\*\\$)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)									\
+				or findall("^{0}: The variable \\$.+\\$ should be an element(?: of \\$\\\\\\\\mathbb\\{{Z\\}}_r\\$)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)									\
 			):
 				return True
 			else:

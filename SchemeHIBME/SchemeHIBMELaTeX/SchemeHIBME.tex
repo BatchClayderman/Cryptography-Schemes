@@ -13,17 +13,17 @@ This scheme is applicable to symmetric and asymmetric groups of prime orders.
 
 generate $g \in \mathbb{G}_1$ randomly
 
-generate $\alpha, b_1, b_2 \in \mathbb{Z}_p^*$ randomly
+generate $\alpha, b_1, b_2 \in \mathbb{Z}_r$ randomly
 
-generate $s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l \in \mathbb{Z}_p^*$ randomly
+generate $s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l \in \mathbb{Z}_r$ randomly
 
 generate $g_2, g_3 \in \mathbb{G}_2$ randomly
 
 generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)
 
-$H_1:\mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
+$H_1:\mathbb{Z}_r \rightarrow \mathbb{G}_1$
 
-$H_2:\mathbb{Z}_p^* \rightarrow \mathbb{G}_2$
+$H_2:\mathbb{Z}_r \rightarrow \mathbb{G}_2$
 
 $\hat{H}: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
 
@@ -77,7 +77,7 @@ $\textbf{return }\textit{ek}_{\textit{ID}_k}$
 
 \subsection{$\textbf{DKGen}(\textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$}
 
-generate $r \in \mathbb{Z}_p^*$ randomly
+generate $r \in \mathbb{Z}_r$ randomly
 
 $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
 
@@ -108,7 +108,7 @@ $\textbf{return }\textit{dk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{DerivedDKGen}(\textit{dk}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$}
 
-generate $t \in \mathbb{Z}_p^*$ randomly
+generate $t \in \mathbb{Z}_r$ randomly
 
 $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t$
 
@@ -139,7 +139,7 @@ $\textbf{return }\textit{dk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$}
 
-generate $s_1, s_2, \eta \in \mathbb{Z}_p^*$ randomly
+generate $s_1, s_2, \eta \in \mathbb{Z}_r$ randomly
 
 $T \gets A^{s_1 + s_2}$
 

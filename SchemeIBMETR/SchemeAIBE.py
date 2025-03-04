@@ -38,7 +38,7 @@ class SchemeAIBE:
 		
 		# Scheme #
 		g, g0, g1 = self.__group.random(G1), self.__group.random(G1), self.__group.random(G1) # generate $g, g_0, g_1 \in \mathbb{G}_1$ randomly
-		w, t1, t2, t3, t4 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, t_1, t_2, t_3, t_4 \in \mathbb{Z}_p^*$
+		w, t1, t2, t3, t4 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$
 		Omega = pair(g, g) ** (t1 * t2 * w) # $\Omega \gets e(g, g)^{t_1 t_2 w}$
 		v1 = g ** t1 # $v \gets g^{t_1}$
 		v2 = g ** t2 # $v \gets g^{t_2}$
@@ -59,14 +59,14 @@ class SchemeAIBE:
 			Id = identity
 		else:
 			Id = self.__group.random(ZR)
-			print("Extract: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Extract: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, g0, g1 = self.__mpk[1], self.__mpk[2], self.__mpk[3]
 		w, t1, t2, t3, t4 = self.__msk
 		
 		# Scheme #
-		r1, r2 = self.__group.random(ZR), self.__group.random(ZR) # generate $r1, r2 \in \mathbb{Z}_p^*$ randomly
+		r1, r2 = self.__group.random(ZR), self.__group.random(ZR) # generate $r1, r2 \in \mathbb{Z}_r$ randomly
 		d0 = g ** (r1 * t1 * t2 + r2 * t3 * t4) # $d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
 		d1 = g ** (-(w * t2)) * (g0 * g1 ** Id) ** (-(r1 * t2)) # $d_1 \gets g^{- w t_2} \cdot (g_0 g_1^\textit{Id})^{-  r_1 t_2}$
 		d2 = g ** (-(w * t1)) * (g0 * g1 ** Id) ** (-(r1 * t1)) # $d_2 \gets g^{- w t_1} \cdot (g_0 g_1^\textit{Id})^{-  r_1 t_1}$
@@ -85,7 +85,7 @@ class SchemeAIBE:
 			Id = identity
 		else:
 			Id = self.__group.random(ZR)
-			print("Encrypt: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Encrypt: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(message, Element) and message.type == GT: # type check
 			M = message
 		else:
@@ -96,7 +96,7 @@ class SchemeAIBE:
 		Omega, g0, g1, v1, v2, v3, v4 = self.__mpk[0], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7]
 		
 		# Scheme #
-		s, s1, s2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s, s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+		s, s1, s2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s, s_1, s_2 \in \mathbb{Z}_r$ randomly
 		CPi = Omega ** s * M # $C' \gets \Omega^s M$
 		C0 = (g0 * g1 ** Id) ** s # $(g_0 g_1^\textit{Id})^s$
 		C1 = v1 ** (s - s1) # $C_1 \gets v_1^{s - s_1}$

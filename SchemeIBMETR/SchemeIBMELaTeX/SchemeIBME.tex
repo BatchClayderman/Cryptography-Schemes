@@ -11,17 +11,17 @@ This scheme is only applicable to symmetric groups of prime orders.
 
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
-generate $r, s \in \mathbb{Z}_p^*$ randomly
+generate $r, s \in \mathbb{Z}_r$ randomly
 
 generate $P \in \mathbb{G}_1$ randomly
 
 $P_0 \gets r \cdot P$
 
-$H_1: \mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
+$H_1: \mathbb{Z}_r \rightarrow \mathbb{G}_1$
 
-generate $\textit{mask}, \|\textit{mask}\| \gets \|e\|, e \in \mathbb{Z}_p^*$ randomly
+generate $\textit{mask}, \|\textit{mask}\| \gets \|e\|, e \in \mathbb{Z}_r$ randomly
 
-$H': \mathbb{Z}_p^* \oplus \textit{mask} \rightarrow \mathbb{G}_1$
+$H': \mathbb{Z}_r \oplus \textit{mask} \rightarrow \mathbb{G}_1$
 
 $\textit{mpk} \gets (P, P_0, H, H')$
 
@@ -51,7 +51,7 @@ $\textbf{return }\textit{dk}_R$
 
 \subsection{$\textbf{Enc}(\textit{ek}_S, R, M) \rightarrow C$}
 
-generate $u, t \in \mathbb{Z}_p^*$ randomly
+generate $u, t \in \mathbb{Z}_r$ randomly
 
 $T \gets t \cdot P$
 

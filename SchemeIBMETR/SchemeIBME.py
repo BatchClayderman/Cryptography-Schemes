@@ -39,12 +39,12 @@ class SchemeIBME:
 		self.__flag = False
 		
 		# Scheme #
-		r, s = self.__group.random(ZR), self.__group.random(ZR) # generate $r, s \in \mathbb{Z}_p^*$ randomly
+		r, s = self.__group.random(ZR), self.__group.random(ZR) # generate $r, s \in \mathbb{Z}_r$ randomly
 		P = self.__group.random(G1) # generate $P \in \mathbb{G}_1$ randomly
 		P0 = r * P # $P_0 \gets r \cdot P$
-		H = lambda x:self.__group.hash(x, G1) # $H_1: \mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
-		mask = bytes([randbelow(256) for _ in range(len(self.__group.serialize(self.__group.random(ZR))))]) # generate $\textit{mask}, \|\textit{mask}\| \gets \|e\|, e \in \mathbb{Z}_p^*$ randomly
-		HPrime = lambda x:self.__group.hash(bytes([a ^ b for a, b in zip(self.__group.serialize(x), mask)]), G1) # $H': \mathbb{Z}_p^* \oplus \textit{mask} \rightarrow \mathbb{G}_1$
+		H = lambda x:self.__group.hash(x, G1) # $H_1: \mathbb{Z}_r \rightarrow \mathbb{G}_1$
+		mask = bytes([randbelow(256) for _ in range(len(self.__group.serialize(self.__group.random(ZR))))]) # generate $\textit{mask}, \|\textit{mask}\| \gets \|e\|, e \in \mathbb{Z}_r$ randomly
+		HPrime = lambda x:self.__group.hash(bytes([a ^ b for a, b in zip(self.__group.serialize(x), mask)]), G1) # $H': \mathbb{Z}_r \oplus \textit{mask} \rightarrow \mathbb{G}_1$
 		self.__mpk = (P, P0, H, HPrime) # $\textit{mpk} \gets (P, P_0, H, H')$
 		self.__msk = (r, s) # $\textit{msk} \gets (r, s)$
 		
@@ -60,7 +60,7 @@ class SchemeIBME:
 			S = sender
 		else:
 			S = self.__group.random(ZR)
-			print("SKGen: The variable $S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("SKGen: The variable $S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		HPrime = self.__mpk[-1]
@@ -80,7 +80,7 @@ class SchemeIBME:
 			R = receiver
 		else:
 			R = self.__group.random(ZR)
-			print("RKGen: The variable $R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("RKGen: The variable $R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		H = self.__mpk[-2]
@@ -109,7 +109,7 @@ class SchemeIBME:
 			R = receiver
 		else:
 			R = self.__group.random(ZR)
-			print("Enc: The variable $R$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Enc: The variable $R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(message, int): # type check
 			M = message & self.__operand
 			if message != M:
@@ -127,7 +127,7 @@ class SchemeIBME:
 		P, P0 = self.__mpk[0], self.__mpk[1]
 		
 		# Scheme #
-		u, t = self.__group.random(ZR), self.__group.random(ZR) # generate $u, t \in \mathbb{Z}_p^*$ randomly
+		u, t = self.__group.random(ZR), self.__group.random(ZR) # generate $u, t \in \mathbb{Z}_r$ randomly
 		T = t * P # $T \gets t \cdot P$
 		U = u * P # $U \gets u \cdot P$
 		H_R = H(R) # $H_R \gets H(R)$
@@ -152,7 +152,7 @@ class SchemeIBME:
 			S = sender
 		else:
 			S = self.__group.random(ZR)
-			print("Dec: The variable $S$ should be an element of $\\mathbb{Z}_p^*$ but it is not, which has been generated randomly. ")
+			print("Dec: The variable $S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(cipher, tuple) and len(cipher) == 3 and isinstance(cipher[0], Element) and isinstance(cipher[1], Element) and isinstance(cipher[2], int): # hybrid check
 			C = cipher
 		else:

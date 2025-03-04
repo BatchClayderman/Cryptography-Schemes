@@ -36,10 +36,10 @@ class SchemeIBPME:
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
 		h = self.__group.random(G1) # generate $h \in \mathbb{G}_1$ randomly
-		x, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $x, \alpha \in \mathbb{Z}_p^*$ randomly
+		x, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $x, \alpha \in \mathbb{Z}_r$ randomly
 		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(x, G1) # $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_p^*$
+		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
 		H4 = lambda x:self.__group.hash(x, G1) # $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1^2$
 		H5 = lambda x:self.__group.hash(x, G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H6 = lambda x:self.__group.hash(x, G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
@@ -133,7 +133,7 @@ class SchemeIBPME:
 		
 		# Scheme #
 		N = self.__group.random(ZR) # generate $N \in \{0, 1\}^\lambda$ randomly
-		xBar = self.__group.random(ZR) # generate $\bar{x} \in \mathbb{Z}_p^*$ randomly
+		xBar = self.__group.random(ZR) # generate $\bar{x} \in \mathbb{Z}_r$ randomly
 		rk1 = g ** xBar # $\textit{rk}_1 \gets g^{\bar{x}}$
 		rk2 = dk_id_2[0] * h ** xBar * H6(pair(y, H1(id_3)) ** xBar) # $\textit{rk}_2 \gets \textit{dk}_{\textit{id}_2, 1} h^{\bar{x}} H_6(e(y, H_1(\textit{id}_3))^{\bar{x}})$
 		K = pair(ek_id_2, H1(id_3)) # $K \gets e(\textit{ek}_{\textit{id}_2}, H_1(\textit{id}_3))$

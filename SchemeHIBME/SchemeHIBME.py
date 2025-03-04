@@ -49,12 +49,12 @@ class SchemeHIBME:
 		
 		# Scheme #
 		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
-		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2 \in \mathbb{Z}_p^*$ randomly
-		s, a = tuple(self.__group.random(ZR) for _ in range(self.__l)), tuple(self.__group.random(ZR) for _ in range(self.__l)) # generate $s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l \in \mathbb{Z}_p^*$ randomly
+		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2 \in \mathbb{Z}_r$ randomly
+		s, a = tuple(self.__group.random(ZR) for _ in range(self.__l)), tuple(self.__group.random(ZR) for _ in range(self.__l)) # generate $s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l \in \mathbb{Z}_r$ randomly
 		g2, g3 = self.__group.random(G2), self.__group.random(G2) # generate $g_2, g_3 \in \mathbb{G}_2$ randomly
 		h = tuple(self.__group.random(G2) for _ in range(self.__l)) # generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)
-		H1 = lambda x:self.__group.hash(x, G1) # $H_1:\mathbb{Z}_p^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G2) # $H_2:\mathbb{Z}_p^* \rightarrow \mathbb{G}_2$
+		H1 = lambda x:self.__group.hash(x, G1) # $H_1:\mathbb{Z}_r \rightarrow \mathbb{G}_1$
+		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G2) # $H_2:\mathbb{Z}_r \rightarrow \mathbb{G}_2$
 		if 512 == self.__group.secparam:
 			HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest(), byteorder = "big")
 		elif 384 == self.__group.secparam:
@@ -180,7 +180,7 @@ class SchemeHIBME:
 		k = len(ID_k)
 		
 		# Scheme #
-		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_p^*$ randomly
+		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_r$ randomly
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1} h_2^{I_2} \cdots h_k^{I_k}$
 		a0 = g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r # $a_0 \gets g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r$
 		a1 = g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r # $a_1 \gets g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r$
@@ -244,7 +244,7 @@ class SchemeHIBME:
 		f0, f1 = dk1[-2], dk1[-1]
 		
 		# Scheme #
-		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_p^*$ randomly
+		t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_r$ randomly
 		a0Prime = a0 * c0[0] ** ID_k[k - 1] * (f0 * d0[0] ** ID_k[k - 1] * g3Bar) ** t # $a'_0 \gets a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t$
 		a1Prime = a1 * c1[0] ** ID_k[k - 1] * (f1 * d1[0] ** ID_k[k - 1] * g3Tilde) ** t # $a'_1 \gets a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t$
 		dk1Prime = ( # $\textit{dk}'_1 \gets (
@@ -322,7 +322,7 @@ class SchemeHIBME:
 		n, m = len(ID_Snd), len(ID_Rev)
 		
 		# Scheme #
-		s1, s2, eta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, \eta \in \mathbb{Z}_p^*$ randomly
+		s1, s2, eta = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2, \eta \in \mathbb{Z}_r$ randomly
 		T = A ** (s1 + s2) # $T \gets A^{s_1 + s_2}$
 		if m == n: # \textbf{if} $m = n$ \textbf{then}
 			K = self.__product(tuple(pair(g ** eta * ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # \quad$K \gets \prod_{i = 1}^n e(g^{\eta} \cdot \textit{ek}_{1, i}, H_2(I'_i))$

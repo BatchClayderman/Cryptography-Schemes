@@ -13,7 +13,7 @@ This scheme is only applicable to symmetric groups of prime orders.
 
 generate $g, g_0, g_1 \in \mathbb{G}_1$ randomly
 
-generate $w, t_1, t_2, t_3, t_4 \in \mathbb{Z}_p^*$
+generate $w, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$
 
 $\Omega \gets e(g, g)^{t_1 t_2 w}$
 
@@ -33,7 +33,7 @@ $\textbf{return }(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{Extract}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$}
 
-generate $r1, r2 \in \mathbb{Z}_p^*$ randomly
+generate $r1, r2 \in \mathbb{Z}_r$ randomly
 
 $d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
 
@@ -51,7 +51,7 @@ $\textbf{return }\textit{Pvk}_\textit{Id}$
 
 \subsection{$\textbf{TSK}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$}
 
-generate $r1, r2 \in \mathbb{Z}_p^*$ randomly
+generate $r1, r2 \in \mathbb{Z}_r$ randomly
 
 $d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
 
@@ -69,7 +69,7 @@ $\textbf{return }\textit{Pvk}_\textit{Id}$
 
 \subsection{$\textbf{Encrypt}(\textit{Id}, m) \rightarrow \textit{CT}$}
 
-generate $s, s_1, s_2 \in \mathbb{Z}_p^*$ randomly
+generate $s, s_1, s_2 \in \mathbb{Z}_r$ randomly
 
 $C' \gets \Omega^s M$
 
