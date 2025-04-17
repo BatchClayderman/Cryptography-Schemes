@@ -324,7 +324,9 @@ def main() -> int:
 			for root, dirs, files in os.walk(argv[1]):
 				for fileName in files:
 					if os.path.splitext(fileName)[1].lower() == ".py" and "." != root and not fileName.startswith(".") and "/." not in root and "\\." not in root:
+						filePath = os.path.join(root, fileName)
 						totalCount += 1
+						print(filePath)
 						successCount += int(generateSchemeTxt(os.path.join(root, fileName)))
 		elif os.path.isfile(argv[1]) and os.path.splitext(argv[1])[1].lower() == ".py" and os.path.split(argv[1])[0] != os.path.abspath(os.path.dirname(__file__)):
 			totalCount += 1
@@ -335,9 +337,11 @@ def main() -> int:
 	else:
 		for root, dirs, files in os.walk("."):
 			for fileName in files:
-				if os.path.splitext(fileName)[1].lower() == ".py" and "." != root:
+				if os.path.splitext(fileName)[1].lower() == ".py" and "." != root and not fileName.startswith(".") and "/." not in root and "\\." not in root:
+					filePath = os.path.join(root, fileName)
 					totalCount += 1
-					successCount += int(generateSchemeTxt(os.path.join(root, fileName)))
+					print(filePath)
+					successCount += int(generateSchemeTxt(filePath))
 	iRet = EXIT_SUCCESS if totalCount and successCount == totalCount else EXIT_FAILURE
 	print("\n")
 	print("Successfully handled {0} / {1} {2} with a success rate of {3:.2f}%. ".format(successCount, totalCount, "items" if successCount > 1 else "item", successCount * 100 / totalCount) if totalCount else "Nothing was handled. ")
