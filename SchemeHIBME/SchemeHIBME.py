@@ -48,7 +48,7 @@ class SchemeHIBME:
 			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
-		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
+		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
 		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2 \in \mathbb{Z}_r$ randomly
 		s, a = tuple(self.__group.random(ZR) for _ in range(self.__l)), tuple(self.__group.random(ZR) for _ in range(self.__l)) # generate $s_1, s_2, \cdots, s_l, a_1, a_2, \cdots, a_l \in \mathbb{Z}_r$ randomly
 		g2, g3 = self.__group.random(G2), self.__group.random(G2) # generate $g_2, g_3 \in \mathbb{G}_2$ randomly
@@ -408,7 +408,7 @@ class SchemeHIBME:
 		m, n = len(ID_Rev), len(ID_Snd)
 		
 		# Scheme #
-		TPrime = (pair(C2, dk1[0]) * pair(C3, dk1[1])) / pair(dk1[2], C4) # $T' = \cfrac{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}{e(\textit{dk}_{1, 3}, C_4)}$
+		TPrime = pair(dk1[2], C4) / (pair(C2, dk1[0]) * pair(C3, dk1[1])) # $T' = \cfrac{e(\textit{dk}_{1, 3}, C_4)}{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}$
 		if m == n: # \textbf{if} $m = n$ \textbf{then}
 			KPrime = ( # \quad$K' \gets
 				self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(n))) # \prod\limits_{i = 1}^n e(H_1(I_i), \textit{dk}_{2, i}) 

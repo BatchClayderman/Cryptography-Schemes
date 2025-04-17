@@ -19,7 +19,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeIBPME:
+class SchemePBAC:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -34,16 +34,14 @@ class SchemeIBPME:
 		
 		# Scheme #
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
-		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
-		h = self.__group.random(G1) # generate $h \in \mathbb{G}_1$ randomly
-		x, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $x, \alpha \in \mathbb{Z}_r$ randomly
+		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
+		s, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $s, \alpha \in \mathbb{Z}_r$ randomly
 		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(x, G1) # $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
 		H4 = lambda x:self.__group.hash(x, G1) # $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1^2$
 		H5 = lambda x:self.__group.hash(x, G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H6 = lambda x:self.__group.hash(x, G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H7 = lambda x:self.__group.hash(x, G1) # $H_7: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		y = g ** x # $y \gets g^x$
 		self.__mpk = (g, h, H1, H2, H3, H4, H5, H6, H7, y) # $ \textit{mpk} \gets (G, G_T, q, g, e, h, H_1, H_2, H_3, H_4, H_5, H_6, H_7, y)$
 		self.__msk = (x, alpha) # $\textit{msk} \gets (x, \alpha)$
@@ -51,16 +49,36 @@ class SchemeIBPME:
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def DKGen(self:object, idR:bytes) -> tuple: # $\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
+	def SKGen(self:object, id1:bytes) -> Element: # $\textbf{SKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
 		# Check #
 		if not self.__flag:
-			print("DKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
+			print("SKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``SKGen`` subsequently. ")
+			self.Setup()
+		if isinstance(id1, bytes): # type check
+			id_1 = id1
+		else:
+			id_1 = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
+			print("SKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		H2 = self.__mpk[3]
+		alpha = self.__msk[-1]
+		
+		# Scheme #
+		ek_id_1 = H1(id_1) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
+		
+		# Return #
+		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
+	def RKGen(self:object, idR:bytes) -> tuple: # $\textbf{RKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
+		# Check #
+		if not self.__flag:
+			print("RKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``RKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(idR, bytes): # type check
 			id_R = idR
 		else:
 			id_R = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
-			print("DKGen: The variable $\\textit{id}_R$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+			print("RKGen: The variable $\\textit{id}_R$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		H1 = self.__mpk[2]
@@ -73,60 +91,40 @@ class SchemeIBPME:
 		
 		# Return #
 		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
-	def EKGen(self:object, idS:bytes) -> Element: # $\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
+	def ReSKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{ReSKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
 		# Check #
 		if not self.__flag:
-			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
-			self.Setup()
-		if isinstance(idS, bytes): # type check
-			id_S = idS
-		else:
-			id_S = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
-			print("EKGen: The variable $\\textit{id}_S$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		
-		# Unpack #
-		H2 = self.__mpk[3]
-		alpha = self.__msk[-1]
-		
-		# Scheme #
-		ek_id_S = H2(id_S) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
-		
-		# Return #
-		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
-	def ReEKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
-		# Check #
-		if not self.__flag:
-			print("ReEKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReEKGen`` subsequently. ")
+			print("ReSKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReSKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(id2, bytes): # type check:
 			id_2 = id2
 			if isinstance(ekid2, Element): # type check
 				ek_id_2 = ekid2
 			else:
-				ek_id_2 = self.EKGen(id_2)
-				print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated accordingly. ")
+				ek_id_2 = self.SKGen(id_2)
+				print("ReSKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated accordingly. ")
 			if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
 				dk_id_2 = dkid2
 			else:
-				dk_id_2 = self.DKGen(id_2)
-				print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
+				dk_id_2 = self.RKGen(id_2)
+				print("ReSKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
 		else:
 			id_2 = self.__group.random(ZR)
-			print("ReEKGen: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-			ek_id_2 = self.EKGen(id_2)
-			print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
-			dk_id_2 = self.DKGen(id_2)
-			print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ has been generated accordingly. ")
+			print("ReSKGen: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+			ek_id_2 = self.SKGen(id_2)
+			print("ReSKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
+			dk_id_2 = self.RKGen(id_2)
+			print("ReSKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ has been generated accordingly. ")
 		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
 			id_1 = self.__group.random(ZR)
-			print("ReEKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+			print("ReSKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(id3, bytes): # type check
 			id_3 = id3
 		else:
 			id_3 = self.__group.random(ZR)
-			print("ReEKGen: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+			print("ReSKGen: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
@@ -153,7 +151,7 @@ class SchemeIBPME:
 		if isinstance(ekid1, Element): # type check
 			ek_id_1 = ekid1
 		else:
-			ek_id_1 = self.EKGen(self.__group.random(ZR))
+			ek_id_1 = self.SKGen(self.__group.random(ZR))
 			print("Enc: The variable $\\textit{ek}_{\\textit{id}_1}$ should be an element but it is not, which has been generated randomly. ")
 		if isinstance(id2, bytes): # type check
 			id_2 = id2
@@ -197,12 +195,12 @@ class SchemeIBPME:
 		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
 			ct = cipher
 		else:
-			ct = self.Enc(self.EKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
+			ct = self.Enc(self.SKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
 			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
 		if isinstance(reKey, tuple) and len(reKey) == 4 and all([isinstance(ele, Element) for ele in reKey]): # hybrid check
 			rk = reKey
 		else:
-			rk = self.ReEKGen(self.EKGen(id2Generated), self.DKGen(id2Generated), self.__group.random(ZR), id2Generated, self.__group.random(ZR))
+			rk = self.ReSKGen(self.SKGen(id2Generated), self.RKGen(id2Generated), self.__group.random(ZR), id2Generated, self.__group.random(ZR))
 			print("ReEnc: The variable $\\textit{rk}$ should be a tuple containing 4 elements but it is not, which has been generated randomly. ")
 		del id2Generated
 		
@@ -236,7 +234,7 @@ class SchemeIBPME:
 		if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
 			dk_id_2 = dkid2
 		else:
-			dk_id_2 = self.DKGen(id2Generated)
+			dk_id_2 = self.RKGen(id2Generated)
 			print("Dec1: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
 		if isinstance(id1, bytes): # type check
 			id_1 = id1
@@ -246,7 +244,7 @@ class SchemeIBPME:
 		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
 			ct = cipher
 		else:
-			ct = self.Enc(self.EKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
+			ct = self.Enc(self.SKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
 			print("Dec1: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
 		del id2Generated
 		
@@ -285,12 +283,12 @@ class SchemeIBPME:
 			if isinstance(dkid3, tuple) and len(dkid3) == 2 and all([isinstance(ele, Element) for ele in dkid3]): # hybrid check
 				dk_id_3 = dkid3
 			else:
-				dk_id_3 = self.DKGen(id_3)
+				dk_id_3 = self.RKGen(id_3)
 				print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
 		else:
 			id_3 = self.__group.random(ZR)
 			print("Dec2: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-			dk_id_3 = self.DKGen(id_3)
+			dk_id_3 = self.RKGen(id_3)
 			print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ has been generated accordingly. ")
 		if isinstance(id1, bytes): # type check
 			id_1 = id1
@@ -307,7 +305,7 @@ class SchemeIBPME:
 		elif isinstance(cipherPrime, bool):
 			return False
 		else:
-			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id_2, id_3))
+			ctPrime = self.ReEnc(self.Enc(self.SKGen(id_1), id_2, self.__group.random(GT)), self.ReSKGen(self.SKGen(id_2), self.RKGen(id_2), id_1, id_2, id_3))
 			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -373,72 +371,72 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeIBPME = SchemeIBPME(group)
+	schemePBAC = SchemePBAC(group)
 	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeIBPME.Setup()
+	mpk, msk = schemePBAC.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# DKGen #
+	# RKGen #
 	startTime = perf_counter()
 	id_2 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
 	id_3 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
-	dk_id_2 = schemeIBPME.DKGen(id_2)
-	dk_id_3 = schemeIBPME.DKGen(id_3)
+	dk_id_2 = schemePBAC.RKGen(id_2)
+	dk_id_3 = schemePBAC.RKGen(id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# EKGen #
+	# SKGen #
 	startTime = perf_counter()
 	id_1 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
-	ek_id_1 = schemeIBPME.EKGen(id_1)
-	ek_id_2 = schemeIBPME.EKGen(id_2)
+	ek_id_1 = schemePBAC.SKGen(id_1)
+	ek_id_2 = schemePBAC.SKGen(id_2)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# ReEKGen #
+	# ReSKGen #
 	startTime = perf_counter()
-	rk = schemeIBPME.ReEKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
+	rk = schemePBAC.ReSKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	ct = schemeIBPME.Enc(ek_id_1, id_2, message)
+	ct = schemePBAC.Enc(ek_id_1, id_2, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# ReEnc #
 	startTime = perf_counter()
-	ctPrime = schemeIBPME.ReEnc(ct, rk)
+	ctPrime = schemePBAC.ReEnc(ct, rk)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec1 #
 	startTime = perf_counter()
-	m = schemeIBPME.Dec1(dk_id_2, id_1, ct)
+	m = schemePBAC.Dec1(dk_id_2, id_1, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec2 #
 	startTime = perf_counter()
-	mPrime = schemeIBPME.Dec2(dk_id_3, id_1, id_2, id_3, ctPrime)
+	mPrime = schemePBAC.Dec2(dk_id_3, id_1, id_2, id_3, ctPrime)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	booleans = [True, isinstance(ctPrime, Element), isinstance(m, Element) and message == m, isinstance(mPrime, Element) and message == mPrime]
 	spaceRecords = [																													\
-		schemeIBPME.getLengthOf(group.random(ZR)), schemeIBPME.getLengthOf(group.random(G1)), 												\
-		schemeIBPME.getLengthOf(group.random(G2)), schemeIBPME.getLengthOf(group.random(GT)), 											\
-		schemeIBPME.getLengthOf(mpk), schemeIBPME.getLengthOf(msk), schemeIBPME.getLengthOf(ek_id_1), schemeIBPME.getLengthOf(ek_id_2), 		\
-		schemeIBPME.getLengthOf(dk_id_2), schemeIBPME.getLengthOf(dk_id_3), schemeIBPME.getLengthOf(ct), schemeIBPME.getLengthOf(ctPrime)	\
+		schemePBAC.getLengthOf(group.random(ZR)), schemePBAC.getLengthOf(group.random(G1)), 												\
+		schemePBAC.getLengthOf(group.random(G2)), schemePBAC.getLengthOf(group.random(GT)), 											\
+		schemePBAC.getLengthOf(mpk), schemePBAC.getLengthOf(msk), schemePBAC.getLengthOf(ek_id_1), schemePBAC.getLengthOf(ek_id_2), 		\
+		schemePBAC.getLengthOf(dk_id_2), schemePBAC.getLengthOf(dk_id_3), schemePBAC.getLengthOf(ct), schemePBAC.getLengthOf(ctPrime)	\
 	]
-	del schemeIBPME
+	del schemePBAC
 	print("Original:", message)
 	print("Dec1:", m)
 	print("Dec2:", mPrime)
@@ -485,10 +483,10 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 20, "SchemeIBPME.xlsx"
+	roundCount, filePath = 20, "SchemePBAC.xlsx"
 	columns = [																							\
-		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 		\
-		"Setup (s)", "DKGen (s)", "EKGen (s)", "ReEKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isReSKGenPassed", "isDec1Passed", "isDec2Passed", 		\
+		"Setup (s)", "RKGen (s)", "SKGen (s)", "ReSKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 			\
 		"ek_id_1 (B)", "ek_id_2 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"									\
 	]

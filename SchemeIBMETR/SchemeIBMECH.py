@@ -43,8 +43,8 @@ class SchemeIBMECH:
 		self.__flag = False
 		
 		# Scheme #
-		g1 = self.__group.random(G1) # generate $g_1 \in \mathbb{G}_1$ randomly
-		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
+		g1 = self.__group.init(G1, 1) # $g_1 \gets 1_{\mathbb{G}_1}$
+		g2 = self.__group.init(G2, 1) # $g_2 \gets 1_{\mathbb{G}_2}$
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
 		alpha, eta = self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, \eta \in \mathbb{Z}_r$ randomly
 		zero, one = self.__group.init(ZR, 0), self.__group.random(ZR) # generate $\textbf{0}_{\mathbb{Z}_r}, \textbf{1}_{\mathbb{Z}_r} \in \mathbb{Z}_r$ randomly

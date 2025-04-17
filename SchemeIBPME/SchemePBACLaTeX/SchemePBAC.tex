@@ -5,17 +5,15 @@
 
 \begin{document}
 
-\section{SchemeIBPME}
+\section{SchemePBAC}
 
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
 $q \gets \|\mathbb{G}\|$
 
-generate $g \in \mathbb{G}_1$ randomly
+$g \gets 1_{\mathbb{G}_1}$
 
-generate $h \in \mathbb{G}_1$ randomly
-
-generate $x, \alpha \in \mathbb{Z}_r$ randomly
+generate $s, \alpha \in \mathbb{Z}_r$ randomly
 
 $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
@@ -29,8 +27,6 @@ $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
 $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
-$H_7: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-
 $y \gets g^x$
 
 $ \textit{mpk} \gets (G, G_T, q, g, e, h, H_1, H_2, H_3, H_4, H_5, H_6, H_7, y)$
@@ -39,7 +35,13 @@ $\textit{msk} \gets (x, \alpha)$
 
 $\textbf{return }(\textit{mpk}, \textit{msk})$
 
-\subsection{$\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$}
+\subsection{$\textbf{SKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$}
+
+$\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
+
+$\textbf{return }\textit{ek}_{\textit{id}_S}$
+
+\subsection{$\textbf{RKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$}
 
 $\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^x$
 
@@ -49,13 +51,7 @@ $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_
 
 $\textbf{return }\textit{dk}_{\textit{id}_R}$
 
-\subsection{$\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$}
-
-$\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
-
-$\textbf{return }\textit{ek}_{\textit{id}_S}$
-
-\subsection{$\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$}
+\subsection{$\textbf{ReSKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$}
 
 generate $N \in \{0, 1\}^\lambda$ randomly
 

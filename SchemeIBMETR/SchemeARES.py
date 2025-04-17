@@ -37,7 +37,8 @@ class SchemeARES:
 		self.__flag = False
 		
 		# Scheme #
-		g, g0, g1 = self.__group.random(G1), self.__group.random(G1), self.__group.random(G1) # generate $g, g_0, g_1 \in \mathbb{G}_1$ randomly
+		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
+		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
 		w, t1, t2, t3, t4 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$
 		Omega = pair(g, g) ** (t1 * t2 * w) # $\Omega \gets e(g, g)^{t_1 t_2 w}$
 		v1 = g ** t1 # $v \gets g^{t_1}$

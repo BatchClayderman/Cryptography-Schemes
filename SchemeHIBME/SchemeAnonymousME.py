@@ -46,7 +46,7 @@ class SchemeAnonymousME:
 			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
-		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
+		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
 		alpha, b1, b2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $\alpha, b_1, b_2, \in \mathbb{Z}_r$ randomly
 		g2, g3 = self.__group.random(G2), self.__group.random(G2) # generate $g_2, g_3 \in \mathbb{G}_2$ randomly
 		h = tuple(self.__group.random(G2) for _ in range(self.__l)) # generate $h_1, h_2, \cdots, h_l \in \mathbb{G}_2$ randomly (Note that the indexes in implementations are 1 smaller than those in theory)

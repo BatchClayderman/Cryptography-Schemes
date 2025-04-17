@@ -323,7 +323,7 @@ def main() -> int:
 		if os.path.isdir(argv[1]):
 			for root, dirs, files in os.walk(argv[1]):
 				for fileName in files:
-					if os.path.splitext(fileName)[1].lower() == ".py" and "." != root:
+					if os.path.splitext(fileName)[1].lower() == ".py" and "." != root and not fileName.startswith(".") and "/." not in root and "\\." not in root:
 						totalCount += 1
 						successCount += int(generateSchemeTxt(os.path.join(root, fileName)))
 		elif os.path.isfile(argv[1]) and os.path.splitext(argv[1])[1].lower() == ".py" and os.path.split(argv[1])[0] != os.path.abspath(os.path.dirname(__file__)):

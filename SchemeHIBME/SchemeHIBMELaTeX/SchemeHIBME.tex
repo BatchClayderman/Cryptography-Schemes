@@ -11,7 +11,7 @@ This scheme is applicable to symmetric and asymmetric groups of prime orders.
 
 \subsection{$\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$}
 
-generate $g \in \mathbb{G}_1$ randomly
+$g \gets 1_{\mathbb{G}_1}$
 
 generate $\alpha, b_1, b_2 \in \mathbb{Z}_r$ randomly
 
@@ -185,7 +185,7 @@ $\textbf{return }\textit{CT}$
 
 \subsection{$\textbf{Dec}(\textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Rev}, \textit{ID}_\textit{Snd}, \textit{CT}) \rightarrow M$}
 
-$T' = \cfrac{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}{e(\textit{dk}_{1, 3}, C_4)}$
+$T' = \cfrac{e(\textit{dk}_{1, 3}, C_4)}{e(C_2, \textit{dk}_{1, 1})e(C_3, \textit{dk}_{1, 2})}$
 
 \textbf{if} $m = n$ \textbf{then}
 

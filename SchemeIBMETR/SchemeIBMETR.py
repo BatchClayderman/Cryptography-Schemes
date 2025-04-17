@@ -48,7 +48,7 @@ class SchemeIBMETR:
 		
 		# Scheme #
 		p = self.__group.order() # $p \gets \|\mathbb{G}\|$
-		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
+		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
 		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_1:\{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(self.__group.serialize(x), G2) # $H_2:\{0, 1\}^* \rightarrow \mathbb{G}_2$
 		if 512 == self.__group.secparam:
