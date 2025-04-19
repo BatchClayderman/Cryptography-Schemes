@@ -34,7 +34,7 @@ class SchemeIBPME:
 		
 		# Scheme #
 		q = self.__group.order() # $q \gets \|\mathbb{G}\|$
-		g = self.__group.random(G1) # generate $g \in \mathbb{G}_1$ randomly
+		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
 		h = self.__group.random(G1) # generate $h \in \mathbb{G}_1$ randomly
 		x, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $x, \alpha \in \mathbb{Z}_r$ randomly
 		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$

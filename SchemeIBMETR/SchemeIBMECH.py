@@ -298,7 +298,7 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBMECH.xlsx"
 	columns = [																\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\

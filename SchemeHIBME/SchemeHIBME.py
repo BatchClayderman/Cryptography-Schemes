@@ -543,7 +543,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	# Dec #
 	startTime = perf_counter()
 	M = schemeHIBME.Dec(dk_ID_R, ID_Rev, ID_Snd, CT)
-	MDerived = schemeHIBME.Dec(dk_ID_RDerived, ID_Rev, ID_Snd, CT)
+	MDerived = schemeHIBME.Dec(dk_ID_RDerived, ID_Rev, ID_Snd, CTDerived)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -599,7 +599,7 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeHIBME.xlsx"
 	columns = [																						\
 		"curveType", "secparam", "l", "m", "n", "roundCount", "isSystemValid", "isDeriverPassed", "isSchemeCorrect", 	\
