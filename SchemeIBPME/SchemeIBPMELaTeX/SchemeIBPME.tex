@@ -11,7 +11,7 @@
 
 $q \gets \|\mathbb{G}\|$
 
-generate $g \in \mathbb{G}_1$ randomly
+$g \gets 1_{\mathbb{G}_1}$
 
 generate $h \in \mathbb{G}_1$ randomly
 
@@ -43,7 +43,7 @@ $\textbf{return }(\textit{mpk}, \textit{msk})$
 
 $\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^x$
 
-$\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^\alpha$
+$\textit{dk}_{\textit{id}_R, 2} \gets H_1(\textit{id}_R)^\alpha$
 
 $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
 

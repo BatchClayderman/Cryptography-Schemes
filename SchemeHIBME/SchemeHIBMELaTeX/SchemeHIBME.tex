@@ -63,7 +63,7 @@ $\textbf{return }\textit{ek}_{\textit{ID}_k}$
 
 $\textit{ek}'_{1, i} \gets \textit{ek}_{1, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
 
-$\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1}}$
+$\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1} a_k}$
 
 $\textit{ek}'_1 \gets \textit{ek}'_1 || \langle\textit{ek}'_{1, k}\rangle$
 
@@ -125,7 +125,7 @@ f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 
 $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
 
-$\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1}}$
+$\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1} a_k}$
 
 $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
 
@@ -156,7 +156,7 @@ $T \gets A^{s_1 + s_2}$
 \quad$K \gets
 (
 \prod\limits_{i = 1}^n e(\textit{ek}_{1, i}, H_2(I'_i))
-\cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{\alpha_i A_n}
+\cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{s_i A_n}
 )^{B_n^m}
 \cdot e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 $
@@ -211,7 +211,7 @@ $
 \quad$K' \gets
 (
 \prod\limits_{i = 1}^m e(H_1(I_i), \textit{dk}_{2, i})
-\cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{\alpha_i A_m}
+\cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{s_i A_m}
 )^{B_m^n}
 \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 $

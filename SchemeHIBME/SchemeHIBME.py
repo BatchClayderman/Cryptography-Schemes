@@ -150,7 +150,7 @@ class SchemeHIBME:
 		
 		# Scheme #
 		ek1Prime = tuple(ek1[i] ** a[k - 1] for i in range(k - 1)) # $\textit{ek}'_{1, i} \gets \textit{ek}_{1, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
-		ek1kPrime = H1(ID_k[k - 1]) ** ek2[0] # $\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1}}$
+		ek1kPrime = H1(ID_k[k - 1]) ** (ek2[0] * a[k - 1]) # $\textit{ek}'_{1, k} \gets H_1(I_k)^{\textit{ek}_{2, 1} a_k}$
 		ek1Prime += (ek1kPrime, ) # $\textit{ek}'_1 \gets \textit{ek}'_1 || \langle\textit{ek}'_{1, k}\rangle$
 		ek2Prime = tuple(ek2[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{ek}'_{2, i} \gets \textit{ek}_{2, i} \cdot a_k, \forall i \in \{2, 3, \cdots, l - k + 1\}$
 		ek3Prime = tuple(a[i] for i in range(k, self.__l)) # $\textit{ek}'_3 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
@@ -256,7 +256,7 @@ class SchemeHIBME:
 			+ (f0 * c0[0] ** ID_k[k - 1], f1 * c1[0] ** ID_k[k - 1]) # f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 		) # )$
 		dk2Prime = tuple(dk2[i] ** a[k - 1] for i in range(k - 1)) # $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
-		dk2kPrime = H2(ID_k[k - 1]) ** dk3[0] # $\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1}}$
+		dk2kPrime = H2(ID_k[k - 1]) ** (dk3[0] * a[k - 1]) # $\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1} a_k}$
 		dk2Prime += (dk2kPrime, ) # $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
 		dk3Prime = tuple(dk3[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \{2, 3, \cdots, l - k + 1\}$
 		dk4Prime = tuple(a[k + i] for i in range(self.__l - k)) # $\textit{dk}'_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
@@ -318,7 +318,7 @@ class SchemeHIBME:
 		
 		# Unpack #
 		g, g3, gBar, gTilde, h, H1, H2, HHat, A = self.__mpk[0], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:-4], self.__mpk[-4], self.__mpk[-3], self.__mpk[-2], self.__mpk[-1]
-		a = self.__msk[-self.__l:]
+		s, a = self.__msk[3:-self.__l], self.__msk[-self.__l:]
 		n, m = len(ID_Snd), len(ID_Rev)
 		
 		# Scheme #
@@ -332,7 +332,7 @@ class SchemeHIBME:
 			K = ( # \quad$K \gets
 				( # (
 					self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[i])) for i in range(n))) # \prod\limits_{i = 1}^n e(\textit{ek}_{1, i}, H_2(I'_i))
-					* self.__product(tuple(pair(H1(ID_Snd[n - 1]), H2(ID_Rev[i])) ** (a[i] * An) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{\alpha_i A_n}
+					* self.__product(tuple(pair(H1(ID_Snd[n - 1]), H2(ID_Rev[i])) ** (s[i] * An) for i in range(n, m))) # \cdot \prod\limits_{i = n + 1}^m e(H_1(I_n), H_2(I'_i))^{s_i A_n}
 				) ** Bmn # )^{B_n^m}
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
@@ -343,7 +343,6 @@ class SchemeHIBME:
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		# \textbf{end}
-		print(K)
 		C1 = M ^ HHat(T) ^ HHat(K) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
 		C3 = gTilde ** s2 # $C_3 \gets \tilde{g}^{s_2}$
@@ -403,7 +402,7 @@ class SchemeHIBME:
 		
 		# Unpack #
 		H1, H2, HHat = self.__mpk[-4], self.__mpk[-3], self.__mpk[-2]
-		a = self.__msk[-self.__l:]
+		s, a = self.__msk[3:-self.__l], self.__msk[-self.__l:]
 		C1, C2, C3, C4, C5 = CT
 		dk1, dk2, dk3, dk4 = dk_ID_R
 		m, n = len(ID_Rev), len(ID_Snd)
@@ -427,12 +426,11 @@ class SchemeHIBME:
 			KPrime = ( # \quad$K' \gets
 				( # (
 					self.__product(tuple(pair(H1(ID_Snd[i]), dk2[i]) for i in range(m))) # \prod\limits_{i = 1}^m e(H_1(I_i), \textit{dk}_{2, i})
-					* self.__product(tuple(pair(H1(ID_Snd[i]), H2(ID_Rev[m - 1])) ** (a[i] * Am) for i in range(m, n))) # \cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{\alpha_i A_m}
+					* self.__product(tuple(pair(H1(ID_Snd[i]), H2(ID_Rev[m - 1])) ** (s[i] * Am) for i in range(m, n))) # \cdot \prod\limits_{i = m + 1}^n e(H_1(I_i), H_2(I'_m))^{s_i A_m}
 				) ** Bnm # )^{B_m^n}
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		# \textbf{end if}
-		print(KPrime)
 		M = C1 ^ HHat(TPrime) ^ HHat(KPrime) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #
@@ -618,8 +616,6 @@ def main() -> int:
 			for l in (5, 10, 15, 20, 25, 30):
 				for m in range(5, l, 5):
 					for n in range(5, l, 5):
-						if n == m:
-							continue
 						average = Scheme(curveType, l, m, n, 0)
 						for round in range(1, roundCount):
 							result = Scheme(curveType, l, m, n, round)
