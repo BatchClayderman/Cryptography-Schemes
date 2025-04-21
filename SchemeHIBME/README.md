@@ -19,3 +19,7 @@ Consequently, when $n$ grows with the variables $l$ and $m$ fixed, the curve in 
 ### ``SchemeAnonymousME.py``
 
 This is the official implementation of the AnonymousME cryptography scheme (``Anonymous Hierarchical Identity-based Encryption``) in Python programming language based on the Python charm library. 
+
+#### Discussion
+
+It is interesting to note that the AnonymousME cryptography scheme can remain correct while the HIB-ME cryptography scheme cannot when $g$ is set to a random element of $\mathbb{G}_1$ instead of a generator of it. 

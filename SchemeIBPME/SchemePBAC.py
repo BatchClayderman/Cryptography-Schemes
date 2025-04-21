@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from math import ceil, log
 from secrets import randbelow
 from time import perf_counter, sleep
 try:
@@ -25,6 +26,7 @@ class SchemePBAC:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
+		self.__operand = (1 << self.__group.secparam) - 1 # use to cast binary strings
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -38,34 +40,38 @@ class SchemePBAC:
 		s, alpha = self.__group.random(ZR), self.__group.random(ZR) # generate $s, \alpha \in \mathbb{Z}_r$ randomly
 		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(x, G1) # $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
-		H4 = lambda x:self.__group.hash(x, G1) # $H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1^2$
+		H3 = lambda x1, x2, x3:self.__group.hash(
+			self.__group.serialize(x1) + self.__group.serialize(x2) + (self.__group.serialize(x3) if isinstance(x3, Element) else (
+				x3.to_bytes(ceil(self.__group.secparam / 8), byteorder = "big") if isinstance(x3, int) else bytes(x3)
+			)), ZR
+		) # $H_3: \mathbb{G}_T^2 \times \{0, 1\}^\lambda \rightarrow \mathbb{Z}_r$
+		H4 = lambda x:self.__group.serialize(x) # $H_4: \mathbb{G}_T \rightarrow \{0, 1\}^\lambda$
 		H5 = lambda x:self.__group.hash(x, G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H6 = lambda x:self.__group.hash(x, G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		y = g ** x # $y \gets g^x$
-		self.__mpk = (g, h, H1, H2, H3, H4, H5, H6, H7, y) # $ \textit{mpk} \gets (G, G_T, q, g, e, h, H_1, H_2, H_3, H_4, H_5, H_6, H_7, y)$
-		self.__msk = (x, alpha) # $\textit{msk} \gets (x, \alpha)$
+		gHat = g ** s # $\hat{g} \gets g^s$
+		self.__mpk = (g, gHat, H1, H2, H3, H4, H5, H6) # $ \textit{mpk} \gets (g, \hat{g}, H_1, H_2, H_3, H_4, H_5, H_6)$
+		self.__msk = (s, alpha) # $\textit{msk} \gets (x, \alpha)$
 		
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def SKGen(self:object, id1:bytes) -> Element: # $\textbf{SKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
+	def SKGen(self:object, idS:bytes) -> Element: # $\textbf{SKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
 		# Check #
 		if not self.__flag:
 			print("SKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``SKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(id1, bytes): # type check
-			id_1 = id1
+		if isinstance(idS, bytes): # type check
+			id_S = idS
 		else:
-			id_1 = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
-			print("SKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+			id_S = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
+			print("SKGen: The variable $\\textit{id}_S$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		H2 = self.__mpk[3]
+		H1 = self.__mpk[2]
 		alpha = self.__msk[-1]
 		
 		# Scheme #
-		ek_id_1 = H1(id_1) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
+		ek_id_S = H1(id_S) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_1(\textit{id}_S)^\alpha$
 		
 		# Return #
 		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
@@ -77,73 +83,21 @@ class SchemePBAC:
 		if isinstance(idR, bytes): # type check
 			id_R = idR
 		else:
-			id_R = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
+			id_R = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("RKGen: The variable $\\textit{id}_R$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		H1 = self.__mpk[2]
-		x, alpha = self.__msk
+		H2 = self.__mpk[3]
+		s, alpha = self.__msk
 		
 		# Scheme #
-		dk_id_R1 = H1(id_R) ** x # $\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^x$
-		dk_id_R2 = H1(id_R) ** alpha # $\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^\alpha$
+		dk_id_R1 = H2(id_R) ** alpha # $\textit{dk}_{\textit{id}_R, 1} \gets H_2(\textit{id}_R)^\alpha$
+		dk_id_R2 = H2(id_R) ** s # $\textit{dk}_{\textit{id}_R, 2} \gets H_2(\textit{id}_R)^s$
 		dk_id_R = (dk_id_R1, dk_id_R2) # $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
 		
 		# Return #
 		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
-	def ReSKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{ReSKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
-		# Check #
-		if not self.__flag:
-			print("ReSKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReSKGen`` subsequently. ")
-			self.Setup()
-		if isinstance(id2, bytes): # type check:
-			id_2 = id2
-			if isinstance(ekid2, Element): # type check
-				ek_id_2 = ekid2
-			else:
-				ek_id_2 = self.SKGen(id_2)
-				print("ReSKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated accordingly. ")
-			if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
-				dk_id_2 = dkid2
-			else:
-				dk_id_2 = self.RKGen(id_2)
-				print("ReSKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
-		else:
-			id_2 = self.__group.random(ZR)
-			print("ReSKGen: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-			ek_id_2 = self.SKGen(id_2)
-			print("ReSKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
-			dk_id_2 = self.RKGen(id_2)
-			print("ReSKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ has been generated accordingly. ")
-		if isinstance(id1, bytes): # type check
-			id_1 = id1
-		else:
-			id_1 = self.__group.random(ZR)
-			print("ReSKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(id3, bytes): # type check
-			id_3 = id3
-		else:
-			id_3 = self.__group.random(ZR)
-			print("ReSKGen: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		
-		# Unpack #
-		g, h, H1, H2, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
-		
-		# Scheme #
-		N = self.__group.random(ZR) # generate $N \in \{0, 1\}^\lambda$ randomly
-		xBar = self.__group.random(ZR) # generate $\bar{x} \in \mathbb{Z}_r$ randomly
-		rk1 = g ** xBar # $\textit{rk}_1 \gets g^{\bar{x}}$
-		rk2 = dk_id_2[0] * h ** xBar * H6(pair(y, H1(id_3)) ** xBar) # $\textit{rk}_2 \gets \textit{dk}_{\textit{id}_2, 1} h^{\bar{x}} H_6(e(y, H_1(\textit{id}_3))^{\bar{x}})$
-		K = pair(ek_id_2, H1(id_3)) # $K \gets e(\textit{ek}_{\textit{id}_2}, H_1(\textit{id}_3))$
-		rk3 = pair( # $\textit{rk}_3 \gets e(
-			H2(id_1), # H_2(\textit{id}_1), 
-			H7(self.__group.serialize(K)[2:] + id_2 + id_3 + self.__group.serialize(N)[2:]) * dk_id_2[1] # H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
-		) # )$
-		rk = (N, rk1, rk2, rk3) # $\textit{rk} \gets (N, \textit{rk}_1, \textit{rk}_2, \textit{rk}_3)$
-		
-		# Return #
-		return rk # $\textbf{return }\textit{rk}$
-	def Enc(self:object, ekid1:Element, id2:Element, message:Element) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
+	def Enc(self:object, ekid1:Element, id2:Element, message:int|bytes) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -151,57 +105,105 @@ class SchemePBAC:
 		if isinstance(ekid1, Element): # type check
 			ek_id_1 = ekid1
 		else:
-			ek_id_1 = self.SKGen(self.__group.random(ZR))
+			ek_id_1 = self.SKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"))
 			print("Enc: The variable $\\textit{ek}_{\\textit{id}_1}$ should be an element but it is not, which has been generated randomly. ")
 		if isinstance(id2, bytes): # type check
 			id_2 = id2
 		else:
-			id_2 = self.__group.random(ZR)
+			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Enc: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(message, Element) and message.type == GT: # type check
-			m = message
+		if isinstance(message, int): # type check
+			m = message & self.__operand
+			if message != m:
+				print("Enc: The passed message (int) is too long, which has been cast. ")
+		elif isinstance(message, bytes):
+			m = int.from_bytes(message, byteorder = "big") & self.__operand
+			if len(message) << 3 > self.__group.secparam:
+				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
-			m = self.__group.random(GT)
-			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			m = int.from_bytes(b"SchemePBAC", byteorder = "big") & self.__operand
+			print("Enc: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemePBAC\". ")
 		
 		# Unpack #
-		g, h, H1, H3, H4, H5, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[-1]
+		g, gHat, H2, H3, H4, H5 = self.__mpk[0], self.__mpk[1], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6]
 		
 		# Scheme #
-		sigma = self.__group.random(G1) # generate $\sigma \in \mathbb{G}_1$ randomly
-		eta = self.__group.random(GT) # generate $\eta \in \mathbb{G}_T$ randomly
-		r = H3(self.__group.serialize(m) + self.__group.serialize(sigma) + self.__group.serialize(eta)) # $r \gets H_3(m || \sigma || \eta)$
-		ct1 = h ** r # $\textit{ct}_1 \gets h^r$
-		ct2 = g ** r # $\textit{ct}_2 \gets g^r$
-		ct3 = self.__group.init(
-			ZR, (
-				int.from_bytes(self.__group.serialize(m)[2:] + self.__group.serialize(sigma)[2:], byteorder = "big")
-				^ int.from_bytes(self.__group.serialize(H4(pair(y, H1(id_2)) ** r))[2:], byteorder = "big")
-				^ int.from_bytes(self.__group.serialize(H4(eta))[2:], byteorder = "big")
-			)
-		) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
-		ct4 = eta * pair(ek_id_1, H1(id_2)) # $\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
-		ct5 = H5(self.__group.serialize(ct1)[2:] + self.__group.serialize(ct2)[2:] + self.__group.serialize(ct3)[2:] + self.__group.serialize(ct4)[2:]) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
-		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
+		eta_1, eta_2 = self.__group.random(GT), self.__group.random(GT) # generate $\eta_1, \eta_2 \in \mathbb{G}_T$ randomly
+		r = H3(eta_1, eta_2, m) # $r \gets H_3(\eta_1, \eta_2, m)$
+		C1 = g ** r # $C_1 \gets g^r$
+		C2 = eta_1 * pair(gHat, H2(id_2) ** r) # $C_2 \gets \eta_1 \cdot e(\hat{g}, H_2(\textit{id}_2)^r)$
+		C3 = eta_2 * pair(ek_id_1, H2(id_2)) # $C_3 \gets \eta_2 \cdot e(\textit{ek}_{\textit{id}_1}, H_2(\textit{id}_2))$
+		C4 = m ^ int.from_bytes(H4(eta_1), byteorder = "big") ^ int.from_bytes(H4(eta_2), byteorder = "big") # $C_4 \gets m \oplus H_4(\eta_1) \oplus H_4(\eta_2)$
+		S = H5(id_2 + self.__group.serialize(C1) + self.__group.serialize(C2) + self.__group.serialize(C3) + C4.to_bytes(ceil(log(C4 + 1, 256)), byteorder = "big")) ** r # $S \gets H_5(\textit{id}_2 || C_1 || C_2 || C_3 || C_4)^r$
+		C = (C1, C2, C3, C4, S) # $C \gets (C_1, C_2, C_3, C_4, S)$
 		
 		# Return #
-		return ct # $\textbf{return }\textit{ct}$
-	def ReEnc(self:object, cipher:tuple, reKey:tuple) -> tuple|bool: # $\textbf{ReEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$
+		return C # $\textbf{return }C$
+	def PKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{PKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
 		# Check #
 		if not self.__flag:
-			print("ReEnc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReEnc`` subsequently. ")
+			print("PKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``PKGen`` subsequently. ")
+			self.Setup()
+		if isinstance(id2, bytes): # type check:
+			id_2 = id2
+			if isinstance(ekid2, Element): # type check
+				ek_id_2 = ekid2
+			else:
+				ek_id_2 = self.SKGen(id_2)
+				print("PKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated accordingly. ")
+			if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
+				dk_id_2 = dkid2
+			else:
+				dk_id_2 = self.RKGen(id_2)
+				print("PKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
+		else:
+			id_2 = self.__group.random(ZR)
+			print("PKGen: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+			ek_id_2 = self.SKGen(id_2)
+			print("PKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
+			dk_id_2 = self.RKGen(id_2)
+			print("PKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ has been generated accordingly. ")
+		if isinstance(id1, bytes): # type check
+			id_1 = id1
+		else:
+			id_1 = self.__group.random(ZR)
+			print("PKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+		if isinstance(id3, bytes): # type check
+			id_3 = id3
+		else:
+			id_3 = self.__group.random(ZR)
+			print("PKGen: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		H2, H6 = self.__mpk[3], self.__mpk[7]
+		
+		# Scheme #
+		N1 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big") # generate $N_1 \in \{0, 1\}^\lambda$ randomly
+		N2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big") # generate $N_2 \in \{0, 1\}^\lambda$ randomly
+		K1 = pair(dk_id_2[1], H2(id_3)) # $K_1 \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_3))$
+		K2 = pair(ek_id_2, H2(id_3)) # $K_2 \gets e(\textit{ek}_{\textit{id}_2}, H_2(\textit{id}_3))$
+		rk_1 = (N1, H6(self.__group.serialize(K1) + id_2 + id_3 + self.__group.serialize(N1) * dk_id_2[1])) # $\textit{rk}_1 \gets (N_1, H_6(K_1 || \textit{id}_2 || \textit{id}_3 || N_1) \cdot \textit{dk}_{\textit{id}_2, 2})$
+		rk_2 = (N2, H6(self.__group.serialize(K2) + id_2 + id_3 + self.__group.serialize(N2) * dk_id_2[0])) # $\textit{rk}_2 \gets (N_2, H_6(K_2 || \textit{id}_2 || \textit{id}_3 || N_2) \cdot \textit{dk}_{\textit{id}_2, 1})$
+		rk = (id_1, id_2, rk_1, rk_2) # $\textit{rk} \gets (\textit{id}_1, \textit{id}_2, \textit{rk}_1, \textit{rk}_2)$
+		
+		# Return #
+		return rk # $\textbf{return }\textit{rk}$
+	def ProxyEnc(self:object, cipher:tuple, reKey:tuple) -> tuple|bool: # $\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$
+		# Check #
+		if not self.__flag:
+			print("ProxyEnc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ProxyEnc`` subsequently. ")
 			self.Setup()
 		id2Generated = self.__group.random(ZR)
 		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
 			ct = cipher
 		else:
 			ct = self.Enc(self.SKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
-			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
+			print("ProxyEnc: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
 		if isinstance(reKey, tuple) and len(reKey) == 4 and all([isinstance(ele, Element) for ele in reKey]): # hybrid check
 			rk = reKey
 		else:
-			rk = self.ReSKGen(self.SKGen(id2Generated), self.RKGen(id2Generated), self.__group.random(ZR), id2Generated, self.__group.random(ZR))
-			print("ReEnc: The variable $\\textit{rk}$ should be a tuple containing 4 elements but it is not, which has been generated randomly. ")
+			rk = self.PKGen(self.SKGen(id2Generated), self.RKGen(id2Generated), self.__group.random(ZR), id2Generated, self.__group.random(ZR))
+			print("ProxyEnc: The variable $\\textit{rk}$ should be a tuple containing 4 elements but it is not, which has been generated randomly. ")
 		del id2Generated
 		
 		# Unpack #
@@ -305,7 +307,7 @@ class SchemePBAC:
 		elif isinstance(cipherPrime, bool):
 			return False
 		else:
-			ctPrime = self.ReEnc(self.Enc(self.SKGen(id_1), id_2, self.__group.random(GT)), self.ReSKGen(self.SKGen(id_2), self.RKGen(id_2), id_1, id_2, id_3))
+			ctPrime = self.ProxyEnc(self.Enc(self.SKGen(id_1), id_2, self.__group.random(GT)), self.PKGen(self.SKGen(id_2), self.RKGen(id_2), id_1, id_2, id_3))
 			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -380,39 +382,39 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# RKGen #
-	startTime = perf_counter()
-	id_2 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
-	id_3 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
-	dk_id_2 = schemePBAC.RKGen(id_2)
-	dk_id_3 = schemePBAC.RKGen(id_3)
-	endTime = perf_counter()
-	timeRecords.append(endTime - startTime)
-	
 	# SKGen #
 	startTime = perf_counter()
-	id_1 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
+	id_1 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
+	id_2 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
 	ek_id_1 = schemePBAC.SKGen(id_1)
 	ek_id_2 = schemePBAC.SKGen(id_2)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# ReSKGen #
+	# RKGen #
 	startTime = perf_counter()
-	rk = schemePBAC.ReSKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
+	id_3 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
+	dk_id_2 = schemePBAC.RKGen(id_2)
+	dk_id_3 = schemePBAC.RKGen(id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
-	message = group.random(GT)
-	ct = schemePBAC.Enc(ek_id_1, id_2, message)
+	message = b"SchemePBAC"
+	C = schemePBAC.Enc(ek_id_1, id_2, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# ReEnc #
+	# PKGen #
 	startTime = perf_counter()
-	ctPrime = schemePBAC.ReEnc(ct, rk)
+	rk = schemePBAC.PKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
+	endTime = perf_counter()
+	timeRecords.append(endTime - startTime)
+	
+	# ProxyEnc #
+	startTime = perf_counter()
+	ctPrime = schemePBAC.ProxyEnc(ct, rk)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -440,7 +442,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Original:", message)
 	print("Dec1:", m)
 	print("Dec2:", mPrime)
-	print("Is ``ReEnc`` passed? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Is ``ProxyEnc`` passed? {0}. ".format("Yes" if booleans[1] else "No"))
 	print("Is ``Dec1`` passed (m == message)? {0}. ".format("Yes" if booleans[2] else "No"))
 	print("Is ``Dec2`` passed (m\' == message)? {0}. ".format("Yes" if booleans[3] else "No"))
 	print("Time:", timeRecords)
@@ -485,8 +487,8 @@ def main() -> int:
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemePBAC.xlsx"
 	columns = [																							\
-		"curveType", "secparam", "roundCount", "isSystemValid", "isReSKGenPassed", "isDec1Passed", "isDec2Passed", 		\
-		"Setup (s)", "RKGen (s)", "SKGen (s)", "ReSKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
+		"curveType", "secparam", "roundCount", "isSystemValid", "isPKGenPassed", "isDec1Passed", "isDec2Passed", 		\
+		"Setup (s)", "RKGen (s)", "SKGen (s)", "PKGen (s)", "Enc (s)", "ProxyEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 			\
 		"ek_id_1 (B)", "ek_id_2 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "ct (B)", "ct\' (B)"									\
 	]
@@ -509,7 +511,7 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	except BaseException as e:
+	#except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #

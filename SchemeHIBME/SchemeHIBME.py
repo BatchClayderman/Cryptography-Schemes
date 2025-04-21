@@ -264,7 +264,7 @@ class SchemeHIBME:
 				
 		# Return #
 		return dk_ID_k # $\textbf{return }\textit{dk}_{\textit{ID}_k}$
-	def Enc(self:object, ekIDS:tuple, IDSnd:tuple, IDRev:tuple, message:bytes|int) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$
+	def Enc(self:object, ekIDS:tuple, IDSnd:tuple, IDRev:tuple, message:int|bytes) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -343,6 +343,7 @@ class SchemeHIBME:
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		# \textbf{end}
+		print(K)
 		C1 = M ^ HHat(T) ^ HHat(K) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
 		C3 = gTilde ** s2 # $C_3 \gets \tilde{g}^{s_2}$
@@ -431,6 +432,7 @@ class SchemeHIBME:
 				* pair(C5, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # \cdot e(C_5, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
 		# \textbf{end if}
+		print(KPrime)
 		M = C1 ^ HHat(TPrime) ^ HHat(KPrime) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #
@@ -616,6 +618,8 @@ def main() -> int:
 			for l in (5, 10, 15, 20, 25, 30):
 				for m in range(5, l, 5):
 					for n in range(5, l, 5):
+						if n == m:
+							continue
 						average = Scheme(curveType, l, m, n, 0)
 						for round in range(1, roundCount):
 							result = Scheme(curveType, l, m, n, round)

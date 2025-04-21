@@ -59,7 +59,7 @@ class SchemeIBPME:
 		if isinstance(idR, bytes): # type check
 			id_R = idR
 		else:
-			id_R = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
+			id_R = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("DKGen: The variable $\\textit{id}_R$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -68,7 +68,7 @@ class SchemeIBPME:
 		
 		# Scheme #
 		dk_id_R1 = H1(id_R) ** x # $\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^x$
-		dk_id_R2 = H1(id_R) ** alpha # $\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^\alpha$
+		dk_id_R2 = H1(id_R) ** alpha # $\textit{dk}_{\textit{id}_R, 2} \gets H_1(\textit{id}_R)^\alpha$
 		dk_id_R = (dk_id_R1, dk_id_R2) # $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
 		
 		# Return #
@@ -81,7 +81,7 @@ class SchemeIBPME:
 		if isinstance(idS, bytes): # type check
 			id_S = idS
 		else:
-			id_S = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam >> 3) + (self.__group.secparam >> 3 << 3 != self.__group.secparam), byteorder = "big")
+			id_S = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("EKGen: The variable $\\textit{id}_S$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -153,12 +153,12 @@ class SchemeIBPME:
 		if isinstance(ekid1, Element): # type check
 			ek_id_1 = ekid1
 		else:
-			ek_id_1 = self.EKGen(self.__group.random(ZR))
+			ek_id_1 = self.EKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"))
 			print("Enc: The variable $\\textit{ek}_{\\textit{id}_1}$ should be an element but it is not, which has been generated randomly. ")
 		if isinstance(id2, bytes): # type check
 			id_2 = id2
 		else:
-			id_2 = self.__group.random(ZR)
+			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Enc: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(message, Element) and message.type == GT: # type check
 			m = message
@@ -384,8 +384,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# DKGen #
 	startTime = perf_counter()
-	id_2 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
-	id_3 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
+	id_2 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
+	id_3 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
 	dk_id_2 = schemeIBPME.DKGen(id_2)
 	dk_id_3 = schemeIBPME.DKGen(id_3)
 	endTime = perf_counter()
@@ -393,7 +393,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# EKGen #
 	startTime = perf_counter()
-	id_1 = randbelow(1 << group.secparam).to_bytes((group.secparam >> 3) + (group.secparam >> 3 << 3 != group.secparam), byteorder = "big")
+	id_1 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
 	ek_id_1 = schemeIBPME.EKGen(id_1)
 	ek_id_2 = schemeIBPME.EKGen(id_2)
 	endTime = perf_counter()
