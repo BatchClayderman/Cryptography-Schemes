@@ -21,7 +21,7 @@ $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
 $H_3: \mathbb{G}_T^2 \times \{0, 1\}^\lambda \rightarrow \mathbb{Z}_r$
 
-$H_4: \mathbb{G}_T \rightarrow \{0, 1\}^\lambda$
+$H_4: \{0, 1\}^* \rightarrow \{0, 1\}^\lambda$
 
 $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
@@ -89,50 +89,64 @@ $\textit{rk} \gets (\textit{id}_1, \textit{id}_2, \textit{rk}_1, \textit{rk}_2)$
 
 $\textbf{return }\textit{rk}$
 
-\subsection{$\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$}
+\subsection{$\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{CT}$}
 
-\textbf{If} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
+$h \gets H_5(\textit{id}_2 || C_1 || C_2 || C_3 || C_4)$
 
-\quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
+\textbf{if} $e(h, C_1) = e(g, S)$ \textbf{then}
 
-$\textit{ct}_6 \gets \textit{rk}_1$
+generate $t \in \mathbb{Z}_r$ randomly
 
-\quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
+$C_2' \gets C_2 / \cfrac{e(C_1, \textit{rk}_{1, 2} \cdot h^t)}{e(g^t, S)}$
 
-\quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
+$C_3' \gets C_3 / e(H_1(\textit{id}_1), \textit{rk}_{2, 2})$
+
+$\textit{CT} \gets (\textit{id}_1, C_1, C_2', C_3', C_4, \textit{rk}_{1, 1}, \textit{rk}_{2, 1})$
 
 \textbf{else}
 
-\quad$\textit{ct}' \gets \perp$
+\quad$\textit{CT} \gets \perp$
 
-$\textbf{return }\textit{ct}'$
+$\textbf{return }\textit{CT}$
 
-\subsection{$\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$}
+\subsection{$\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$}
 
-If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+$h \gets H_5(\textit{id}_2 || C_1 || C_2 || C_3 || C_4)$
 
-\quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
+generate $t \in \mathbb{Z}_r$ randomly
 
-\quad$\eta' \gets \frac{\textit{ct}_4}{V}$
+$\eta_1 \gets C_2 / \cfrac{e(C_1, \textit{dk}_{\textit{id}_2, 2} \cdot h^t)}{e(g^t, S)}$
 
-\quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
+$\eta_2 \gets C_3 / e(\textit{dk}_{\textit{id}_2, 1}, H_1(\textit{id}_1))$
 
-\quad If $g^r = \textit{ct}_2$: 
+$m \gets C_4 \oplus H_4(\eta_1) \oplus H_4(\eta_2)$
 
-$\textbf{return }m$
+$r \gets H_3(\eta_1, \eta_2, m)$
 
-\subsection{$\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m$}
+\textbf{if }$S \neq h^r \lor C_1 \neq g^r$\textbf{ then}
 
-$V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
-
-$\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
-
-$R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
-
-$r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
-
-If $g^r = \textit{ct}_2$: 
+\quad$m \gets \perp$
 
 $\textbf{return }m$
+
+\subsection{$\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_3, \textit{id}_2, \textit{CT}) \rightarrow m'$}
+
+$K_1' \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
+
+$K_2' \gets e(\textit{dk}_{\textit{id}_3, 1}, H_1(\textit{id}_2))$
+
+$\eta_1' \gets C_2' \cdot e(C_1, H_6(K_1' || \textit{id}_2 || \textit{id}_3 || N_1))$
+
+$\eta_2' \gets C_3' \cdot e(H_6(K_2' || \textit{id}_2 || \textit{id}_3 || N_2), H_1(\textit{id}_1))$
+
+$m' \gets C_4 \oplus H_4(\eta_1') \oplus H_4(\eta_2')$
+
+$r' \gets H_3(\eta_1', \eta_2', m')$
+
+\textbf{if }$C_1 \neq g^{r'}$\textbf{ then}
+
+\quad$m' \gets \perp$
+
+$\textbf{return }m'$
 
 \end{document}
