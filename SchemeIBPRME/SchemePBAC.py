@@ -221,7 +221,7 @@ class SchemePBAC:
 			C = cipher
 		else:
 			C = self.Enc(self.SKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemePBAC", byteorder = "big"))
-			print("ProxyEnc: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, which has been generated randomly with $m$ set to b\"SchemePBAC\". ")
+			print("ProxyEnc: The variable $C$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemePBAC\". ")
 		del id2Generated
 		
 		# Unpack #
@@ -268,7 +268,7 @@ class SchemePBAC:
 			C = cipher
 		else:
 			C = self.Enc(self.SKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id_2, int.from_bytes(b"SchemePBAC", byteorder = "big"))
-			print("Dec1: The variable $C$ should be a tuple containing 4 elements and an integer but it is not, which has been generated randomly with $m$ set to b\"SchemePBAC\". ")
+			print("Dec1: The variable $C$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemePBAC\". ")
 		
 		# Unpack #
 		g, H1, H3, H4, H5 = self.__mpk[0], self.__mpk[2], self.__mpk[4], self.__mpk[5], self.__mpk[6]
@@ -319,7 +319,7 @@ class SchemePBAC:
 			return False
 		else:
 			CT = self.ProxyEnc(self.PKGen(self.SKGen(id_2), self.RKGen(id_2), id_1, id_2, id_3), self.Enc(self.SKGen(id_1), id_2, b"SchemePBAC"))
-			print("Dec2: The variable $\\textit{CT}$ should be a tuple containing 7 objects but it is not, which has been generated randomly with $m$ set to b\"SchemePBAC\". ")
+			print("Dec2: The variable $\\textit{CT}$ should be a tuple containing 7 objects but it is not, which has been generated with $m$ set to b\"SchemePBAC\". ")
 		
 		# Unpack #
 		g, H1, H2, H3, H4, H6 = self.__mpk[0], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[7]

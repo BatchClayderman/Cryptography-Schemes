@@ -19,7 +19,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeIBPME:
+class SchemeIBPRME:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -373,12 +373,12 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeIBPME = SchemeIBPME(group)
+	schemeIBPRME = SchemeIBPRME(group)
 	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeIBPME.Setup()
+	mpk, msk = schemeIBPRME.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -386,59 +386,59 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	startTime = perf_counter()
 	id_2 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
 	id_3 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
-	dk_id_2 = schemeIBPME.DKGen(id_2)
-	dk_id_3 = schemeIBPME.DKGen(id_3)
+	dk_id_2 = schemeIBPRME.DKGen(id_2)
+	dk_id_3 = schemeIBPRME.DKGen(id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# EKGen #
 	startTime = perf_counter()
 	id_1 = randbelow(1 << group.secparam).to_bytes(ceil(group.secparam / 8), byteorder = "big")
-	ek_id_1 = schemeIBPME.EKGen(id_1)
-	ek_id_2 = schemeIBPME.EKGen(id_2)
+	ek_id_1 = schemeIBPRME.EKGen(id_1)
+	ek_id_2 = schemeIBPRME.EKGen(id_2)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# ReEKGen #
 	startTime = perf_counter()
-	rk = schemeIBPME.ReEKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
+	rk = schemeIBPRME.ReEKGen(ek_id_2, dk_id_2, id_1, id_2, id_3)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	ct = schemeIBPME.Enc(ek_id_1, id_2, message)
+	ct = schemeIBPRME.Enc(ek_id_1, id_2, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# ReEnc #
 	startTime = perf_counter()
-	ctPrime = schemeIBPME.ReEnc(ct, rk)
+	ctPrime = schemeIBPRME.ReEnc(ct, rk)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec1 #
 	startTime = perf_counter()
-	m = schemeIBPME.Dec1(dk_id_2, id_1, ct)
+	m = schemeIBPRME.Dec1(dk_id_2, id_1, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec2 #
 	startTime = perf_counter()
-	mPrime = schemeIBPME.Dec2(dk_id_3, id_1, id_2, id_3, ctPrime)
+	mPrime = schemeIBPRME.Dec2(dk_id_3, id_1, id_2, id_3, ctPrime)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	booleans = [True, isinstance(ctPrime, Element), isinstance(m, Element) and message == m, isinstance(mPrime, Element) and message == mPrime]
 	spaceRecords = [																													\
-		schemeIBPME.getLengthOf(group.random(ZR)), schemeIBPME.getLengthOf(group.random(G1)), 												\
-		schemeIBPME.getLengthOf(group.random(G2)), schemeIBPME.getLengthOf(group.random(GT)), 											\
-		schemeIBPME.getLengthOf(mpk), schemeIBPME.getLengthOf(msk), schemeIBPME.getLengthOf(ek_id_1), schemeIBPME.getLengthOf(ek_id_2), 		\
-		schemeIBPME.getLengthOf(dk_id_2), schemeIBPME.getLengthOf(dk_id_3), schemeIBPME.getLengthOf(ct), schemeIBPME.getLengthOf(ctPrime)	\
+		schemeIBPRME.getLengthOf(group.random(ZR)), schemeIBPRME.getLengthOf(group.random(G1)), 												\
+		schemeIBPRME.getLengthOf(group.random(G2)), schemeIBPRME.getLengthOf(group.random(GT)), 											\
+		schemeIBPRME.getLengthOf(mpk), schemeIBPRME.getLengthOf(msk), schemeIBPRME.getLengthOf(ek_id_1), schemeIBPRME.getLengthOf(ek_id_2), 		\
+		schemeIBPRME.getLengthOf(dk_id_2), schemeIBPRME.getLengthOf(dk_id_3), schemeIBPRME.getLengthOf(ct), schemeIBPRME.getLengthOf(ctPrime)	\
 	]
-	del schemeIBPME
+	del schemeIBPRME
 	print("Original:", message)
 	print("Dec1:", m)
 	print("Dec2:", mPrime)
@@ -485,7 +485,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 20, "SchemeIBPME.xlsx"
+	roundCount, filePath = 20, "SchemeIBPRME.xlsx"
 	columns = [																							\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 		\
 		"Setup (s)", "DKGen (s)", "EKGen (s)", "ReEKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
