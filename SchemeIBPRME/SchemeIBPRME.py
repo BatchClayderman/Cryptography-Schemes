@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from math import ceil
 from secrets import randbelow
 from time import perf_counter, sleep
 try:
@@ -50,7 +51,7 @@ class SchemeIBPRME:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def DKGen(self:object, idR:bytes) -> tuple: # $\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
@@ -72,7 +73,7 @@ class SchemeIBPRME:
 		dk_id_R = (dk_id_R1, dk_id_R2) # $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
 		
 		# Return #
-		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
+		return dk_id_R # \textbf{return} $\textit{dk}_{\textit{id}_R}$
 	def EKGen(self:object, idS:bytes) -> Element: # $\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
 		# Check #
 		if not self.__flag:
@@ -92,7 +93,7 @@ class SchemeIBPRME:
 		ek_id_S = H2(id_S) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
 		
 		# Return #
-		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
+		return ek_id_S # \textbf{return} $\textit{ek}_{\textit{id}_S}$
 	def ReEKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
 		# Check #
 		if not self.__flag:
@@ -144,7 +145,7 @@ class SchemeIBPRME:
 		rk = (N, rk1, rk2, rk3) # $\textit{rk} \gets (N, \textit{rk}_1, \textit{rk}_2, \textit{rk}_3)$
 		
 		# Return #
-		return rk # $\textbf{return }\textit{rk}$
+		return rk # \textbf{return} $\textit{rk}$
 	def Enc(self:object, ekid1:Element, id2:Element, message:Element) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
@@ -187,7 +188,7 @@ class SchemeIBPRME:
 		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
 		
 		# Return #
-		return ct # $\textbf{return }\textit{ct}$
+		return ct # \textbf{return} $\textit{ct}$
 	def ReEnc(self:object, cipher:tuple, reKey:tuple) -> tuple|bool: # $\textbf{ReEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$
 		# Check #
 		if not self.__flag:
@@ -226,7 +227,7 @@ class SchemeIBPRME:
 		# \textbf{end if}
 		
 		# Return #
-		return ctPrime # $\textbf{return }\textit{ct}'$
+		return ctPrime # \textbf{return} $\textit{ct}'$
 	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
@@ -274,7 +275,7 @@ class SchemeIBPRME:
 			m = False
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, id3:Element, cipherPrime:tuple|bool) -> Element|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m$
 		# Check #
 		if not self.__flag:
@@ -326,7 +327,7 @@ class SchemeIBPRME:
 			m = False
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))

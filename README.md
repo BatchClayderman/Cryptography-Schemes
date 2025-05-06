@@ -159,7 +159,7 @@ Here are the equivalent implementations in Java programming language based on th
 - Baselines: 
   - [https://github.com/BatchClayderman/Fuzzy_IB_ME](https://github.com/BatchClayderman/Fuzzy_IB_ME)
   - [https://github.com/BatchClayderman/Fuzzy_ME](https://github.com/BatchClayderman/Fuzzy_ME)
-- Proposed:
+- Proposed: 
   - [https://github.com/BatchClayderman/AA-IB-ME](https://github.com/BatchClayderman/AA-IB-ME)
 
 Regardless, using the implementations in Python programming language is more encouraging. 
@@ -170,11 +170,11 @@ Click [here](./SchemeCANIFPPCT/README.md) to view details.
 
 Here are the equivalent implementations in Java programming language based on the JPBC library. 
 
-- Baselines
+- Baselines: 
   - Version 1: [https://github.com/BatchClayderman/FEPPCT](https://github.com/BatchClayderman/FEPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-PSI](https://github.com/BatchClayderman/CA-NI-PSI)
 
-- Proposed
+- Proposed: 
   - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
 
@@ -188,13 +188,17 @@ Click [here](./SchemeHIBME/README.md) to view details.
 
 Click [here](./SchemeIBMETR/README.md) to view details. 
 
-## 6. Others
+## 6. SchemeIBPRME
+
+Click [here](./SchemeIBPRME/README.md) to view details. 
+
+## 7. Others
 
 Here are some links to my other implemented cryptography schemes, which do not involve the Python charm library. 
 
 By the way, this is not one of the major academic authors of the schemes mentioned in this section. Please only query here about the practical implementations. Thanks. 
 
-### 6.1 C/C++
+### 7.1 C/C++
 
 Here are some links to my other implemented cryptography schemes, which are in C/C++ programming language. 
 
@@ -203,13 +207,13 @@ Here are some links to my other implemented cryptography schemes, which are in C
 3) SPSI-CA-ull: [https://github.com/BatchClayderman/SPSI-CA-ull](https://github.com/BatchClayderman/SPSI-CA-ull)
 4) VPSI-CA-ull: [https://github.com/BatchClayderman/VPSI-CA-ull](https://github.com/BatchClayderman/VPSI-CA-ull)
 
-### 6.2 Java
+### 7.2 Java
 
 Here is a link to my other implemented cryptography scheme, which is in Java programming language based on the JPBC library. 
 
 - GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
 
-### 6.3 Python
+### 7.3 Python
 
 Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
 
@@ -217,7 +221,7 @@ Here are some links to my other implemented cryptography schemes, which are in P
 2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
 3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
 
-## 7. Acknowledgment
+## 8. Acknowledgment
 
 The experimental environment details are as follows. Thanks to the developers for their hard work. 
 

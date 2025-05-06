@@ -69,7 +69,7 @@ class SchemePBAC:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def SKGen(self:object, idS:bytes) -> Element: # $\textbf{SKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
 		# Check #
 		if not self.__flag:
@@ -89,7 +89,7 @@ class SchemePBAC:
 		ek_id_S = H1(id_S) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_1(\textit{id}_S)^\alpha$
 		
 		# Return #
-		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
+		return ek_id_S # \textbf{return} $\textit{ek}_{\textit{id}_S}$
 	def RKGen(self:object, idR:bytes) -> tuple: # $\textbf{RKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
@@ -111,7 +111,7 @@ class SchemePBAC:
 		dk_id_R = (dk_id_R1, dk_id_R2) # $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
 		
 		# Return #
-		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
+		return dk_id_R # \textbf{return} $\textit{dk}_{\textit{id}_R}$
 	def Enc(self:object, ekid1:Element, id2:Element, message:int|bytes) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
@@ -153,7 +153,7 @@ class SchemePBAC:
 		C = (C1, C2, C3, C4, S) # $C \gets (C_1, C_2, C_3, C_4, S)$
 		
 		# Return #
-		return C # $\textbf{return }C$
+		return C # \textbf{return} $C$
 	def PKGen(self:object, ekid2:Element, dkid2:tuple, id1:bytes, id2:bytes, id3:bytes) -> tuple: # $\textbf{PKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$
 		# Check #
 		if not self.__flag:
@@ -202,7 +202,7 @@ class SchemePBAC:
 		rk = (id_1, id_2, rk_1, rk_2) # $\textit{rk} \gets (\textit{id}_1, \textit{id}_2, \textit{rk}_1, \textit{rk}_2)$
 		
 		# Return #
-		return rk # $\textbf{return }\textit{rk}$
+		return rk # \textbf{return} $\textit{rk}$
 	def ProxyEnc(self:object, reKey:tuple, cipher:tuple) -> tuple|bool: # $\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
@@ -231,7 +231,7 @@ class SchemePBAC:
 		
 		# Scheme #
 		h = H5(id_2 + self.__group.serialize(C1) + self.__group.serialize(C2) + self.__group.serialize(C3) + C4.to_bytes(ceil(log(C4 + 1, 256)), byteorder = "big")) # $h \gets H_5(\textit{id}_2 || C_1 || C_2 || C_3 || C_4)$
-		if pair(h, C1) == pair(g, S): # \textbf{if} $e(h, C_1) = e(g, S)$ \textbf{then}
+		if pair(h, C1) == pair(g, S): # \textbf{if} $e(h, C_1) = e(g, S) $\textbf{then}
 			t = self.__group.random(ZR) # generate $t \in \mathbb{Z}_r$ randomly
 			C2Prime = C2 / (pair(C1, rk_1[1] * h ** t) / pair(g ** t, S)) # $C_2' \gets C_2 / \cfrac{e(C_1, \textit{rk}_{1, 2} \cdot h^t)}{e(g^t, S)}$
 			C3Prime = C3 / pair(H1(id_1), rk_2[1]) # $C_3' \gets C_3 / e(H_1(\textit{id}_1), \textit{rk}_{2, 2})$
@@ -241,7 +241,7 @@ class SchemePBAC:
 		# \textbf{end if}
 		
 		# Return #
-		return CT # $\textbf{return }\textit{CT}$
+		return CT # \textbf{return} $\textit{CT}$
 	def Dec1(self:object, dkid2:tuple, id2:bytes, id1:bytes, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
@@ -272,7 +272,6 @@ class SchemePBAC:
 		
 		# Unpack #
 		g, H1, H3, H4, H5 = self.__mpk[0], self.__mpk[2], self.__mpk[4], self.__mpk[5], self.__mpk[6]
-		#x = self.__msk[0]
 		C1, C2, C3, C4, S = C
 		
 		# Scheme #
@@ -282,12 +281,12 @@ class SchemePBAC:
 		eta_2 = C3 / pair(dk_id_2[0], H1(id_1)) # $\eta_2 \gets C_3 / e(\textit{dk}_{\textit{id}_2, 1}, H_1(\textit{id}_1))$
 		m = C4 ^ H4(eta_1) ^ H4(eta_2) # $m \gets C_4 \oplus H_4(\eta_1) \oplus H_4(\eta_2)$
 		r = H3(eta_1, eta_2, m) # $r \gets H_3(\eta_1, \eta_2, m)$
-		if S != h ** r or C1 != g ** r: # \textbf{if }$S \neq h^r \lor C_1 \neq g^r$\textbf{ then}
+		if S != h ** r or C1 != g ** r: # \textbf{if} $S \neq h^r \lor C_1 \neq g^r$ \textbf{then}
 			m = False # \quad$m \gets \perp$
 		# \textbf{end if}
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def Dec2(self:object, dkid3:tuple, id3:bytes, id2:bytes, cipherText:tuple|bool) -> Element|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_3, \textit{id}_2, \textit{CT}) \rightarrow m'$
 		# Check #
 		if not self.__flag:
@@ -332,12 +331,12 @@ class SchemePBAC:
 		eta2Prime = C3Prime * pair(H6(self.__group.serialize(K2Prime) + id_2 + id_3 + N2), H1(id_1)) # $\eta_2' \gets C_3' \cdot e(H_6(K_2' || \textit{id}_2 || \textit{id}_3 || N_2), H_1(\textit{id}_1))$
 		mPrime = C4 ^ H4(eta1Prime) ^ H4(eta2Prime) # $m' \gets C_4 \oplus H_4(\eta_1') \oplus H_4(\eta_2')$
 		rPrime = H3(eta1Prime, eta2Prime, mPrime) # $r' \gets H_3(\eta_1', \eta_2', m')$
-		if C1 != g ** rPrime: # \textbf{if }$C_1 \neq g^{r'}$\textbf{ then}
+		if C1 != g ** rPrime: # \textbf{if} $C_1 \neq g^{r'}$ \textbf{then}
 			mPrime = False # \quad$m' \gets \perp$
 		# \textbf{end if}
 		
 		# Return #
-		return mPrime # $\textbf{return }m'$
+		return mPrime # \textbf{return} $m'$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))

@@ -33,13 +33,13 @@ $ \textit{mpk} \gets (g, \hat{g}, H_1, H_2, H_3, H_4, H_5, H_6)$
 
 $\textit{msk} \gets (x, \alpha)$
 
-$\textbf{return }(\textit{mpk}, \textit{msk})$
+\textbf{return} $(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{SKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$}
 
 $\textit{ek}_{\textit{id}_S} \gets H_1(\textit{id}_S)^\alpha$
 
-$\textbf{return }\textit{ek}_{\textit{id}_S}$
+\textbf{return} $\textit{ek}_{\textit{id}_S}$
 
 \subsection{$\textbf{RKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$}
 
@@ -49,7 +49,7 @@ $\textit{dk}_{\textit{id}_R, 2} \gets H_2(\textit{id}_R)^s$
 
 $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
 
-$\textbf{return }\textit{dk}_{\textit{id}_R}$
+\textbf{return} $\textit{dk}_{\textit{id}_R}$
 
 \subsection{$\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$}
 
@@ -69,7 +69,7 @@ $S \gets H_5(\textit{id}_2 || C_1 || C_2 || C_3 || C_4)^r$
 
 $C \gets (C_1, C_2, C_3, C_4, S)$
 
-$\textbf{return }C$
+\textbf{return} $C$
 
 \subsection{$\textbf{PKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$}
 
@@ -87,13 +87,13 @@ $\textit{rk}_2 \gets (N_2, H_6(K_2 || \textit{id}_2 || \textit{id}_3 || N_2) \cd
 
 $\textit{rk} \gets (\textit{id}_1, \textit{id}_2, \textit{rk}_1, \textit{rk}_2)$
 
-$\textbf{return }\textit{rk}$
+\textbf{return} $\textit{rk}$
 
 \subsection{$\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{CT}$}
 
 $h \gets H_5(\textit{id}_2 || C_1 || C_2 || C_3 || C_4)$
 
-\textbf{if} $e(h, C_1) = e(g, S)$ \textbf{then}
+\textbf{if} $e(h, C_1) = e(g, S) $\textbf{then}
 
 generate $t \in \mathbb{Z}_r$ randomly
 
@@ -107,7 +107,9 @@ $\textit{CT} \gets (\textit{id}_1, C_1, C_2', C_3', C_4, \textit{rk}_{1, 1}, \te
 
 \quad$\textit{CT} \gets \perp$
 
-$\textbf{return }\textit{CT}$
+\textbf{end if}
+
+\textbf{return} $\textit{CT}$
 
 \subsection{$\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$}
 
@@ -123,11 +125,13 @@ $m \gets C_4 \oplus H_4(\eta_1) \oplus H_4(\eta_2)$
 
 $r \gets H_3(\eta_1, \eta_2, m)$
 
-\textbf{if }$S \neq h^r \lor C_1 \neq g^r$\textbf{ then}
+\textbf{if} $S \neq h^r \lor C_1 \neq g^r$ \textbf{then}
 
 \quad$m \gets \perp$
 
-$\textbf{return }m$
+\textbf{end if}
+
+\textbf{return} $m$
 
 \subsection{$\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_3, \textit{id}_2, \textit{CT}) \rightarrow m'$}
 
@@ -143,10 +147,12 @@ $m' \gets C_4 \oplus H_4(\eta_1') \oplus H_4(\eta_2')$
 
 $r' \gets H_3(\eta_1', \eta_2', m')$
 
-\textbf{if }$C_1 \neq g^{r'}$\textbf{ then}
+\textbf{if} $C_1 \neq g^{r'}$ \textbf{then}
 
 \quad$m' \gets \perp$
 
-$\textbf{return }m'$
+\textbf{end if}
+
+\textbf{return} $m'$
 
 \end{document}

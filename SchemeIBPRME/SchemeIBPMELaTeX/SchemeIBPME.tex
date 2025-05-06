@@ -7,7 +7,7 @@
 
 \section{SchemeIBPME}
 
-This scheme is only applicable to symmetric groups of prime orders. 
+This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
@@ -49,13 +49,13 @@ $ \textit{mpk} \gets (g, \hat{g}, g_1, f, h, \hat{f}, \hat{h}, H, H_1, H_2, H_3,
 
 $\textit{msk} \gets (s, \alpha)$
 
-$\textbf{return }(\textit{mpk}, \textit{msk})$
+\textbf{return} $(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{SKGen}(\sigma) \rightarrow \textit{ek}_\sigma$}
 
 $\textit{ek}_\sigma \gets H_1(\sigma)^s$
 
-$\textbf{return }\textit{ek}_\sigma$
+\textbf{return} $\textit{ek}_\sigma$
 
 \subsection{$\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$}
 
@@ -65,7 +65,7 @@ $d_2 \gets H_2(\rho)^\alpha$
 
 $\textit{dk}_\rho \gets (d_1, d_2)$
 
-$\textbf{return }\textit{dk}_\rho$
+\textbf{return} $\textit{dk}_\rho$
 
 \subsection{$\textbf{PKGen}(\textit{dk}_\rho, \sigma) \rightarrow \textit{pdk}_{\rho, \sigma}$}
 
@@ -79,7 +79,7 @@ $y_2 \gets \hat{g}^y$
 
 $\textit{pdk}_{(\rho, \sigma)} \gets (y_1, y_2)$
 
-$\textbf{return }\textit{pdk}_{(\rho, \sigma)}$
+\textbf{return} $\textit{pdk}_{(\rho, \sigma)}$
 
 \subsection{$\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow \textit{ct}$}
 
@@ -101,7 +101,7 @@ $C_3 \gets (m || K_C || Y) \oplus H_6(K_R)$
 
 $C \gets (C_1, C_2, C_3)$
 
-$\textbf{return }C$
+\textbf{return} $C$
 
 \subsection{$\textbf{ProxyDec}(\textit{pdk}, C) \rightarrow \textit{CT}$}
 
@@ -109,7 +109,7 @@ $K_R \gets e(C_1, y_1) / e(C_2, y_2)$
 
 $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 
-\textbf{if }$Y = H_5(m, K_C, K_R, C_1, C_2)$\textbf{ then}
+\textbf{if} $Y = H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 
 $\textit{CT}_1 \gets C_1$
 
@@ -121,7 +121,9 @@ $\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
 
 \quad$\textit{CT} \gets \perp$
 
-$\textbf{return }\textit{CT}$
+\textbf{end if}
+
+\textbf{return} $\textit{CT}$
 
 \subsection{$\textbf{Dec}_1(\textit{dk}_\rho, \sigma, C) \rightarrow m$}
 
@@ -131,11 +133,13 @@ $K_R \gets e(C_1, d_2^{H_3(\eta)})$
 
 $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 
-\textbf{if }$K_C \neq H_4(m, \eta, K_R) \lor Y \neq H_5(m, K_C, K_R, C_1, C_2)$\textbf{ then}
+\textbf{if} $K_C \neq H_4(m, \eta, K_R) \lor Y \neq H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 
 \quad$m \gets \perp$
 
-$\textbf{return }m$
+\textbf{end if}
+
+\textbf{return} $m$
 
 \subsection{$\textbf{Dec}_1(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$}
 
@@ -145,10 +149,12 @@ $K_R \gets e(C_1, d_2^{H_3(\eta)})$
 
 $m || K_C \gets \textit{CT}_2 \oplus H_7(K_R)$
 
-\textbf{if }$K_C \neq H_4(m, \eta, K_R)$\textbf{ then}
+\textbf{if} $K_C \neq H_4(m, \eta, K_R) $\textbf{then}
 
 \quad$m \gets \perp$
 
-$\textbf{return }m$
+\textbf{end if}
+
+\textbf{return} $m$
 
 \end{document}

@@ -60,13 +60,13 @@ class SchemeAnonymousME:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def KGen(self:object, IDk:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -99,15 +99,15 @@ class SchemeAnonymousME:
 		) # )$
 		
 		# Return #
-		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
+		return sk_ID_k # \textbf{return} $\textit{sk}_{\textit{ID}_k}$
 	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("DerivedKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
-			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDkMinus1]): # hybrid check
+			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all(isinstance(ele, Element) for ele in skIDkMinus1): # hybrid check
 				sk_ID_kMinus1 = skIDkMinus1
 			else:
 				sk_ID_kMinus1 = self.KGen(ID_k[:-1])
@@ -151,13 +151,13 @@ class SchemeAnonymousME:
 		) # )$
 		
 		# Return #
-		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
+		return sk_ID_k # \textbf{return} $\textit{sk}_{\textit{ID}_k}$
 	def Enc(self:object, IDk:tuple, message:Element) -> object: # $\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -187,18 +187,18 @@ class SchemeAnonymousME:
 		) # )$
 		
 		# Return #
-		return CT # $\textbf{return }\textit{CT}$
+		return CT # \textbf{return} $\textit{CT}$
 	def Dec(self:object, skIDk:tuple, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= ((self.__l - 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDk]): # hybrid check
+		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= ((self.__l - 1) << 2) + 5 and all(isinstance(ele, Element) for ele in skIDk): # hybrid check
 			sk_ID_k = skIDk
 		else:
 			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
 			print("Dec: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
-		if isinstance(cipher, tuple) and len(cipher) == 4 and all([isinstance(ele, Element) for ele in cipher]):# hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 4 and all(isinstance(ele, Element) for ele in cipher):# hybrid check
 			CT = cipher
 		else:
 			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
@@ -212,7 +212,7 @@ class SchemeAnonymousME:
 		M = pair(b, D) * A / (pair(B, a0) * pair(C, a1)) # $M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
 		
 		# Return #
-		return M # $\textbf{return }M$
+		return M # \textbf{return} $M$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -438,7 +438,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[5:8]] + [r > 0 for r in result[8:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[5:8]) + tuple(r > 0 for r in result[8:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))

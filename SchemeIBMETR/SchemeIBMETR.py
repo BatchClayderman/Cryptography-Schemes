@@ -35,7 +35,7 @@ class SchemeIBMETR:
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
 	def __product(self:object, vec:tuple|list|set) -> Element:
-		if isinstance(vec, (tuple, list, set)) and vec and all([isinstance(ele, Element) for ele in vec]):
+		if isinstance(vec, (tuple, list, set)) and vec and all(isinstance(ele, Element) for ele in vec):
 			element = vec[0]
 			for ele in vec[1:]:
 				element *= ele
@@ -76,7 +76,7 @@ class SchemeIBMETR:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def EKGen(self:object, idS:Element) -> Element: # $\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$
 		# Check #
 		if not self.__flag:
@@ -96,7 +96,7 @@ class SchemeIBMETR:
 		ek_id_S = H1(id_S) ** alpha # $\textit{ek}_{\textit{id}_S} \gets H_1(\textit{id}_S)$
 		
 		# Return #
-		return ek_id_S # $\textbf{return }\textit{ek}_{\textit{id}_S}$
+		return ek_id_S # \textbf{return} $\textit{ek}_{\textit{id}_S}$
 	def DKGen(self:object, idR:Element) -> tuple: # $\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
@@ -121,7 +121,7 @@ class SchemeIBMETR:
 		dk_id_R = (dk0, dk1, dk2, dk3) # $\textit{dk}_{\textit{ID}_R} \gets (\textit{dk}_0, \textit{dk}_1, \textit{dk}_2, \textit{dk}_3)$
 		
 		# Return #
-		return dk_id_R # $\textbf{return }\textit{dk}_{\textit{id}_R}$
+		return dk_id_R # \textbf{return} $\textit{dk}_{\textit{id}_R}$
 	def TKGen(self:object, idR:Element) -> tuple: # $\textbf{TKGen}(\textit{id}_R) \rightarrow \textit{tk}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
@@ -145,7 +145,7 @@ class SchemeIBMETR:
 		tk_id_R = (tk1, tk2, tk3) # $\textit{tk}_{\textit{ID}_R} \gets (\textit{tk}_1, \textit{tk}_2, \textit{tk}_3)$
 		
 		# Return #
-		return tk_id_R # $\textbf{return }\textit{tk}_{\textit{id}_R}$
+		return tk_id_R # \textbf{return} $\textit{tk}_{\textit{id}_R}$
 	def Enc(self:object, ekidS:Element, idRev:Element, message:int|bytes) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{id}_S}, \textit{id}_\textit{Rev}, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
@@ -190,7 +190,7 @@ class SchemeIBMETR:
 		ct = (ct0, ct1, ct2, ct3, T, V) # $\textit{ct} \gets (\textit{ct}_0, \textit{ct}_1, \textit{ct}_2, \textit{ct}_3, T, V)$
 		
 		# Return #
-		return ct # $\textbf{return }\textit{ct}$
+		return ct # \textbf{return} $\textit{ct}$
 	def Dec(self:object, dkidR:tuple, idRev:Element, idSnd:Element, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_\textit{Rev}, \textit{id}_\textit{Snd}, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
@@ -198,7 +198,7 @@ class SchemeIBMETR:
 			self.Setup()
 		if isinstance(idRev, Element) and idRev.type == ZR: # type check
 			id_Rev = idRev
-			if isinstance(dkidR, tuple) and len(dkidR) == 4 and all([isinstance(ele, Element) for ele in dkidR]): # hybrid check
+			if isinstance(dkidR, tuple) and len(dkidR) == 4 and all(isinstance(ele, Element) for ele in dkidR): # hybrid check
 				dk_id_R = dkidR
 			else:
 				dk_id_R = self.DKGen(id_Rev)
@@ -213,7 +213,7 @@ class SchemeIBMETR:
 		else:
 			id_Snd = self.__group.random(ZR)
 			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all(isinstance(ele, Element) for ele in cipher[1:]): # hybrid check
 			ct = cipher
 		else:
 			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), int.from_bytes(b"SchemeIBMETR", byteorder = "big"))
@@ -230,18 +230,18 @@ class SchemeIBMETR:
 		m = ct0 ^ HHat(RPrime) ^ HHat(KPrime) # $m \gets \textit{ct}_0 \oplus \hat{H}(R') \oplus \hat{H}(K')$
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def TVerify(self:object, tkidR:tuple, cipher:tuple) -> bool: # $\textbf{TVerify}(\textit{tk}_{\textit{id}_R}, \textit{ct}) \rightarrow y, y \in \{0, 1\}$
 		# Check #
 		if not self.__flag:
 			print("TVerify: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TVerify`` subsequently. ")
 			self.Setup()
-		if isinstance(tkidR, tuple) and len(tkidR) == 3 and all([isinstance(ele, Element) for ele in tkidR]): # hybrid check
+		if isinstance(tkidR, tuple) and len(tkidR) == 3 and all(isinstance(ele, Element) for ele in tkidR): # hybrid check
 			tk_id_R = tkidR
 		else:
 			tk_id_R = self.TKGen(self.__group.random(ZR))
 			print("TVerify: The variable $\\textit{tk}_{\\textit{id}_R}$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all(isinstance(ele, Element) for ele in cipher[1:]): # hybrid check
 			ct = cipher
 		else:
 			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), int.from_bytes(b"SchemeIBMETR", byteorder = "big"))
@@ -255,7 +255,7 @@ class SchemeIBMETR:
 		pass
 		
 		# Return #
-		return V == pair(tk1, ct1) * pair(tk2, ct2) * pair(tk3, ct3) # $\textbf{return }V = e(\textit{tk}_1, \textit{ct}_1) \cdot e(\textit{tk}_2, \textit{ct}_2) \cdot e(\textit{tk}_3, \textit{ct}_3)$
+		return V == pair(tk1, ct1) * pair(tk2, ct2) * pair(tk3, ct3) # \textbf{return} $V = e(\textit{tk}_1, \textit{ct}_1) \cdot e(\textit{tk}_2, \textit{ct}_2) \cdot e(\textit{tk}_3, \textit{ct}_3)$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -476,7 +476,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:6]] + [r > 0 for r in result[6:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:6]) + tuple(r > 0 for r in result[6:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))

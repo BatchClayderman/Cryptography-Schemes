@@ -179,21 +179,25 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 								if "__init__" == functionName:
 									f.write(line[line.index(": # ") + 4:] + "\n\n")
 									functionName = None
+								elif "__" in functionName:
+									functionName = None
 								else:
 									f.write("\\subsection{" + line[line.index(": # ") + 4:].strip() + "}\n\n")
 							elif className is not None and functionName is not None and "\t\t# Scheme #" == line: # XXX # Scheme # XXX
 								schemeFlag, doubleSeparatorFlag = True, True
 							elif className is not None and functionName is not None and schemeFlag and " # " in line:
-								prompt = line[line.index(" # ") + 3:]
+								prompt = line[line.index(" # ") + 3:].lstrip()
 								if "$" == prompt.strip():
 									doubleSeparatorFlag = not doubleSeparatorFlag # invert the double separator switch
-								elif (prompt.lstrip().startswith("$") or prompt.lstrip().startswith("\\quad$")) and not prompt.rstrip().endswith("$"):
+								elif (prompt.startswith("$") or prompt.startswith("\\quad$")) and not prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = False # disable the double separator switch
-								elif not prompt.lstrip().startswith("$") and prompt.rstrip().endswith("$"):
+								elif not prompt.startswith("$") and prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = True # enable the double separator switch
 								f.write(prompt + ("\n\n" if doubleSeparatorFlag else "\n"))
 								if line.startswith("\t\treturn "):
 									functionName, schemeFlag, doubleSeparatorFlag = None, False, True
+							elif className is not None and functionName is not None and schemeFlag and line.lstrip().startswith("# ") and line.rstrip().endswith("\\textbf{end if}"):
+								f.write(line.lstrip()[2:].lstrip() + ("\n\n" if doubleSeparatorFlag else "\n"))
 							elif not line.startswith("\t") and line.strip() and not line.lstrip().startswith("#"): # Reset
 								className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True # reset
 							

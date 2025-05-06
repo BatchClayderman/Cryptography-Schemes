@@ -22,7 +22,7 @@ EOF = (-1)
 
 
 class SchemeIBPME:
-	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
+	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -94,7 +94,7 @@ class SchemeIBPME:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def SKGen(self:object, snd:bytes) -> Element: # $\textbf{SKGen}(\sigma) \rightarrow \textit{ek}_\sigma$
 		# Check #
 		if not self.__flag:
@@ -114,7 +114,7 @@ class SchemeIBPME:
 		ek_sigma = H1(sigma) ** s # $\textit{ek}_\sigma \gets H_1(\sigma)^s$
 		
 		# Return #
-		return ek_sigma # $\textbf{return }\textit{ek}_\sigma$
+		return ek_sigma # \textbf{return} $\textit{ek}_\sigma$
 	def RKGen(self:object, rcv:bytes) -> tuple: # $\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$
 		# Check #
 		if not self.__flag:
@@ -136,7 +136,7 @@ class SchemeIBPME:
 		dk_rho = (d1, d2) # $\textit{dk}_\rho \gets (d_1, d_2)$
 		
 		# Return #
-		return dk_rho # $\textbf{return }\textit{dk}_\rho$
+		return dk_rho # \textbf{return} $\textit{dk}_\rho$
 	def PKGen(self:object, dkrho:Element, snd:bytes) -> tuple: # $\textbf{PKGen}(\textit{dk}_\rho, \sigma) \rightarrow \textit{pdk}_{\rho, \sigma}$
 		# Check #
 		if not self.__flag:
@@ -165,7 +165,7 @@ class SchemeIBPME:
 		pdk = (y1, y2) # $\textit{pdk}_{(\rho, \sigma)} \gets (y_1, y_2)$
 		
 		# Return #
-		return pdk # $\textbf{return }\textit{pdk}_{(\rho, \sigma)}$
+		return pdk # \textbf{return} $\textit{pdk}_{(\rho, \sigma)}$
 	def Enc(self:object, eksigma:Element, rcv:bytes, message:int|bytes) -> object: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
@@ -204,7 +204,7 @@ class SchemeIBPME:
 		C = (C1, C2, C3) # $C \gets (C_1, C_2, C_3)$
 		
 		# Return #
-		return C # $\textbf{return }C$
+		return C # \textbf{return} $C$
 	def ProxyDec(self:object, _pdk:tuple, cipher:tuple) -> tuple|bool: # $\textbf{ProxyDec}(\textit{pdk}, C) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
@@ -237,7 +237,7 @@ class SchemeIBPME:
 		m_KC_Y = C3 ^ int.from_bytes(H6(K_R), byteorder = "big") # $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 		m_KC_Y = m_KC_Y.to_bytes(ceil(log(m_KC_Y + 1, 256)), byteorder = "big")
 		m_KC, Y = m_KC_Y[:-ceil(self.__group.secparam / 8)], m_KC_Y[-ceil(self.__group.secparam / 8):]
-		if Y == H5(m_KC, K_R, C1, C2): # \textbf{if }$Y = H_5(m, K_C, K_R, C_1, C_2)$\textbf{ then}
+		if Y == H5(m_KC, K_R, C1, C2): # \textbf{if} $Y = H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 			CT_1 = C1 # $\textit{CT}_1 \gets C_1$
 			CT_2 = int.from_bytes(m_KC, byteorder = "big") ^ int.from_bytes(H7(K_R), byteorder = "big") # $\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
 			CT = (CT_1, CT_2) # $\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
@@ -246,7 +246,7 @@ class SchemeIBPME:
 		# \textbf{end if}
 		
 		# Return #
-		return CT # $\textbf{return }\textit{CT}$
+		return CT # \textbf{return} $\textit{CT}$
 	def Dec1(self:object, dkrho:tuple, snd:bytes, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_\rho, \sigma, C) \rightarrow m$
 		# Check #
 		if not self.__flag:
@@ -282,12 +282,12 @@ class SchemeIBPME:
 		m_KC_Y = C3 ^ int.from_bytes(H6(K_R), byteorder = "big") # $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 		m_KC_Y = m_KC_Y.to_bytes(ceil(log(m_KC_Y + 1, 256)), byteorder = "big")
 		m, K_C, Y = m_KC_Y[:-(ceil(self.__group.secparam / 8) << 1)], m_KC_Y[-(ceil(self.__group.secparam / 8) << 1):-ceil(self.__group.secparam / 8)], m_KC_Y[-ceil(self.__group.secparam / 8):]
-		if K_C != H4(m, eta, K_R) or Y != H5(m, K_C, K_R, C1, C2): # \textbf{if }$K_C \neq H_4(m, \eta, K_R) \lor Y \neq H_5(m, K_C, K_R, C_1, C_2)$\textbf{ then}
+		if K_C != H4(m, eta, K_R) or Y != H5(m, K_C, K_R, C1, C2): # \textbf{if} $K_C \neq H_4(m, \eta, K_R) \lor Y \neq H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 			m = False # \quad$m \gets \perp$
 		# \textbf{end if}
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def Dec2(self:object, dkrho:tuple, snd:bytes, cipherText:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$
 		# Check #
 		if not self.__flag:
@@ -330,12 +330,12 @@ class SchemeIBPME:
 		m_KC = CT_2 ^ int.from_bytes(H7(K_R), byteorder = "big") # $m || K_C \gets \textit{CT}_2 \oplus H_7(K_R)$
 		m_KC = m_KC.to_bytes(ceil(log(m_KC + 1, 256)), byteorder = "big")
 		m, K_C = m_KC[:-ceil(self.__group.secparam / 8)], m_KC[-ceil(self.__group.secparam / 8):]
-		if K_C != H4(m, eta, K_R): # \textbf{if }$K_C \neq H_4(m, \eta, K_R)$\textbf{ then}
+		if K_C != H4(m, eta, K_R): # \textbf{if} $K_C \neq H_4(m, \eta, K_R) $\textbf{then}
 			m = False # \quad$m \gets \perp$
 		# \textbf{end if}
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -367,7 +367,6 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 				group = PairingGroup(curveType[0])
 		else:
 			group = PairingGroup(curveType)
-		pair(group.random(G1), group.random(G1))
 	except BaseException as e:
 		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 			print("curveType =", curveType[0])
@@ -496,7 +495,7 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBPME.xlsx"
 	columns = [																					\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isProxyDecPassed", "isDec1Passed", 			\

@@ -31,7 +31,7 @@ class SchemeIBMECH:
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
 	def __product(self:object, vec:tuple|list|set) -> Element:
-		if isinstance(vec, (tuple, list, set)) and vec and all([isinstance(ele, Element) for ele in vec]):
+		if isinstance(vec, (tuple, list, set)) and vec and all(isinstance(ele, Element) for ele in vec):
 			element = vec[0]
 			for ele in vec[1:]:
 				element *= ele
@@ -58,7 +58,7 @@ class SchemeIBMECH:
 		
 		# Return #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def SKGen(self:object, sender:Element) -> tuple: # $\textbf{SKGen}(\sigma) \rightarrow \textit{ek}_\sigma$
 		# Check #
 		if not self.__flag:
@@ -78,7 +78,7 @@ class SchemeIBMECH:
 		ek_sigma = tuple(d3[i] ** (eta + r * sigma) / d4[i] ** r for i in range(8)) # $\textit{ek}_\sigma \gets \frac{\bm{d}_{3, i}^{\eta + r \sigma}}{\bm{d}_{4, i}^r}, \forall i \in \{1, 2, \cdots, 8\}$
 		
 		# Return #
-		return ek_sigma # $\textbf{return }\textit{ek}_\sigma$
+		return ek_sigma # \textbf{return} $\textit{ek}_\sigma$
 	def RKGen(self:object, receiver:Element) -> tuple: # $\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$
 		# Check #
 		if not self.__flag:
@@ -102,13 +102,13 @@ class SchemeIBMECH:
 		dk_rho = (k1, k2, k3) # $\textit{dk}_\rho \gets (k_1, k_2, k_3)$
 		
 		# Return #
-		return dk_rho # $\textbf{return }\textit{dk}_\rho$
+		return dk_rho # \textbf{return} $\textit{dk}_\rho$
 	def Enc(self:object, eksigma:tuple, receiver:Element, message:Element) -> tuple: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{rcv}, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
-		if isinstance(eksigma, tuple) and len(eksigma) == 8 and all([isinstance(ele, Element) for ele in eksigma]): # hybrid check
+		if isinstance(eksigma, tuple) and len(eksigma) == 8 and all(isinstance(ele, Element) for ele in eksigma): # hybrid check
 			ek_sigma = eksigma
 		else:
 			ek_sigma = self.SKGen(self.__group.random(ZR))
@@ -134,15 +134,15 @@ class SchemeIBMECH:
 		ct = (C, C0) # $\textit{ct} \gets (C, C_0)$
 		
 		# Return #
-		return ct # $\textbf{return }\textit{ct}$
+		return ct # \textbf{return} $\textit{ct}$
 	def Dec(self:object, dkrho:tuple, sender:Element, cipher:tuple) -> Element: # $\textbf{Dec}(\textit{dk}_\rho, \textit{snd}, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
 		if (																																\
-			isinstance(dkrho, tuple) and len(dkrho) == 3 and isinstance(dkrho[0], tuple) and len(dkrho[0]) == 8 and all([isinstance(ele, Element) for ele in dkrho[0]])	\
-			and isinstance(dkrho[1], tuple) and len(dkrho[1]) == 8 and all([isinstance(ele, Element) for ele in dkrho[1]]) and isinstance(dkrho[2], Element)			\
+			isinstance(dkrho, tuple) and len(dkrho) == 3 and isinstance(dkrho[0], tuple) and len(dkrho[0]) == 8 and all(isinstance(ele, Element) for ele in dkrho[0])		\
+			and isinstance(dkrho[1], tuple) and len(dkrho[1]) == 8 and all(isinstance(ele, Element) for ele in dkrho[1]) and isinstance(dkrho[2], Element)				\
 		): # hybrid check
 			dk_rho = dkrho
 		else:
@@ -153,7 +153,7 @@ class SchemeIBMECH:
 		else:
 			snd = self.__group.random(ZR)
 			print("Dec: The variable $\\textit{snd}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 2 and isinstance(cipher[0], tuple) and len(cipher[0]) == 8 and all([isinstance(ele, Element) for ele in cipher[0]]) and isinstance(cipher[1], Element): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 2 and isinstance(cipher[0], tuple) and len(cipher[0]) == 8 and all(isinstance(ele, Element) for ele in cipher[0]) and isinstance(cipher[1], Element): # hybrid check
 			ct = cipher
 		else:
 			ct = self.Enc(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), self.__group.random(GT))
@@ -167,7 +167,7 @@ class SchemeIBMECH:
 		m = C0 * k3 / self.__product(tuple(pair(C[i], k1[i] * k2[i] ** snd) for i in range(8))) # $m \gets \frac{C_0 k_3}{\prod\limits_{i = 1}^8 e(C_i, k_{1, i} k_{2, i}^\textit{snd})}$
 		
 		# Return #
-		return m # $\textbf{return }m$
+		return m # \textbf{return} $m$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -374,7 +374,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:5]] + [r > 0 for r in result[5:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:5]) + tuple(r > 0 for r in result[5:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))

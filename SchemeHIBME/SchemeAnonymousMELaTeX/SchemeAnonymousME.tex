@@ -31,7 +31,7 @@ $\textit{mpk} \gets (g, g_1, g_2, g_3, \bar{g}, \tilde{g}, \bar{g}_3, \tilde{g}_
 
 $\textit{msk} \gets (g_2^\alpha, b_1, b_2)$
 
-$\textbf{return }(\textit{mpk}, \textit{msk})$
+\textbf{return} $(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
@@ -50,7 +50,7 @@ h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}},
 \textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
 )$
 
-$\textbf{return }\textit{sk}_{\textit{ID}_k}$
+\textbf{return} $\textit{sk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
@@ -67,7 +67,7 @@ d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l},
 f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 )$
 
-$\textbf{return }\textit{sk}_{\textit{ID}_k}$
+\textbf{return} $\textit{sk}_{\textit{ID}_k}$
 
 \subsection{$\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$}
 
@@ -80,12 +80,12 @@ e(g_1, g_2)^{s_1 + s_2} \cdot M,
 (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
 )$
 
-$\textbf{return }\textit{CT}$
+\textbf{return} $\textit{CT}$
 
 \subsection{$\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$}
 
 $M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
 
-$\textbf{return }M$
+\textbf{return} $M$
 
 \end{document}

@@ -50,7 +50,7 @@ class SchemeIBME:
 		
 		# Return #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def SKGen(self:object, sender:Element) -> Element: # $\textbf{SKGen}(S) \rightarrow \textit{ek}_S$
 		# Check #
 		if not self.__flag:
@@ -70,7 +70,7 @@ class SchemeIBME:
 		ek_S = s * HPrime(S) # $\textit{ek}_S \gets s \cdot H'(S)$
 		
 		# Return #
-		return ek_S # $\textbf{return }\textit{ek}_S$
+		return ek_S # \textbf{return} $\textit{ek}_S$
 	def RKGen(self:object, receiver:Element) -> Element: # $\textbf{RKGen}(S) \rightarrow \textit{dk}_R$
 		# Check #
 		if not self.__flag:
@@ -94,7 +94,7 @@ class SchemeIBME:
 		dk_R = (dk1, dk2, dk3) # $\textit{dk}_R \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3)$
 		
 		# Return #
-		return dk_R # $\textbf{return }\textit{dk}_R$
+		return dk_R # \textbf{return} $\textit{dk}_R$
 	def Enc(self:object, ekS:Element, receiver:Element, message:int|bytes) -> tuple: # $\textbf{Enc}(\textit{ek}_S, R, M) \rightarrow C$
 		# Check #
 		if not self.__flag:
@@ -137,13 +137,13 @@ class SchemeIBME:
 		C = (T, U, V) # $C \gets (T, U, V)$
 		
 		# Return #
-		return C # $\textbf{return }C$	
+		return C # \textbf{return} $C$	
 	def Dec(self:object, dkR:tuple, sender:Element, cipher:tuple) -> int: # $\textbf{Dec}(\textit{dk}_R, S, C) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			self.Setup()
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
-		if isinstance(dkR, tuple) and len(dkR) == 3 and all([isinstance(ele, Element) for ele in dkR]): # hybrid check
+		if isinstance(dkR, tuple) and len(dkR) == 3 and all(isinstance(ele, Element) for ele in dkR): # hybrid check
 			dk_R = dkR
 		else:
 			dk_R = self.RKGen(self.__group.random(ZR))
@@ -171,7 +171,7 @@ class SchemeIBME:
 		M = V ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $M \gets V \oplus k_R \oplus k_S$
 		
 		# Return #
-		return M # $\textbf{return }M$
+		return M # \textbf{return} $M$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -379,7 +379,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:5]] + [r > 0 for r in result[5:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:5]) + tuple(r > 0 for r in result[5:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))

@@ -31,7 +31,7 @@ $\textit{mpk} \gets (Omega, g, g_0, g_1, v_1, v_2, v_3, v_4)$
 
 $\textit{msk} \gets (w, t_1, t_2, t_3, t_4)$
 
-$\textbf{return }(\textit{mpk}, \textit{msk})$
+\textbf{return} $(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{Extract}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$}
 
@@ -49,7 +49,7 @@ $d_4 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_3}$
 
 $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
 
-$\textbf{return }\textit{Pvk}_\textit{Id}$
+\textbf{return} $\textit{Pvk}_\textit{Id}$
 
 \subsection{$\textbf{Encrypt}(\textit{Id}, m) \rightarrow \textit{CT}$}
 
@@ -69,12 +69,12 @@ $C_4 \gets v_4^{s_2}$
 
 $\textit{CT} \gets (C', C_0, C_1, C_2, C_3, C_4)$
 
-$\textbf{return }\textit{CT}$
+\textbf{return} $\textit{CT}$
 
 \subsection{$\textbf{Decrypt}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow M$}
 
 $M \gets C' \cdot e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4)$
 
-$\textbf{return }M$
+\textbf{return} $M$
 
 \end{document}

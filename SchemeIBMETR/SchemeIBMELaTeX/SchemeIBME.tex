@@ -27,13 +27,13 @@ $\textit{mpk} \gets (P, P_0, H, H')$
 
 $\textit{msk} \gets (r, s)$
 
-$\textbf{return }(\textit{mpk}, \textit{msk})$
+\textbf{return} $(\textit{mpk}, \textit{msk})$
 
 \subsection{$\textbf{SKGen}(S) \rightarrow \textit{ek}_S$}
 
 $\textit{ek}_S \gets s \cdot H'(S)$
 
-$\textbf{return }\textit{ek}_S$
+\textbf{return} $\textit{ek}_S$
 
 \subsection{$\textbf{RKGen}(S) \rightarrow \textit{dk}_R$}
 
@@ -47,7 +47,7 @@ $\textit{dk}_3 \gets H_R$
 
 $\textit{dk}_R \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3)$
 
-$\textbf{return }\textit{dk}_R$
+\textbf{return} $\textit{dk}_R$
 
 \subsection{$\textbf{Enc}(\textit{ek}_S, R, M) \rightarrow C$}
 
@@ -67,7 +67,7 @@ $V \gets M \oplus k_R \oplus k_S$
 
 $C \gets (T, U, V)$
 
-$\textbf{return }C$	
+\textbf{return} $C$	
 
 \subsection{$\textbf{Dec}(\textit{dk}_R, S, C) \rightarrow M$}
 
@@ -79,6 +79,6 @@ $k_S \gets e(\textit{dk}_3, T)$
 
 $M \gets V \oplus k_R \oplus k_S$
 
-$\textbf{return }M$
+\textbf{return} $M$
 
 \end{document}

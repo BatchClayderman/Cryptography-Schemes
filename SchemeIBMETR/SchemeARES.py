@@ -50,7 +50,7 @@ class SchemeARES:
 		
 		# Return #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def Extract(self:object, identity:Element) -> tuple: # $\textbf{Extract}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$
 		# Check #
 		if not self.__flag:
@@ -76,7 +76,7 @@ class SchemeARES:
 		Pvk_Id = (d0, d1, d2, d3, d4) # $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
 		
 		# Return #
-		return Pvk_Id # $\textbf{return }\textit{Pvk}_\textit{Id}$
+		return Pvk_Id # \textbf{return} $\textit{Pvk}_\textit{Id}$
 	def TSK(self:object, identity:Element) -> tuple: # $\textbf{TSK}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$
 		# Check #
 		if not self.__flag:
@@ -102,7 +102,7 @@ class SchemeARES:
 		Pvk_Id = (d0, d1, d2, d3, d4) # $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
 		
 		# Return #
-		return Pvk_Id # $\textbf{return }\textit{Pvk}_\textit{Id}$
+		return Pvk_Id # \textbf{return} $\textit{Pvk}_\textit{Id}$
 	def Encrypt(self:object, identity:Element, message:Element) -> tuple: # $\textbf{Encrypt}(\textit{Id}, m) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
@@ -133,18 +133,18 @@ class SchemeARES:
 		CT = (CPi, C0, C1, C2, C3, C4) # $\textit{CT} \gets (C', C_0, C_1, C_2, C_3, C_4)$
 		
 		# Return #
-		return CT # $\textbf{return }\textit{CT}$
+		return CT # \textbf{return} $\textit{CT}$
 	def Decrypt(self:object, PvkId:tuple, cipher:tuple) -> Element: # $\textbf{Decrypt}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Decrypt`` subsequently. ")
 			self.Setup()
-		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all([isinstance(ele, Element) for ele in PvkId]): # hybrid check
+		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all(isinstance(ele, Element) for ele in PvkId): # hybrid check
 			Pvk_Id = PvkId
 		else:
 			Pvk_Id = self.Extract(self.__group.random(ZR))
 			print("Decrypt: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 6 and all(isinstance(ele, Element) for ele in cipher): # hybrid check
 			CT = cipher
 		else:
 			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
@@ -158,18 +158,18 @@ class SchemeARES:
 		M = CPi * pair(C0, d0) * pair(C1, d1) * pair(C2, d2) * pair(C3, d3) * pair(C4, d4) # $M \gets C' \cdot e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4)$
 		
 		# Return #
-		return M # $\textbf{return }M$
+		return M # \textbf{return} $M$
 	def TVerify(self:object, PvkId:tuple, cipher:tuple) -> bool: # $\textbf{TVerify}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow y, y \in \{0, 1\}$
 		# Check #
 		if not self.__flag:
 			print("TVerify: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TVerify`` subsequently. ")
 			self.Setup()
-		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all([isinstance(ele, Element) for ele in PvkId]): # hybrid check
+		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all(isinstance(ele, Element) for ele in PvkId): # hybrid check
 			Pvk_Id = PvkId
 		else:
 			Pvk_Id = self.Extract(self.__group.random(ZR))
 			print("TVerify: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 6 and all(isinstance(ele, Element) for ele in cipher): # hybrid check
 			CT = cipher
 		else:
 			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
@@ -183,7 +183,7 @@ class SchemeARES:
 		pass
 		
 		# Return #
-		return pair(C0, d0) * pair(C1, d1) * pair(C2, d2) * pair(C3, d3) * pair(C4, d4) == self.__group.init(GT) # $\textbf{return }e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4) = 1 (\mathbb{G}_T)$
+		return pair(C0, d0) * pair(C1, d1) * pair(C2, d2) * pair(C3, d3) * pair(C4, d4) == self.__group.init(GT) # \textbf{return} $e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4) = 1 (\mathbb{G}_T)$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -397,7 +397,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[3:6]] + [r > 0 for r in result[6:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:6]) + tuple(r > 0 for r in result[6:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))

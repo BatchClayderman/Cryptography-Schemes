@@ -81,13 +81,13 @@ class SchemeHIBME:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
 	def EKGen(self:object, IDk:tuple) -> tuple: # $\textbf{EKGen}(\textit{ID}_k) \rightarrow \textit{ek}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -109,18 +109,18 @@ class SchemeHIBME:
 		ek_ID_k = (ek1, ek2, ek3) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}_1, \textit{ek}_2, \textit{ek}_3)$
 		
 		# Return #
-		return ek_ID_k # $\textbf{return }\textit{ek}_{\textit{ID}_k}$
+		return ek_ID_k # \textbf{return} $\textit{ek}_{\textit{ID}_k}$
 	def DerivedEKGen(self:object, ekIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedEKGen}(\textit{ek}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{ek}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("DerivedEKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedEKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
-			if (																																											\
-				isinstance(ekIDkMinus1, tuple) and len(ekIDkMinus1) == 3 and isinstance(ekIDkMinus1[0], tuple) and len(ekIDkMinus1[0]) == len(ID_k) - 1 and all([isinstance(ele, Element) for ele in ekIDkMinus1[0]])		\
-				and isinstance(ekIDkMinus1[1], tuple) and len(ekIDkMinus1[1]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in ekIDkMinus1[1]])												\
-				and isinstance(ekIDkMinus1[2], tuple) and len(ekIDkMinus1[2]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in ekIDkMinus1[2]])												\
+			if (																																										\
+				isinstance(ekIDkMinus1, tuple) and len(ekIDkMinus1) == 3 and isinstance(ekIDkMinus1[0], tuple) and len(ekIDkMinus1[0]) == len(ID_k) - 1 and all(isinstance(ele, Element) for ele in ekIDkMinus1[0])		\
+				and isinstance(ekIDkMinus1[1], tuple) and len(ekIDkMinus1[1]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in ekIDkMinus1[1]])											\
+				and isinstance(ekIDkMinus1[2], tuple) and len(ekIDkMinus1[2]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in ekIDkMinus1[2]])											\
 			): # hybrid check
 				ek_ID_kMinus1 = ekIDkMinus1
 			else:
@@ -157,13 +157,13 @@ class SchemeHIBME:
 		ek_ID_k = (ek1Prime, ek2Prime, ek3Prime) # $\textit{ek}_{\textit{ID}_k} \gets (\textit{ek}'_1, \textit{ek}'_2, \textit{ek}'_3)$
 		
 		# Return #
-		return ek_ID_k # $\textbf{return }\textit{ek}_{\textit{ID}_k}$
+		return ek_ID_k # \textbf{return} $\textit{ek}_{\textit{ID}_k}$
 	def DKGen(self:object, IDk:tuple) -> tuple: # $\textbf{DKGen}(\textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("DKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -199,19 +199,20 @@ class SchemeHIBME:
 		dk_ID_k = (dk1, dk2, dk3, dk4) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3, \textit{dk}_4)$
 		
 		# Return #
-		return dk_ID_k # $\textbf{return }\textit{dk}_{\textit{ID}_k}$
+		return dk_ID_k # \textbf{return} $\textit{dk}_{\textit{ID}_k}$
 	def DerivedDKGen(self:object, dkIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedDKGen}(\textit{dk}_{\textit{ID}_{k - 1}}, \textit{ID}_k) \rightarrow \textit{dk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("DerivedDKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedDKGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDk): # hybrid check
 			ID_k = IDk
-			if (
-				isinstance(dkIDkMinus1, tuple) and len(dkIDkMinus1) == 4 and isinstance(dkIDkMinus1[0], tuple) and len(dkIDkMinus1[0]) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all([isinstance(ele, Element) for ele in dkIDkMinus1[0]])
-				and isinstance(dkIDkMinus1[1], tuple) and len(dkIDkMinus1[1]) == len(ID_k) - 1 and all([isinstance(ele, Element) for ele in dkIDkMinus1[1]])
-				and isinstance(dkIDkMinus1[2], tuple) and len(dkIDkMinus1[2]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in dkIDkMinus1[2]])
-				and isinstance(dkIDkMinus1[3], tuple) and len(dkIDkMinus1[3]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in dkIDkMinus1[3]])
+			if (																																\
+				isinstance(dkIDkMinus1, tuple) and len(dkIDkMinus1) == 4 and isinstance(dkIDkMinus1[0], tuple)												\
+				and len(dkIDkMinus1[0]) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all(isinstance(ele, Element) for ele in dkIDkMinus1[0])							\
+				and isinstance(dkIDkMinus1[1], tuple) and len(dkIDkMinus1[1]) == len(ID_k) - 1 and all([isinstance(ele, Element) for ele in dkIDkMinus1[1]])			\
+				and isinstance(dkIDkMinus1[2], tuple) and len(dkIDkMinus1[2]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in dkIDkMinus1[2]])	\
+				and isinstance(dkIDkMinus1[3], tuple) and len(dkIDkMinus1[3]) == self.__l - len(ID_k) + 1 and all([isinstance(ele, Element) for ele in dkIDkMinus1[3]])	\
 			): # hybrid check
 				dk_ID_kMinus1 = dkIDkMinus1
 			else:
@@ -263,18 +264,18 @@ class SchemeHIBME:
 		dk_ID_k = (dk1Prime, dk2Prime, dk3Prime, dk4Prime) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
 				
 		# Return #
-		return dk_ID_k # $\textbf{return }\textit{dk}_{\textit{ID}_k}$
+		return dk_ID_k # \textbf{return} $\textit{dk}_{\textit{ID}_k}$
 	def Enc(self:object, ekIDS:tuple, IDSnd:tuple, IDRev:tuple, message:int|bytes) -> Element: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_S}, \textit{ID}_\textit{Rev}, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
-		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDSnd]): # hybrid check
+		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDSnd): # hybrid check
 			ID_Snd = IDSnd
 			if (
-				isinstance(ekIDS, tuple) and len(ekIDS) == 3 and isinstance(ekIDS[0], tuple) and len(ekIDS[0]) == len(ID_Snd) and all([isinstance(ele, Element) for ele in ekIDS[0]])
-				and isinstance(ekIDS[1], tuple) and len(ekIDS[1]) == self.__l - len(ID_Snd) and all([isinstance(ele, Element) for ele in ekIDS[1]])
-				and isinstance(ekIDS[2], tuple) and len(ekIDS[2]) == self.__l - len(ID_Snd) and all([isinstance(ele, Element) for ele in ekIDS[2]])
+				isinstance(ekIDS, tuple) and len(ekIDS) == 3 and isinstance(ekIDS[0], tuple) and len(ekIDS[0]) == len(ID_Snd) and all(isinstance(ele, Element) for ele in ekIDS[0])
+				and isinstance(ekIDS[1], tuple) and len(ekIDS[1]) == self.__l - len(ID_Snd) and all(isinstance(ele, Element) for ele in ekIDS[1])
+				and isinstance(ekIDS[2], tuple) and len(ekIDS[2]) == self.__l - len(ID_Snd) and all(isinstance(ele, Element) for ele in ekIDS[2])
 			): # hybrid check
 				ek_ID_S = ekIDS
 			else:
@@ -294,7 +295,7 @@ class SchemeHIBME:
 			)
 			ek_ID_S = self.EKGen(ID_Snd)
 			print("Enc: The variable $\\textit{ek}_{\\textit{ID}_S}$ has been generated accordingly. ")
-		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDRev]): # hybrid check
+		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDRev): # hybrid check
 			ID_Rev = IDRev
 		else:
 			ID_Rev = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -342,7 +343,7 @@ class SchemeHIBME:
 				* self.__product(tuple(pair(ek_ID_S[0][i], H2(ID_Rev[m - 1])) for i in range(m, n))) # \prod\limits_{i = m + 1}^n e(\textit{ek}_{1, i}, H_2(I'_m))
 				* pair(g ** eta, self.__product(tuple(H2(ID_Rev[i]) for i in range(m)))) # e(g^{\eta}, \prod\limits_{i = 1}^m H_2(I'_i))
 			) # $
-		# \textbf{end}
+		# \textbf{end if}
 		C1 = M ^ HHat(T) ^ HHat(K) # $C_1 \gets M \oplus \hat{H}(T) \oplus \hat{H}(K)$
 		C2 = gBar ** s1 # $C_2 \gets \bar{g}^{s_1}$
 		C3 = gTilde ** s2 # $C_3 \gets \tilde{g}^{s_2}$
@@ -351,19 +352,20 @@ class SchemeHIBME:
 		CT = (C1, C2, C3, C4, C5) # $\textit{CT} \gets (C_1, C_2, C_3, C_4, C_5)$
 		
 		# Return #
-		return CT # $\textbf{return }\textit{CT}$
+		return CT # \textbf{return} $\textit{CT}$
 	def Dec(self:object, dkIDR:tuple, IDRev:tuple, IDSnd:tuple, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Rev}, \textit{ID}_\textit{Snd}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDRev]): # hybrid check
+		if isinstance(IDRev, tuple) and 2 <= len(IDRev) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDRev): # hybrid check
 			ID_Rev = IDRev
-			if (
-				isinstance(dkIDR, tuple) and len(dkIDR) == 4 and isinstance(dkIDR[0], tuple) and len(dkIDR[0]) == ((self.__l - len(ID_Rev)) << 2) + 5 and all([isinstance(ele, Element) for ele in dkIDR[0]])
-				and isinstance(dkIDR[1], tuple) and len(dkIDR[1]) == len(ID_Rev) and all([isinstance(ele, Element) for ele in dkIDR[1]])
-				and isinstance(dkIDR[2], tuple) and len(dkIDR[2]) == self.__l - len(ID_Rev) and all([isinstance(ele, Element) for ele in dkIDR[2]])
-				and isinstance(dkIDR[3], tuple) and len(dkIDR[3]) == self.__l - len(ID_Rev) and all([isinstance(ele, Element) for ele in dkIDR[3]])
+			if (																												\
+				isinstance(dkIDR, tuple) and len(dkIDR) == 4 and isinstance(dkIDR[0], tuple)												\
+				and len(dkIDR[0]) == ((self.__l - len(ID_Rev)) << 2) + 5 and all(isinstance(ele, Element) for ele in dkIDR[0])						\
+				and isinstance(dkIDR[1], tuple) and len(dkIDR[1]) == len(ID_Rev) and all([isinstance(ele, Element) for ele in dkIDR[1]])			\
+				and isinstance(dkIDR[2], tuple) and len(dkIDR[2]) == self.__l - len(ID_Rev) and all([isinstance(ele, Element) for ele in dkIDR[2]])		\
+				and isinstance(dkIDR[3], tuple) and len(dkIDR[3]) == self.__l - len(ID_Rev) and all([isinstance(ele, Element) for ele in dkIDR[3]])		\
 			): # hybrid check
 				dk_ID_R = dkIDR
 			else:
@@ -384,7 +386,7 @@ class SchemeHIBME:
 			)
 			dk_ID_R = self.DKGen(ID_Rev)
 			print("Dec: The variable $\\textit{dk}_{\\textit{ID}_R}$ has been generated accordingly. ")
-		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDSnd]): # hybrid check
+		if isinstance(IDSnd, tuple) and 2 <= len(IDSnd) < self.__l and all(isinstance(ele, Element) and ele.type == ZR for ele in IDSnd): # hybrid check
 			ID_Snd = IDSnd
 		else:
 			ID_Snd = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -394,7 +396,7 @@ class SchemeHIBME:
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
-		if isinstance(cipher, tuple) and len(cipher) == 5 and isinstance(cipher[0], int) and all([isinstance(ele, Element) for ele in cipher[1:]]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 5 and isinstance(cipher[0], int) and all(isinstance(ele, Element) for ele in cipher[1:]): # hybrid check
 			CT = cipher
 		else:
 			CT = self.Enc(self.EKGen(ID_Snd), ID_Snd, ID_Rev, int.from_bytes(b"SchemeHIBME", byteorder = "big") & self.__operand)
@@ -434,7 +436,7 @@ class SchemeHIBME:
 		M = C1 ^ HHat(TPrime) ^ HHat(KPrime) # $M \gets C_1 \oplus \hat{H}(T') \oplus \hat{H}(K')$
 		
 		# Return #
-		return M # $\textbf{return }M$
+		return M # \textbf{return} $M$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -678,7 +680,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[6:9]] + [r > 0 for r in result[9:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[6:9]) + tuple(r > 0 for r in result[9:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))
