@@ -7,140 +7,147 @@
 
 \section{SchemeIBPME}
 
+This scheme is only applicable to symmetric groups of prime orders. 
+
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
 $q \gets \|\mathbb{G}\|$
 
 $g \gets 1_{\mathbb{G}_1}$
 
-generate $h \in \mathbb{G}_1$ randomly
+$\hat{g} \gets 1_{\mathbb{G}_2}$
 
-generate $x, \alpha \in \mathbb{Z}_r$ randomly
+generate $s, \alpha, \beta_0, \beta_1 \in \mathbb{Z}_r$ randomly
+
+$g_1 \gets g^\alpha$
+
+$f \gets g^{\beta_0}$
+
+$\hat{f} \gets \hat{g}^{\beta_0}$
+
+$h \gets g^{\beta_1}$
+
+$\hat{h} \gets \hat{g}^{\beta_1}$
+
+$H: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
 
 $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
-$H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+$H_2: \{0, 1\}^* \rightarrow \mathbb{G}_2$
 
-$H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
+$H_3: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
 
-$H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1^2$
+$H_4: \{0, 1\}^\lambda \times \mathbb{G}_T^2 \times \mathbb{G}_1^2 \rightarrow \{0, 1\}^\lambda$
 
-$H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+$H_5: \{0, 1\}^\lambda \times \mathbb{G}_T^2 \times \mathbb{G}_1^2 \rightarrow \{0, 1\}^\lambda$
 
-$H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+$H_6: \mathbb{G}_T \rightarrow \{0, 1\}^{3\lambda}$
 
-$H_7: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+$H_7: \mathbb{G}_T \rightarrow \{0, 1\}^{2\lambda}$
 
-$y \gets g^x$
+$ \textit{mpk} \gets (g, \hat{g}, g_1, f, h, \hat{f}, \hat{h}, H, H_1, H_2, H_3, H_4, H_5, H_6, H_7)$
 
-$ \textit{mpk} \gets (G, G_T, q, g, e, h, H_1, H_2, H_3, H_4, H_5, H_6, H_7, y)$
-
-$\textit{msk} \gets (x, \alpha)$
+$\textit{msk} \gets (s, \alpha)$
 
 $\textbf{return }(\textit{mpk}, \textit{msk})$
 
-\subsection{$\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$}
+\subsection{$\textbf{SKGen}(\sigma) \rightarrow \textit{ek}_\sigma$}
 
-$\textit{dk}_{\textit{id}_R, 1} \gets H_1(\textit{id}_R)^x$
+$\textit{ek}_\sigma \gets H_1(\sigma)^s$
 
-$\textit{dk}_{\textit{id}_R, 2} \gets H_1(\textit{id}_R)^\alpha$
+$\textbf{return }\textit{ek}_\sigma$
 
-$\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_{\textit{id}_R, 2})$
+\subsection{$\textbf{RKGen}(\rho) \rightarrow \textit{dk}_\rho$}
 
-$\textbf{return }\textit{dk}_{\textit{id}_R}$
+$d_1 \gets H_2(\rho)^s$
 
-\subsection{$\textbf{EKGen}(\textit{id}_S) \rightarrow \textit{ek}_{\textit{id}_S}$}
+$d_2 \gets H_2(\rho)^\alpha$
 
-$\textit{ek}_{\textit{id}_S} \gets H_2(\textit{id}_S)^\alpha$
+$\textit{dk}_\rho \gets (d_1, d_2)$
 
-$\textbf{return }\textit{ek}_{\textit{id}_S}$
+$\textbf{return }\textit{dk}_\rho$
 
-\subsection{$\textbf{ReEKGen}(\textit{ek}_{\textit{id}_2}, \textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{id}_2, \textit{id}_3) \rightarrow \textit{rk}$}
+\subsection{$\textbf{PKGen}(\textit{dk}_\rho, \sigma) \rightarrow \textit{pdk}_{\rho, \sigma}$}
 
-generate $N \in \{0, 1\}^\lambda$ randomly
+generate $y \gets \mathbb{Z}_r$ randomly
 
-generate $\bar{x} \in \mathbb{Z}_r$ randomly
+$\eta \gets e(H_1(\sigma), d_1)$
 
-$\textit{rk}_1 \gets g^{\bar{x}}$
+$y_1 \gets d_2^{H_3(\eta)}(\hat{f}\hat{h}^{H(\eta)})^y$
 
-$\textit{rk}_2 \gets \textit{dk}_{\textit{id}_2, 1} h^{\bar{x}} H_6(e(y, H_1(\textit{id}_3))^{\bar{x}})$
+$y_2 \gets \hat{g}^y$
 
-$K \gets e(\textit{ek}_{\textit{id}_2}, H_1(\textit{id}_3))$
+$\textit{pdk}_{(\rho, \sigma)} \gets (y_1, y_2)$
 
-$\textit{rk}_3 \gets e(
-H_2(\textit{id}_1), 
-H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
-)$
+$\textbf{return }\textit{pdk}_{(\rho, \sigma)}$
 
-$\textit{rk} \gets (N, \textit{rk}_1, \textit{rk}_2, \textit{rk}_3)$
+\subsection{$\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow \textit{ct}$}
 
-$\textbf{return }\textit{rk}$
+generate $r \in \mathbb{Z}_r$ randomly
 
-\subsection{$\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$}
+$\eta \gets e(\textit{ek}_\sigma, H_2(\rho))$
 
-generate $\sigma \in \mathbb{G}_1$ randomly
+$K_R \gets e(g_1, H_2(\rho))^{r \cdot H_3(\eta)}$
 
-generate $\eta \in \mathbb{G}_T$ randomly
+$C_1 \gets g^r$
 
-$r \gets H_3(m || \sigma || \eta)$
+$C_2 \gets (fh^{H(\eta)})^r$
 
-$\textit{ct}_1 \gets h^r$
+$K_C \gets H_4(m, \eta, K_R)$
 
-$\textit{ct}_2 \gets g^r$
+$Y \gets H_5(m, K_C, K_R, C_1, C_2)$
 
-$\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
+$C_3 \gets (m || K_C || Y) \oplus H_6(K_R)$
 
-$\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
+$C \gets (C_1, C_2, C_3)$
 
-$\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
+$\textbf{return }C$
 
-$\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
+\subsection{$\textbf{ProxyDec}(\textit{pdk}, C) \rightarrow \textit{CT}$}
 
-$\textbf{return }\textit{ct}$
+$K_R \gets e(C_1, y_1) / e(C_2, y_2)$
 
-\subsection{$\textbf{ReEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$}
+$m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 
-\textbf{If} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
+\textbf{if }$Y = H_5(m, K_C, K_R, C_1, C_2)$\textbf{ then}
 
-\quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
+$\textit{CT}_1 \gets C_1$
 
-$\textit{ct}_6 \gets \textit{rk}_1$
+$\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
 
-\quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
-
-\quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
+$\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
 
 \textbf{else}
 
-\quad$\textit{ct}' \gets \perp$
+\quad$\textit{CT} \gets \perp$
 
-$\textbf{return }\textit{ct}'$
+$\textbf{return }\textit{CT}$
 
-\subsection{$\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$}
+\subsection{$\textbf{Dec}_1(\textit{dk}_\rho, \sigma, C) \rightarrow m$}
 
-If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+$\eta \gets e(H_1(\sigma), d_1)$
 
-\quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
+$K_R \gets e(C_1, d_2^{H_3(\eta)})$
 
-\quad$\eta' \gets \frac{\textit{ct}_4}{V}$
+$m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 
-\quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
+\textbf{if }$K_C \neq H_4(m, \eta, K_R) \lor Y \neq H_5(m, K_C, K_R, C_1, C_2)$\textbf{ then}
 
-\quad If $g^r = \textit{ct}_2$: 
+\quad$m \gets \perp$
 
 $\textbf{return }m$
 
-\subsection{$\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m$}
+\subsection{$\textbf{Dec}_1(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$}
 
-$V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
+$\eta \gets e(H_1(\sigma), d_1)$
 
-$\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
+$K_R \gets e(C_1, d_2^{H_3(\eta)})$
 
-$R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
+$m || K_C \gets \textit{CT}_2 \oplus H_7(K_R)$
 
-$r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
+\textbf{if }$K_C \neq H_4(m, \eta, K_R)$\textbf{ then}
 
-If $g^r = \textit{ct}_2$: 
+\quad$m \gets \perp$
 
 $\textbf{return }m$
 

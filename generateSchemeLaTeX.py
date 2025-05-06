@@ -96,7 +96,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 		elif className is None and functionName is None and (
 			s in (																														\
 				"", "Dec1:", "Dec2:", "Decrypted:", "Derived:", "Is ``ReEnc`` passed? {0}. YesNo", "Is ``Dec1`` passed (m == message)? {0}. YesNo", 		\
-				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 											\
+				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyDec`` passed? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 			\
 				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 								\
 				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 								\
 				"Is the system valid? No. \\n\\t{0}", "Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", 									\
