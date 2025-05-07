@@ -26,7 +26,6 @@ class SchemeIBMECH:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
-		self.__operand = (1 << self.__group.secparam) - 1 # use to cast binary strings
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -177,7 +176,7 @@ class SchemeIBMECH:
 		elif isinstance(obj, bytes):
 			return len(obj)
 		elif isinstance(obj, int) or callable(obj):
-			return self.__group.secparam >> 3
+			return (self.__group.secparam + 7) >> 3
 		else:
 			return -1
 

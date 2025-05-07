@@ -161,7 +161,7 @@ class SchemeIBMETR:
 		else:
 			id_Rev = self.__group.random(ZR)
 			print("Enc: The variable $\\textit{id}_\textit{Rev}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(message, int): # type check
+		if isinstance(message, int) and message >= 0: # type check
 			m = message & self.__operand
 			if message != m:
 				print("Enc: The passed message (int) is too long, which has been cast. ")
@@ -265,7 +265,7 @@ class SchemeIBMETR:
 		elif isinstance(obj, bytes):
 			return len(obj)
 		elif isinstance(obj, int) or callable(obj):
-			return self.__group.secparam >> 3
+			return (self.__group.secparam + 7) >> 3
 		else:
 			return -1
 

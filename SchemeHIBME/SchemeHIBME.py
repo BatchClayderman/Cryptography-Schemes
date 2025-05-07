@@ -305,7 +305,7 @@ class SchemeHIBME:
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
-		if isinstance(message, int): # type check
+		if isinstance(message, int) and message >= 0: # type check
 			M = message & self.__operand
 			if message != M:
 				print("Enc: The passed message (int) is too long, which has been cast. ")
@@ -446,7 +446,7 @@ class SchemeHIBME:
 		elif isinstance(obj, bytes):
 			return len(obj)
 		elif isinstance(obj, int) or callable(obj):
-			return self.__group.secparam >> 3
+			return (self.__group.secparam + 7) >> 3
 		else:
 			return -1
 

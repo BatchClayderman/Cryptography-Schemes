@@ -222,7 +222,7 @@ class SchemeAnonymousME:
 		elif isinstance(obj, bytes):
 			return len(obj)
 		elif isinstance(obj, int) or callable(obj):
-			return self.__group.secparam >> 3
+			return (self.__group.secparam + 7) >> 3
 		else:
 			return -1
 

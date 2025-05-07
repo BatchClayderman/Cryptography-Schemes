@@ -22,7 +22,7 @@ EOF = (-1)
 
 
 class SchemePBAC:
-	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
+	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -65,7 +65,7 @@ class SchemePBAC:
 		H6 = lambda x:self.__group.hash(x, G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		gHat = g ** s # $\hat{g} \gets g^s$
 		self.__mpk = (g, gHat, H1, H2, H3, H4, H5, H6) # $ \textit{mpk} \gets (g, \hat{g}, H_1, H_2, H_3, H_4, H_5, H_6)$
-		self.__msk = (s, alpha) # $\textit{msk} \gets (x, \alpha)$
+		self.__msk = (s, alpha) # $\textit{msk} \gets (s, \alpha)$
 		
 		# Flag #
 		self.__flag = True
@@ -112,7 +112,7 @@ class SchemePBAC:
 		
 		# Return #
 		return dk_id_R # \textbf{return} $\textit{dk}_{\textit{id}_R}$
-	def Enc(self:object, ekid1:Element, id2:Element, message:int|bytes) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
+	def Enc(self:object, ekid1:Element, id2:Element, message:int|bytes) -> tuple: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow C$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -127,7 +127,7 @@ class SchemePBAC:
 		else:
 			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Enc: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(message, int): # type check
+		if isinstance(message, int) and message >= 0: # type check
 			m = message & self.__operand
 			if message != m:
 				print("Enc: The passed message (int) is too long, which has been cast. ")
@@ -242,7 +242,7 @@ class SchemePBAC:
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Dec1(self:object, dkid2:tuple, id2:bytes, id1:bytes, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$
+	def Dec1(self:object, dkid2:tuple, id2:bytes, id1:bytes, cipher:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
@@ -287,7 +287,7 @@ class SchemePBAC:
 		
 		# Return #
 		return m # \textbf{return} $m$
-	def Dec2(self:object, dkid3:tuple, id3:bytes, id2:bytes, cipherText:tuple|bool) -> Element|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_3, \textit{id}_2, \textit{CT}) \rightarrow m'$
+	def Dec2(self:object, dkid3:tuple, id3:bytes, id2:bytes, cipherText:tuple|bool) -> int|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_3, \textit{id}_2, \textit{CT}) \rightarrow m'$
 		# Check #
 		if not self.__flag:
 			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
@@ -346,7 +346,7 @@ class SchemePBAC:
 		elif isinstance(obj, bytes):
 			return len(obj)
 		elif isinstance(obj, int) or callable(obj):
-			return self.__group.secparam >> 3
+			return (self.__group.secparam + 7) >> 3
 		else:
 			return -1
 

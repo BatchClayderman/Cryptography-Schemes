@@ -20,8 +20,16 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
+class Bits:
+	def __init__(self:object, value:int|bytes, length:int) -> object:
+		if isinstance(length, int) and length >= 0:
+			self.__vector = 
+	def  __bytes__(self:object) -> bytes:
+		
+
+
 class SchemeIBPRME:
-	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
+	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
@@ -336,7 +344,7 @@ class SchemeIBPRME:
 		elif isinstance(obj, bytes):
 			return len(obj)
 		elif isinstance(obj, int) or callable(obj):
-			return self.__group.secparam >> 3
+			return (self.__group.secparam + 7) >> 3
 		else:
 			return -1
 

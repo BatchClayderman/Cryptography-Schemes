@@ -27,27 +27,18 @@ class SchemeIBPME:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
+		self.__operand = (1 << self.__group.secparam) - 1 # use to cast binary strings
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
-	def __hash(self:object, *objs:tuple, length:int|None = None) -> bytes:
+	def __hash(self:object, *objs:tuple, bitLength:int|None = None) -> bytes:
 		# bytes #
 		bytesToBeHashed = b""
 		for obj in objs:
-			if isinstance(obj, Element):
-				bytesToBeHashed += self.__group.serialize(obj)
-			elif isinstance(obj, int):
-				bytesToBeHashed += obj.to_bytes(ceil(log(obj + 1, 256)), byteorder = "big")
-			elif isinstance(obj, bytes):
-				bytesToBeHashed += obj
-			else:
-				try:
-					bytesToBeHashed += bytes(obj)
-				except:
-					pass
+			bytesToBeHashed += self.__group.serialize(obj) if isinstance(obj, Element) else bytes(obj)
 		
 		# length #
-		length = length if isinstance(length, int) and length >= 1 else self.__group.secparam
+		length = bitLength if isinstance(bitLength, int) and bitLength >= 1 else self.__group.secparam
 		
 		# convert #
 		if 512 == length:
@@ -63,8 +54,7 @@ class SchemeIBPME:
 		elif 128 == length:
 			return md5(bytesToBeHashed).digest()
 		else:
-			tmp = int.from_bytes(sha512(bytesToBeHashed).digest() * ceil(length / 512), byteorder = "big") & ((1 << length) - 1)
-			return tmp.to_bytes(ceil(log(tmp + 1, 256)), byteorder = "big")
+			return (int.from_bytes(sha512(bytesToBeHashed).digest() * ceil(length / 512), byteorder = "big") & ((1 << length) - 1)).to_bytes(ceil(length / 8))
 	def Setup(self:object) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
@@ -166,7 +156,7 @@ class SchemeIBPME:
 		
 		# Return #
 		return pdk # \textbf{return} $\textit{pdk}_{(\rho, \sigma)}$
-	def Enc(self:object, eksigma:Element, rcv:bytes, message:int|bytes) -> object: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow \textit{ct}$
+	def Enc(self:object, eksigma:Element, rcv:bytes, message:int|bytes) -> tuple: # $\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow C$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -182,12 +172,16 @@ class SchemeIBPME:
 			rho = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Enc: The variable $\\rho$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(message, int) and message >= 0: # type check
-			m = message.to_bytes(ceil(log(message + 1, 256)), byteorder = "big")
+			m = message & self.__operand
+			if message != m:
+				print("Enc: The passed message (int) is too long, which has been cast. ")
 		elif isinstance(message, bytes):
-			m = message
+			m = int.from_bytes(message, byteorder = "big") & self.__operand
+			if len(message) << 3 > self.__group.secparam:
+				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
-			m = b"SchemeIBPME"
-			print("Enc: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBPME\". ")
+			m = int.from_bytes(b"SchemeIBPME", byteorder = "big") & self.__operand
+			print("Enc: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemePBAC\". ")
 		
 		# Unpack #
 		g, g1, f, h, H, H2, H3, H4, H5, H6 = self.__mpk[0], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[7], self.__mpk[9], self.__mpk[10], self.__mpk[11], self.__mpk[12], self.__mpk[13]
@@ -198,9 +192,9 @@ class SchemeIBPME:
 		K_R = pair(g1, H2(rho)) ** (r * H3(eta)) # $K_R \gets e(g_1, H_2(\rho))^{r \cdot H_3(\eta)}$
 		C1 = g ** r # $C_1 \gets g^r$
 		C2 = (f * h ** H(eta)) ** r # $C_2 \gets (fh^{H(\eta)})^r$
-		K_C = H4(m, eta, K_R) # $K_C \gets H_4(m, \eta, K_R)$
-		Y = H5(m, K_C, K_R, C1, C2) # $Y \gets H_5(m, K_C, K_R, C_1, C_2)$
-		C3 = int.from_bytes(m + K_C + Y, byteorder = "big") ^ int.from_bytes(H6(K_R), byteorder = "big") # $C_3 \gets (m || K_C || Y) \oplus H_6(K_R)$
+		K_C = H4(m.to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"), eta, K_R) # $K_C \gets H_4(m, \eta, K_R)$
+		Y = H5(m.to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"), K_C, K_R, C1, C2) # $Y \gets H_5(m, K_C, K_R, C_1, C_2)$
+		C3 = int.from_bytes(m.to_bytes(ceil(self.__group.secparam / 8), byteorder = "big") + K_C + Y, byteorder = "big") ^ int.from_bytes(H6(K_R), byteorder = "big") # $C_3 \gets (m || K_C || Y) \oplus H_6(K_R)$
 		C = (C1, C2, C3) # $C \gets (C_1, C_2, C_3)$
 		
 		# Return #
@@ -235,8 +229,9 @@ class SchemeIBPME:
 		# Scheme #
 		K_R = pair(C1, y1) / pair(C2, y2) # $K_R \gets e(C_1, y_1) / e(C_2, y_2)$
 		m_KC_Y = C3 ^ int.from_bytes(H6(K_R), byteorder = "big") # $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
-		m_KC_Y = m_KC_Y.to_bytes(ceil(log(m_KC_Y + 1, 256)), byteorder = "big")
-		m_KC, Y = m_KC_Y[:-ceil(self.__group.secparam / 8)], m_KC_Y[-ceil(self.__group.secparam / 8):]
+		token = ceil(self.__group.secparam / 8)
+		m_KC_Y = m_KC_Y.to_bytes(token * 3, byteorder = "big")
+		m_KC, Y = m_KC_Y[:-token], m_KC_Y[-token:]
 		if Y == H5(m_KC, K_R, C1, C2): # \textbf{if} $Y = H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 			CT_1 = C1 # $\textit{CT}_1 \gets C_1$
 			CT_2 = int.from_bytes(m_KC, byteorder = "big") ^ int.from_bytes(H7(K_R), byteorder = "big") # $\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
@@ -247,7 +242,7 @@ class SchemeIBPME:
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Dec1(self:object, dkrho:tuple, snd:bytes, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_\rho, \sigma, C) \rightarrow m$
+	def Dec1(self:object, dkrho:tuple, snd:bytes, cipher:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_\rho, \sigma, C) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
@@ -280,15 +275,18 @@ class SchemeIBPME:
 		eta = pair(H1(sigma), d1) # $\eta \gets e(H_1(\sigma), d_1)$
 		K_R = pair(C1, d2 ** H3(eta)) # $K_R \gets e(C_1, d_2^{H_3(\eta)})$
 		m_KC_Y = C3 ^ int.from_bytes(H6(K_R), byteorder = "big") # $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
-		m_KC_Y = m_KC_Y.to_bytes(ceil(log(m_KC_Y + 1, 256)), byteorder = "big")
-		m, K_C, Y = m_KC_Y[:-(ceil(self.__group.secparam / 8) << 1)], m_KC_Y[-(ceil(self.__group.secparam / 8) << 1):-ceil(self.__group.secparam / 8)], m_KC_Y[-ceil(self.__group.secparam / 8):]
+		token = ceil(self.__group.secparam / 8)
+		m_KC_Y = m_KC_Y.to_bytes(token * 3, byteorder = "big")
+		m, K_C, Y = m_KC_Y[:token], m_KC_Y[token:-token], m_KC_Y[-token:]
 		if K_C != H4(m, eta, K_R) or Y != H5(m, K_C, K_R, C1, C2): # \textbf{if} $K_C \neq H_4(m, \eta, K_R) \lor Y \neq H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 			m = False # \quad$m \gets \perp$
+		else:
+			m = int.from_bytes(m, byteorder = "big")
 		# \textbf{end if}
 		
 		# Return #
 		return m # \textbf{return} $m$
-	def Dec2(self:object, dkrho:tuple, snd:bytes, cipherText:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$
+	def Dec2(self:object, dkrho:tuple, snd:bytes, cipherText:tuple) -> int|bool: # $\textbf{Dec}_2(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$
 		# Check #
 		if not self.__flag:
 			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
@@ -328,10 +326,13 @@ class SchemeIBPME:
 		eta = pair(H1(sigma), d1) # $\eta \gets e(H_1(\sigma), d_1)$
 		K_R = pair(CT_1, d2 ** H3(eta)) # $K_R \gets e(C_1, d_2^{H_3(\eta)})$
 		m_KC = CT_2 ^ int.from_bytes(H7(K_R), byteorder = "big") # $m || K_C \gets \textit{CT}_2 \oplus H_7(K_R)$
-		m_KC = m_KC.to_bytes(ceil(log(m_KC + 1, 256)), byteorder = "big")
-		m, K_C = m_KC[:-ceil(self.__group.secparam / 8)], m_KC[-ceil(self.__group.secparam / 8):]
+		token = ceil(self.__group.secparam / 8)
+		m_KC = m_KC.to_bytes(token << 1, byteorder = "big")
+		m, K_C = m_KC[:-token], m_KC[-token:]
 		if K_C != H4(m, eta, K_R): # \textbf{if} $K_C \neq H_4(m, \eta, K_R) $\textbf{then}
 			m = False # \quad$m \gets \perp$
+		else:
+			m = int.from_bytes(m, byteorder = "big")
 		# \textbf{end if}
 		
 		# Return #
@@ -419,7 +420,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Enc #
 	startTime = perf_counter()
-	message = b"SchemeIBPME"
+	message = int.from_bytes(b"SchemeIBPME", byteorder = "big")
 	C = schemeIBPME.Enc(ek_sigma, rho, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
@@ -522,7 +523,7 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	except BaseException as e:
+	#except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
