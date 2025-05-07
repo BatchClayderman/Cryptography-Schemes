@@ -204,7 +204,7 @@ class SchemeIBPRME:
 			ct = cipher
 		else:
 			ct = self.Enc(self.EKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemeIBPRME", byteorder = "big"))
-			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, , which has been generated with $m$ set to b\"SchemeIBPRME\". ")
+			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemeIBPRME\". ")
 		if isinstance(reKey, tuple) and len(reKey) == 4 and all(isinstance(ele, Element) for ele in reKey): # hybrid check
 			rk = reKey
 		else:
