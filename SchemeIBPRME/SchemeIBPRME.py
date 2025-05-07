@@ -1,6 +1,6 @@
 import os
 from sys import argv, exit
-from math import ceil
+from math import ceil, log
 from secrets import randbelow
 from time import perf_counter, sleep
 try:
@@ -140,7 +140,7 @@ class SchemeIBPRME:
 		K = pair(ek_id_2, H1(id_3)) # $K \gets e(\textit{ek}_{\textit{id}_2}, H_1(\textit{id}_3))$
 		rk3 = pair( # $\textit{rk}_3 \gets e(
 			H2(id_1), # H_2(\textit{id}_1), 
-			H7(self.__group.serialize(K)[2:] + id_2 + id_3 + self.__group.serialize(N)[2:]) * dk_id_2[1] # H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
+			H7(self.__group.serialize(K) + id_2 + id_3 + self.__group.serialize(N)) * dk_id_2[1] # H_7(K || \textit{id}_2 || \textit{id}_3 || N) \cdot \textit{dk}_{\textit{id}_2, 2}
 		) # )$
 		rk = (N, rk1, rk2, rk3) # $\textit{rk} \gets (N, \textit{rk}_1, \textit{rk}_2, \textit{rk}_3)$
 		
@@ -178,13 +178,13 @@ class SchemeIBPRME:
 		ct2 = g ** r # $\textit{ct}_2 \gets g^r$
 		ct3 = self.__group.init(
 			ZR, (
-				int.from_bytes(self.__group.serialize(m)[2:] + self.__group.serialize(sigma)[2:], byteorder = "big")
-				^ int.from_bytes(self.__group.serialize(H4(pair(y, H1(id_2)) ** r))[2:], byteorder = "big")
-				^ int.from_bytes(self.__group.serialize(H4(eta))[2:], byteorder = "big")
+				int.from_bytes(self.__group.serialize(m) + self.__group.serialize(sigma), byteorder = "big")
+				^ int.from_bytes(self.__group.serialize(H4(pair(y, H1(id_2)) ** r)), byteorder = "big")
+				^ int.from_bytes(self.__group.serialize(H4(eta)), byteorder = "big")
 			)
 		) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
 		ct4 = eta * pair(ek_id_1, H1(id_2)) # $\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
-		ct5 = H5(self.__group.serialize(ct1)[2:] + self.__group.serialize(ct2)[2:] + self.__group.serialize(ct3)[2:] + self.__group.serialize(ct4)[2:]) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
+		ct5 = H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4)) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
 		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
 		
 		# Return #
@@ -263,10 +263,8 @@ class SchemeIBPRME:
 		): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
 			V = pair(dk_id_2[1], H2(id_1)) # \quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
 			etaPrime = ct4 / V # \quad$\eta' \gets \frac{\textit{ct}_4}{V}$
-			r = H3(																									\
-				(self.__group.serialize(ct3) ^ self.__group.serialize(H4(pair(dk_id_2[0], ct2))) ^ self.__group.serialize(H4(etaPrime)))		\
-				+ self.__group.serialize(etaPrime)																			\
-			) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
+			ct3_H4_H4 = int.from_bytes(self.__group.serialize(ct3), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(pair(dk_id_2[0], ct2))), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")
+			r = H3(ct3_H4_H4.to_bytes(ceil(log(ct3_H4_H4 + 1, 256))) + self.__group.serialize(etaPrime)) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
 			if g ** r == ct2: # \quad If $g^r = \textit{ct}_2$: 
 				m = True
 			else:
@@ -318,9 +316,10 @@ class SchemeIBPRME:
 		
 		# Scheme #
 		V = pair(dk_id_3[1], H2(id_2)) # $V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
-		etaPrime = ct4Prime * pair(H2(id_1), H7(self.__group.serialize(V) + self.__group.serialize(id2) + self.__group.serialize(id3) + self.__group.serialize(N))) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
+		etaPrime = ct4Prime * pair(H2(id_1), H7(self.__group.serialize(V) + id2 + id3 + self.__group.serialize(N))) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
 		R = ct7 / pair(H6(pair(dk_id_3[0], ct6)), ct2) # $R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
-		r = H3(self.__group.serialize(ct3 ^ H4(R) ^ H4(etaPrime)) + self.__group.serialize(etaPrime)) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
+		ct3_H4_H4 = int.from_bytes(self.__group.serialize(ct3), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(R)), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")
+		r = H3(ct3_H4_H4.to_bytes(ceil(log(ct3_H4_H4 + 1, 256))) + self.__group.serialize(etaPrime)) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
 		if g ** r == ct2: # If $g^r = \textit{ct}_2$: 
 			m = True
 		else:
@@ -512,7 +511,7 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	except BaseException as e:
+	#except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #

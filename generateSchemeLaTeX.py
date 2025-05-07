@@ -326,7 +326,7 @@ def main() -> int:
 		if os.path.isdir(argv[1]):
 			for root, dirs, files in os.walk(argv[1]):
 				for fileName in files:
-					if os.path.splitext(fileName)[1].lower() == ".py" and "." != root and not fileName.startswith(".") and "/." not in root and "\\." not in root:
+					if os.path.splitext(fileName)[1].lower() == ".py" and "." != root and not fileName.startswith("."):
 						filePath = os.path.join(root, fileName)
 						totalCount += 1
 						print(filePath)
