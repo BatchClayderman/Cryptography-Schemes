@@ -233,9 +233,9 @@ class SchemeIBPME:
 		m_KC_Y = m_KC_Y.to_bytes(token * 3, byteorder = "big")
 		m_KC, Y = m_KC_Y[:-token], m_KC_Y[-token:]
 		if Y == H5(m_KC, K_R, C1, C2): # \textbf{if} $Y = H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
-			CT_1 = C1 # $\textit{CT}_1 \gets C_1$
-			CT_2 = int.from_bytes(m_KC, byteorder = "big") ^ int.from_bytes(H7(K_R), byteorder = "big") # $\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
-			CT = (CT_1, CT_2) # $\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
+			CT1 = C1 # \quad$\textit{CT}_1 \gets C_1$
+			CT2 = int.from_bytes(m_KC, byteorder = "big") ^ int.from_bytes(H7(K_R), byteorder = "big") # \quad$\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
+			CT = (CT1, CT2) # \quad$\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
 		else: # \textbf{else}
 			CT = False # \quad$\textit{CT} \gets \perp$
 		# \textbf{end if}
@@ -320,12 +320,12 @@ class SchemeIBPME:
 		# Unpack #
 		H1, H3, H4, H7 = self.__mpk[8], self.__mpk[10], self.__mpk[11], self.__mpk[14]
 		d1, d2 = dk_rho
-		CT_1, CT_2 = CT
+		CT1, CT2 = CT
 		
 		# Scheme #
 		eta = pair(H1(sigma), d1) # $\eta \gets e(H_1(\sigma), d_1)$
-		K_R = pair(CT_1, d2 ** H3(eta)) # $K_R \gets e(C_1, d_2^{H_3(\eta)})$
-		m_KC = CT_2 ^ int.from_bytes(H7(K_R), byteorder = "big") # $m || K_C \gets \textit{CT}_2 \oplus H_7(K_R)$
+		K_R = pair(CT1, d2 ** H3(eta)) # $K_R \gets e(C_1, d_2^{H_3(\eta)})$
+		m_KC = CT2 ^ int.from_bytes(H7(K_R), byteorder = "big") # $m || K_C \gets \textit{CT}_2 \oplus H_7(K_R)$
 		token = ceil(self.__group.secparam / 8)
 		m_KC = m_KC.to_bytes(token << 1, byteorder = "big")
 		m, K_C = m_KC[:-token], m_KC[-token:]
@@ -523,7 +523,7 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
+	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #

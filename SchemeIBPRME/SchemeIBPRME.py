@@ -17,15 +17,7 @@ except:
 	pass
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
-EOF = (-1)
-
-
-class Bits:
-	def __init__(self:object, value:int|bytes, length:int) -> object:
-		if isinstance(length, int) and length >= 0:
-			self.__vector = 
-	def  __bytes__(self:object) -> bytes:
-		
+EOF = (-1)		
 
 
 class SchemeIBPRME:
@@ -34,6 +26,7 @@ class SchemeIBPRME:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
+		self.__operand = (1 << self.__group.secparam) - 1 # use to cast binary strings
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -114,13 +107,13 @@ class SchemeIBPRME:
 			else:
 				ek_id_2 = self.EKGen(id_2)
 				print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ should be an element but it is not, which has been generated accordingly. ")
-			if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
+			if isinstance(dkid2, tuple) and len(dkid2) == 2 and all(isinstance(ele, Element) for ele in dkid2): # hybrid check
 				dk_id_2 = dkid2
 			else:
 				dk_id_2 = self.DKGen(id_2)
 				print("ReEKGen: The variable $\\textit{dk}_{\\textit{id}_2}$ should be a tuple containing 2 elements but it is not, which has been generated accordingly. ")
 		else:
-			id_2 = self.__group.random(ZR)
+			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("ReEKGen: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 			ek_id_2 = self.EKGen(id_2)
 			print("ReEKGen: The variable $\\textit{ek}_{\\textit{id}_2}$ has been generated accordingly. ")
@@ -129,12 +122,12 @@ class SchemeIBPRME:
 		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
-			id_1 = self.__group.random(ZR)
+			id_1 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("ReEKGen: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(id3, bytes): # type check
 			id_3 = id3
 		else:
-			id_3 = self.__group.random(ZR)
+			id_3 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("ReEKGen: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		
 		# Unpack #
@@ -154,7 +147,7 @@ class SchemeIBPRME:
 		
 		# Return #
 		return rk # \textbf{return} $\textit{rk}$
-	def Enc(self:object, ekid1:Element, id2:Element, message:Element) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
+	def Enc(self:object, ekid1:Element, id2:Element, message:int|bytes) -> object: # $\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
@@ -169,11 +162,17 @@ class SchemeIBPRME:
 		else:
 			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Enc: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(message, Element) and message.type == GT: # type check
-			m = message
+		if isinstance(message, int) and message >= 0: # type check
+			m = message & self.__operand
+			if message != m:
+				print("Enc: The passed message (int) is too long, which has been cast. ")
+		elif isinstance(message, bytes):
+			m = int.from_bytes(message, byteorder = "big") & self.__operand
+			if len(message) << 3 > self.__group.secparam:
+				print("Enc: The passed message (bytes) is too long, which has been cast. ")
 		else:
-			m = self.__group.random(GT)
-			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			m = int.from_bytes(b"SchemeIBPRME", byteorder = "big")
+			print("Enc: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBPRME\". ")
 		
 		# Unpack #
 		g, h, H1, H3, H4, H5, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[-1]
@@ -181,18 +180,16 @@ class SchemeIBPRME:
 		# Scheme #
 		sigma = self.__group.random(G1) # generate $\sigma \in \mathbb{G}_1$ randomly
 		eta = self.__group.random(GT) # generate $\eta \in \mathbb{G}_T$ randomly
-		r = H3(self.__group.serialize(m) + self.__group.serialize(sigma) + self.__group.serialize(eta)) # $r \gets H_3(m || \sigma || \eta)$
+		r = H3(m.to_bytes(ceil(self.__group.secparam / 8), byteorder = "big") + self.__group.serialize(sigma) + self.__group.serialize(eta)) # $r \gets H_3(m || \sigma || \eta)$
 		ct1 = h ** r # $\textit{ct}_1 \gets h^r$
 		ct2 = g ** r # $\textit{ct}_2 \gets g^r$
-		ct3 = self.__group.init(
-			ZR, (
-				int.from_bytes(self.__group.serialize(m) + self.__group.serialize(sigma), byteorder = "big")
-				^ int.from_bytes(self.__group.serialize(H4(pair(y, H1(id_2)) ** r)), byteorder = "big")
-				^ int.from_bytes(self.__group.serialize(H4(eta)), byteorder = "big")
-			)
+		ct3 = (
+			int.from_bytes(m.to_bytes(ceil(self.__group.secparam / 8), byteorder = "big") + self.__group.serialize(sigma), byteorder = "big")
+			^ int.from_bytes(self.__group.serialize(H4(pair(y, H1(id_2)) ** r)), byteorder = "big")
+			^ int.from_bytes(self.__group.serialize(H4(eta)), byteorder = "big")
 		) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
 		ct4 = eta * pair(ek_id_1, H1(id_2)) # $\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
-		ct5 = H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4)) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
+		ct5 = H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4)) ** r # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
 		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
 		
 		# Return #
@@ -202,16 +199,16 @@ class SchemeIBPRME:
 		if not self.__flag:
 			print("ReEnc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReEnc`` subsequently. ")
 			self.Setup()
-		id2Generated = self.__group.random(ZR)
-		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
+		id2Generated = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
+		if isinstance(cipher, tuple) and len(cipher) == 5 and all(isinstance(ele, Element) for ele in cipher[:2]) and isinstance(cipher[2], int) and all(isinstance(ele, Element) for ele in cipher[3:]): # hybrid check
 			ct = cipher
 		else:
-			ct = self.Enc(self.EKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
-			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
-		if isinstance(reKey, tuple) and len(reKey) == 4 and all([isinstance(ele, Element) for ele in reKey]): # hybrid check
+			ct = self.Enc(self.EKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemeIBPRME", byteorder = "big"))
+			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, , which has been generated with $m$ set to b\"SchemeIBPRME\". ")
+		if isinstance(reKey, tuple) and len(reKey) == 4 and all(isinstance(ele, Element) for ele in reKey): # hybrid check
 			rk = reKey
 		else:
-			rk = self.ReEKGen(self.EKGen(id2Generated), self.DKGen(id2Generated), self.__group.random(ZR), id2Generated, self.__group.random(ZR))
+			rk = self.ReEKGen(self.EKGen(id2Generated), self.DKGen(id2Generated), randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"), id2Generated, randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"))
 			print("ReEnc: The variable $\\textit{rk}$ should be a tuple containing 4 elements but it is not, which has been generated randomly. ")
 		del id2Generated
 		
@@ -224,10 +221,10 @@ class SchemeIBPRME:
 		# Scheme #
 		if (																															\
 			pair(ct1, g) == pair(h, ct2)																									\
-			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4))) == pair(h, ct5)	\
-		): # \textbf{If} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
+			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4))) == pair(h, ct5)	\
+		): # \textbf{if} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 			ct4Prime = ct4 / rk3 # \quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
-			ct6 = rk1 # $\textit{ct}_6 \gets \textit{rk}_1$
+			ct6 = rk1 # \quad$\textit{ct}_6 \gets \textit{rk}_1$
 			ct7 = pair(rk2, ct2) / pair(ct1, rk1) # \quad$\textit{ct}_7 \gets \frac{e(\textit{rk}_2, \textit{ct}_2)}{e(\textit{ct}_1, \textit{rk}_1)}$
 			ctPrime = (ct2, ct3, ct4Prime, ct6, ct7, N) # \quad$\textit{ct}' \gets (\textit{ct}_2, \textit{ct}_3, \textit{ct}_4', \textit{ct}_6, \textit{ct}_7, N)$
 		else: # \textbf{else}
@@ -236,13 +233,13 @@ class SchemeIBPRME:
 		
 		# Return #
 		return ctPrime # \textbf{return} $\textit{ct}'$
-	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:tuple) -> Element|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
+	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
 			self.Setup()
-		id2Generated = self.__group.random(ZR)
-		if isinstance(dkid2, tuple) and len(dkid2) == 2 and all([isinstance(ele, Element) for ele in dkid2]): # hybrid check
+		id2Generated = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
+		if isinstance(dkid2, tuple) and len(dkid2) == 2 and all(isinstance(ele, Element) for ele in dkid2): # hybrid check
 			dk_id_2 = dkid2
 		else:
 			dk_id_2 = self.DKGen(id2Generated)
@@ -250,13 +247,13 @@ class SchemeIBPRME:
 		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
-			id_1 = self.__group.random(ZR)
+			id_1 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec1: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 5 and all([isinstance(ele, Element) for ele in cipher]): # hybrid check
+		if isinstance(cipher, tuple) and len(cipher) == 5 and all(isinstance(ele, Element) for ele in cipher[:2]) and isinstance(cipher[2], int) and all(isinstance(ele, Element) for ele in cipher[3:]): # hybrid check
 			ct = cipher
 		else:
-			ct = self.Enc(self.EKGen(self.__group.random(ZR)), id2Generated, self.__group.random(GT))
-			print("Dec1: The variable $\\textit{ct}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
+			ct = self.Enc(self.EKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemeIBPRME", byteorder = "big"))
+			print("Dec1: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemeIBPRME\". ")
 		del id2Generated
 		
 		# Unpack #
@@ -267,55 +264,60 @@ class SchemeIBPRME:
 		# Scheme #
 		if (																															\
 			pair(ct1, g) == pair(h, ct2)																									\
-			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + self.__group.serialize(ct4))) == pair(h, ct5)	\
-		): # If $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$: 
+			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4))) == pair(h, ct5)	\
+		): # \textbf{if} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 			V = pair(dk_id_2[1], H2(id_1)) # \quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
 			etaPrime = ct4 / V # \quad$\eta' \gets \frac{\textit{ct}_4}{V}$
-			ct3_H4_H4 = int.from_bytes(self.__group.serialize(ct3), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(pair(dk_id_2[0], ct2))), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")
-			r = H3(ct3_H4_H4.to_bytes(ceil(log(ct3_H4_H4 + 1, 256))) + self.__group.serialize(etaPrime)) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
-			if g ** r == ct2: # \quad If $g^r = \textit{ct}_2$: 
-				m = True
+			ct3_H4_H4 = int.from_bytes(ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big"), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(pair(dk_id_2[0], ct2))), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big") # $\quad m || \sigma \gets \textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1}, \textit{ct}_2)) \oplus H_4(\eta')$
+			token1, token2 = ceil(self.__group.secparam / 8), len(self.__group.serialize(self.__group.random(G1)))
+			ct3_H4_H4 = ct3_H4_H4.to_bytes(token1 + token2, byteorder = "big")
+			r = H3(ct3_H4_H4 + self.__group.serialize(etaPrime)) # \quad$r \gets H_3((\textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1})) \oplus H_4(\eta')) || \eta')$
+			if g ** r != ct2: # \quad\textbf{if} $g^r = \textit{ct}_2$ \textbf{then}
+				m = False # \quad\quad$m \gets \perp$
 			else:
-				m = False
-		else:
-			m = False
+				m = ct3_H4_H4[:token1]
+			# \quad\textbf{end if}
+		else: # \textbf{else}
+			m = False # \quad$m \gets \perp$
+		# \textbf{end if}
+		m = int.from_bytes(m, byteorder = "big")
 		
 		# Return #
 		return m # \textbf{return} $m$
-	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, id3:Element, cipherPrime:tuple|bool) -> Element|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m$
+	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, id3:Element, cipherPrime:tuple|bool) -> int|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m'$
 		# Check #
 		if not self.__flag:
 			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
 			self.Setup()
 		if isinstance(id3, bytes): # type check
 			id_3 = id3
-			if isinstance(dkid3, tuple) and len(dkid3) == 2 and all([isinstance(ele, Element) for ele in dkid3]): # hybrid check
+			if isinstance(dkid3, tuple) and len(dkid3) == 2 and all(isinstance(ele, Element) for ele in dkid3): # hybrid check
 				dk_id_3 = dkid3
 			else:
 				dk_id_3 = self.DKGen(id_3)
 				print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
 		else:
-			id_3 = self.__group.random(ZR)
+			id_3 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec2: The variable $\\textit{id}_3$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 			dk_id_3 = self.DKGen(id_3)
 			print("Dec2: The variable $\\textit{dk}_{\\textit{id}_3}$ has been generated accordingly. ")
 		if isinstance(id1, bytes): # type check
 			id_1 = id1
 		else:
-			id_1 = self.__group.random(ZR)
+			id_1 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec2: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
 		if isinstance(id2, bytes): # type check
 			id_2 = id2
 		else:
-			id_2 = self.__group.random(ZR)
+			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec2: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and all([isinstance(ele, Element) for ele in cipherPrime]): # hybrid check
+		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and isinstance(cipherPrime[0], Element) and isinstance(cipherPrime[1], int) and all(isinstance(ele, Element) for ele in cipherPrime[2:]): # hybrid check
 			ctPrime = cipherPrime
 		elif isinstance(cipherPrime, bool):
 			return False
 		else:
-			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, self.__group.random(GT)), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id_2, id_3))
-			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
+			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, int.from_bytes(b"SchemeIBPRME", byteorder = "big")), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id_2, id_3))
+			print("Dec2: The variable $\\textit{ct}'$ should be a tuple containing 5 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemeIBPRME\". ")
 		
 		# Unpack #
 		g, h, H1, H2, H3, H4, H6, H7, y = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[7], self.__mpk[8], self.__mpk[-1]
@@ -326,12 +328,16 @@ class SchemeIBPRME:
 		V = pair(dk_id_3[1], H2(id_2)) # $V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
 		etaPrime = ct4Prime * pair(H2(id_1), H7(self.__group.serialize(V) + id2 + id3 + self.__group.serialize(N))) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
 		R = ct7 / pair(H6(pair(dk_id_3[0], ct6)), ct2) # $R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
-		ct3_H4_H4 = int.from_bytes(self.__group.serialize(ct3), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(R)), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")
-		r = H3(ct3_H4_H4.to_bytes(ceil(log(ct3_H4_H4 + 1, 256))) + self.__group.serialize(etaPrime)) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
-		if g ** r == ct2: # If $g^r = \textit{ct}_2$: 
-			m = True
+		ct3_H4_H4 = int.from_bytes(ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big"), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(R)), byteorder = "big") ^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")
+		token1, token2 = ceil(self.__group.secparam / 8), len(self.__group.serialize(self.__group.random(G1)))
+		ct3_H4_H4 = ct3_H4_H4.to_bytes(token1 + token2, byteorder = "big")
+		r = H3(ct3_H4_H4 + self.__group.serialize(etaPrime)) # $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
+		if g ** r != ct2: # \textbf{if} $g^r \neq \textit{ct}_2$ \textbf{then}
+			m = False # \quad$m \gets \perp$
 		else:
-			m = False
+			m = ct3_H4_H4[:token1]
+		# \textbf{end if}
+		m = int.from_bytes(m, byteorder = "big")
 		
 		# Return #
 		return m # \textbf{return} $m$
@@ -415,7 +421,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# Enc #
 	startTime = perf_counter()
-	message = group.random(GT)
+	message = int.from_bytes(b"SchemeIBPRME", byteorder = "big")
 	ct = schemeIBPRME.Enc(ek_id_1, id_2, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
@@ -439,7 +445,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	timeRecords.append(endTime - startTime)
 	
 	# End #
-	booleans = [True, isinstance(ctPrime, Element), isinstance(m, Element) and message == m, isinstance(mPrime, Element) and message == mPrime]
+	booleans = [True, not isinstance(ctPrime, bool), not isinstance(m, bool) and message == m, not isinstance(mPrime, bool) and message == mPrime]
 	spaceRecords = [																													\
 		schemeIBPRME.getLengthOf(group.random(ZR)), schemeIBPRME.getLengthOf(group.random(G1)), 												\
 		schemeIBPRME.getLengthOf(group.random(G2)), schemeIBPRME.getLengthOf(group.random(GT)), 											\
@@ -519,7 +525,7 @@ def main() -> int:
 			results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
+	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
@@ -568,7 +574,7 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all([all([r == roundCount for r in result[5:8]] + [r > 0 for r in result[8:length]]) for result in results]) else EXIT_FAILURE
+	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:7]) + tuple(r > 0 for r in result[7:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))
