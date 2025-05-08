@@ -55,6 +55,8 @@ Usually, it will succeed if ``pdflatex`` is available and on the path.
 
 For developers, this script will check the style of the Python scripts. 
 
+Developers can use ``python generateSchemeLaTeX.py | grep "unofficial"`` to help check the non-unified prompts. 
+
 ### 1.2 Measurements
 
 To compute the time consumption (time complexity) of a set of codes, please refer to the following codes. 

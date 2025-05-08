@@ -81,7 +81,7 @@ $\textit{pdk}_{(\rho, \sigma)} \gets (y_1, y_2)$
 
 \textbf{return} $\textit{pdk}_{(\rho, \sigma)}$
 
-\subsection{$\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow \textit{ct}$}
+\subsection{$\textbf{Enc}(\textit{ek}_\sigma, \textit{id}_2, m) \rightarrow C$}
 
 generate $r \in \mathbb{Z}_r$ randomly
 
@@ -111,11 +111,11 @@ $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 
 \textbf{if} $Y = H_5(m, K_C, K_R, C_1, C_2) $\textbf{then}
 
-$\textit{CT}_1 \gets C_1$
+\quad$\textit{CT}_1 \gets C_1$
 
-$\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
+\quad$\textit{CT}_2 \gets (m || K_C) \oplus H_7(K_R)$
 
-$\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
+\quad$\textit{CT} \gets (\textit{CT}_1, \textit{CT}_2)$
 
 \textbf{else}
 
@@ -141,7 +141,7 @@ $m || K_C || Y \gets C_3 \oplus H_6(K_R)$
 
 \textbf{return} $m$
 
-\subsection{$\textbf{Dec}_1(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$}
+\subsection{$\textbf{Dec}_2(\textit{dk}_\rho, \sigma, \textit{CT}) \rightarrow m'$}
 
 $\eta \gets e(H_1(\sigma), d_1)$
 

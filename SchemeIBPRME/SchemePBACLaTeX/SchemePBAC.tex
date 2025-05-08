@@ -7,6 +7,8 @@
 
 \section{SchemePBAC}
 
+This scheme is only applicable to symmetric groups of prime orders. 
+
 \subsection{$\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$}
 
 $q \gets \|\mathbb{G}\|$
@@ -31,7 +33,7 @@ $\hat{g} \gets g^s$
 
 $ \textit{mpk} \gets (g, \hat{g}, H_1, H_2, H_3, H_4, H_5, H_6)$
 
-$\textit{msk} \gets (x, \alpha)$
+$\textit{msk} \gets (s, \alpha)$
 
 \textbf{return} $(\textit{mpk}, \textit{msk})$
 
@@ -51,7 +53,7 @@ $\textit{dk}_{\textit{id}_R} \gets (\textit{dk}_{\textit{id}_R, 1}, \textit{dk}_
 
 \textbf{return} $\textit{dk}_{\textit{id}_R}$
 
-\subsection{$\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow \textit{ct}$}
+\subsection{$\textbf{Enc}(\textit{ek}_{\textit{id}_1}, \textit{id}_2, m) \rightarrow C$}
 
 generate $\eta_1, \eta_2 \in \mathbb{G}_T$ randomly
 
