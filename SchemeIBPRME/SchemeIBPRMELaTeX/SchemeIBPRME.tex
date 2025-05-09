@@ -25,7 +25,7 @@ $H_2: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
 $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
 
-$H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1^2$
+$H_4: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
 $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 
@@ -153,6 +153,8 @@ $V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
 $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
 
 $R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
+
+$m || \sigma \gets \textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')$
 
 $r \gets H_3((\textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')) || \eta')$
 

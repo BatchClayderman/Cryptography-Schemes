@@ -55,7 +55,7 @@ Usually, it will succeed if ``pdflatex`` is available and on the path.
 
 For developers, this script will check the style of the Python scripts. 
 
-Developers can use ``python generateSchemeLaTeX.py | grep "unofficial"`` to help check the non-unified prompts. 
+Developers can use ``echo "" | python generateSchemeLaTeX.py | grep "^Detail: "`` to help check the non-unified prompts. 
 
 ### 1.2 Measurements
 
@@ -70,7 +70,7 @@ endTime = perf_counter()
 timeDelta = endTime - startTime # second(s)
 ```
 
-To compute the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. 
+To compute the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $\lambda % 8 = 0$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. 
 
 ```
 def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)
@@ -82,7 +82,7 @@ def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # By
 	elif isinstance(obj, bytes):
 		return len(obj)
 	elif isinstance(obj, int) or callable(obj):
-		return group.secparam >> 3
+		return (group.secparam + 7) >> 3
 	else:
 		return -1
 ```

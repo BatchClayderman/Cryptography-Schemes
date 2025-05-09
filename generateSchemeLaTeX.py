@@ -69,7 +69,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				return True
 			else:
 				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
-				print("\"{0}\" ({1}): {2} (in Function ``{3}`` of Class ``{4}``)".format(filePath, idx, convertEscaped(s), functionName, className))
+				print("Detail: \"{0}\" ({1}): {2} (in Function ``{3}`` of Class ``{4}``)".format(filePath, idx, convertEscaped(s), functionName, className))
 				try:
 					sleep(sleepingTime)
 				except KeyboardInterrupt:
@@ -85,7 +85,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				return True
 			else:
 				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
-				print("\"{0}\" ({1}): {2} (in Function ``{3}``)".format(filePath, idx, convertEscaped(s), functionName))
+				print("Detail: \"{0}\" ({1}): {2} (in Function ``{3}``)".format(filePath, idx, convertEscaped(s), functionName))
 				try:
 					sleep(sleepingTime)
 				except KeyboardInterrupt:
@@ -116,7 +116,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 			return True
 		else:
 			print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
-			print("\"{0}\" ({1}): {2}".format(filePath, idx, convertEscaped(s)))
+			print("Detail: \"{0}\" ({1}): {2}".format(filePath, idx, convertEscaped(s)))
 			try:
 				sleep(sleepingTime)
 			except KeyboardInterrupt:
@@ -125,7 +125,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				pass
 			return False
 	else:
-		print("** Warning: An unofficial statement detected or an unofficial generator is used, please check whether official Python scripts are used. **")
+		print("** Warning: An unofficial statement detected or an unofficial generator used, please check whether official Python scripts are used. **")
 		try:
 			sleep(sleepingTime)
 		except KeyboardInterrupt:
