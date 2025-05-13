@@ -210,9 +210,9 @@ class SchemeIBPRME:
 		if isinstance(reKey, tuple) and len(reKey) == 4 and all(isinstance(ele, Element) for ele in reKey): # hybrid check
 			rk = reKey
 		else:
-			rk = self.ReEKGen(																																\
-				self.EKGen(id2Generated), self.DKGen(id2Generated), randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"), 		\
-				id2Generated, randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")											\
+			rk = self.ReEKGen(																														\
+				self.EKGen(id2Generated), self.DKGen(id2Generated), randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big"), 	\
+				id2Generated, randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")										\
 			)
 			print("ReEnc: The variable $\\textit{rk}$ should be a tuple containing 4 elements but it is not, which has been generated randomly. ")
 		del id2Generated
@@ -273,10 +273,10 @@ class SchemeIBPRME:
 		): # \textbf{if} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 			V = pair(dk_id_2[1], H2(id_1)) # \quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
 			etaPrime = ct4 / V # \quad$\eta' \gets \frac{\textit{ct}_4}{V}$
-			ct3_H4_H4 = (																																\
+			ct3_H4_H4 = (																													\
 				int.from_bytes(ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big"), byteorder = "big")	\
-				^ int.from_bytes(self.__group.serialize(H4(pair(dk_id_2[0], ct2))), byteorder = "big")																\
-				^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")																			\
+				^ int.from_bytes(self.__group.serialize(H4(pair(dk_id_2[0], ct2))), byteorder = "big")															\
+				^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")																	\
 			) # $\quad m || \sigma \gets \textit{ct}_3 \oplus H_4(e(\textit{dk}_{\textit{id}_2, 1}, \textit{ct}_2)) \oplus H_4(\eta')$
 			token1, token2 = ceil(self.__group.secparam / 8), len(self.__group.serialize(self.__group.random(G1)))
 			ct3_H4_H4 = ct3_H4_H4.to_bytes(token1 + token2, byteorder = "big")
@@ -337,10 +337,10 @@ class SchemeIBPRME:
 		V = pair(dk_id_3[1], H2(id_2)) # $V \gets e(\textit{dk}_{\textit{id}_3, 2}, H_2(\textit{id}_2))$
 		etaPrime = ct4Prime * pair(H2(id_1), H7(self.__group.serialize(V) + id2 + id3 + self.__group.serialize(N))) # $\eta' \gets \textit{ct}_4' \cdot e(H_2(\textit{id}_1), H_7(V || \textit{id}_2 || \textit{id}_3 || N))$
 		R = ct7 / pair(H6(pair(dk_id_3[0], ct6)), ct2) # $R \gets \frac{\textit{ct}_7}{e(H_6(e(\textit{dk}_{\textit{id}_3, 1}, \textit{ct}_6), \textit{ct}_2)}$
-		ct3_H4_H4 = (																																\
+		ct3_H4_H4 = (																													\
 			int.from_bytes(ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big"), byteorder = "big")	\
-			^ int.from_bytes(self.__group.serialize(H4(R)), byteorder = "big")																				\
-			^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")																			\
+			^ int.from_bytes(self.__group.serialize(H4(R)), byteorder = "big")																		\
+			^ int.from_bytes(self.__group.serialize(H4(etaPrime)), byteorder = "big")																	\
 		) # $m || \sigma \gets \textit{ct}_3 \oplus H_4(R) \oplus H_4(\eta')$
 		token1, token2 = ceil(self.__group.secparam / 8), len(self.__group.serialize(self.__group.random(G1)))
 		ct3_H4_H4 = ct3_H4_H4.to_bytes(token1 + token2, byteorder = "big")
@@ -389,9 +389,9 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		if isinstance(round, int) and round >= 0:
 			print("round =", round)
 		print("Is the system valid? No. \n\t{0}".format(e))
-		return (																																																	\
+		return (																																													\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])	\
-			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 21																																			\
+			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 21																																\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -459,8 +459,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# End #
 	booleans = [True, not isinstance(ctPrime, bool), not isinstance(m, bool) and message == m, not isinstance(mPrime, bool) and message == mPrime]
-	spaceRecords = [																																\
-		schemeIBPRME.getLengthOf(group.random(ZR)), schemeIBPRME.getLengthOf(group.random(G1)), schemeIBPRME.getLengthOf(group.random(G2)), 	\
+	spaceRecords = [																														\
+		schemeIBPRME.getLengthOf(group.random(ZR)), schemeIBPRME.getLengthOf(group.random(G1)), schemeIBPRME.getLengthOf(group.random(G2)), 		\
 		schemeIBPRME.getLengthOf(group.random(GT)), schemeIBPRME.getLengthOf(mpk), schemeIBPRME.getLengthOf(msk), 							\
 		schemeIBPRME.getLengthOf(ek_id_1), schemeIBPRME.getLengthOf(ek_id_2), schemeIBPRME.getLengthOf(dk_id_2), 								\
 		schemeIBPRME.getLengthOf(dk_id_3), schemeIBPRME.getLengthOf(rk), schemeIBPRME.getLengthOf(ct), schemeIBPRME.getLengthOf(ctPrime)		\
@@ -513,10 +513,10 @@ def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 20, "SchemeIBPRME.xlsx"
-	columns = [																									\
+	columns = [																							\
 		"curveType", "secparam", "roundCount", "isSystemValid", "isReEKGenPassed", "isDec1Passed", "isDec2Passed", 		\
 		"Setup (s)", "DKGen (s)", "EKGen (s)", "ReEKGen (s)", "Enc (s)", "ReEnc (s)", "Dec1 (s)", "Dec2 (s)", 				\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 				\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 			\
 		"ek_id_1 (B)", "ek_id_2 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "rk (B)", "ct (B)", "ct\' (B)"							\
 	]
 	
