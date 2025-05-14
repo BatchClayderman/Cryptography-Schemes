@@ -70,7 +70,7 @@ endTime = perf_counter()
 timeDelta = endTime - startTime # second(s)
 ```
 
-To compute the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $\lambda % 8 = 0$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. 
+To compute the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. 
 
 ```
 def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)

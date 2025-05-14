@@ -5,7 +5,7 @@ from math import ceil, log
 from secrets import randbelow
 from time import perf_counter, sleep
 try:
-	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
+	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the Python ``charm`` library is not handled correctly. ")
 	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
@@ -374,7 +374,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 21																																	\
+			+ [round if isinstance(round, int) else None] + [False] * 4 + [-1] * 20																																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -399,7 +399,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	ek_id_1 = schemePBAC.SKGen(id_1)
 	ek_id_2 = schemePBAC.SKGen(id_2)
 	endTime = perf_counter()
-	timeRecords.append(endTime - startTime)
+	timeRecords.append((endTime - startTime) / 2)
 	
 	# RKGen #
 	startTime = perf_counter()
@@ -407,7 +407,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	dk_id_2 = schemePBAC.RKGen(id_2)
 	dk_id_3 = schemePBAC.RKGen(id_3)
 	endTime = perf_counter()
-	timeRecords.append(endTime - startTime)
+	timeRecords.append((endTime - startTime) / 2)
 	
 	# Enc #
 	startTime = perf_counter()
@@ -442,12 +442,10 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	
 	# End #
 	booleans = [True, not isinstance(CT, bool), not isinstance(m, bool) and message == m, not isinstance(mPrime, bool) and message == mPrime]
-	spaceRecords = [																						\
-		schemePBAC.getLengthOf(group.random(ZR)), schemePBAC.getLengthOf(group.random(G1)), 					\
-		schemePBAC.getLengthOf(group.random(G2)), schemePBAC.getLengthOf(group.random(GT)), 					\
-		schemePBAC.getLengthOf(mpk), schemePBAC.getLengthOf(msk), schemePBAC.getLengthOf(ek_id_1), 			\
-		schemePBAC.getLengthOf(ek_id_2), schemePBAC.getLengthOf(dk_id_2), schemePBAC.getLengthOf(dk_id_3), 	\
-		schemePBAC.getLengthOf(C), schemePBAC.getLengthOf(rk), schemePBAC.getLengthOf(CT)					\
+	spaceRecords = [																																	\
+		schemePBAC.getLengthOf(group.random(ZR)), schemePBAC.getLengthOf(group.random(G1)), schemePBAC.getLengthOf(group.random(GT)), 						\
+		schemePBAC.getLengthOf(mpk), schemePBAC.getLengthOf(msk), schemePBAC.getLengthOf(ek_id_1), schemePBAC.getLengthOf(ek_id_2), 						\
+		schemePBAC.getLengthOf(dk_id_2), schemePBAC.getLengthOf(dk_id_3), schemePBAC.getLengthOf(C), schemePBAC.getLengthOf(rk), schemePBAC.getLengthOf(CT)	\
 	]
 	del schemePBAC
 	print("Original:", message)
@@ -496,28 +494,29 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 20, "SchemePBAC.xlsx"
-	columns = [																						\
-		"curveType", "secparam", "roundCount", "isSystemValid", "isProxyEncPassed", "isDec1Passed", "isDec2Passed", 	\
+	roundCount, filePath = 100, "SchemePBAC.xlsx"
+	queries = ["curveType", "secparam", "roundCount"]
+	validators = ["isSystemValid", "isProxyEncPassed", "isDec1Passed", "isDec2Passed"]
+	metrics = 	[																						\
 		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "PKGen (s)", "ProxyEnc (s)", "Dec1 (s)", "Dec2 (s)", 			\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", "mpk (B)", "msk (B)", 		\
-		"ek_id_1 (B)", "ek_id_2 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "C (B)", "rk (B)", "CT (B)"						\
+		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 										\
+		"mpk (B)", "msk (B)", "ek_id_1 (B)", "ek_id_2 (B)", "dk_id_2 (B)", "dk_id_3 (B)", "C (B)", "rk (B)", "CT (B)"	\
 	]
 	
 	# Scheme #
-	length, results = len(columns), []
+	qLength, columns, results = len(queries), queries + validators + metrics, []
+	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
-		roundCount = max(1, roundCount)
 		for curveType in curveTypes:
 			average = Scheme(curveType, 0)
 			for round in range(1, roundCount):
 				result = Scheme(curveType, round)
-				for idx in range(3, 7):
+				for idx in range(qLength, qvLength):
 					average[idx] += result[idx]
-				for idx in range(7, length):
+				for idx in range(qvLength, length):
 					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-			average[2] = roundCount
-			for idx in range(7, length):
+			average[avgIndex] = roundCount
+			for idx in range(qvLength, length):
 				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 			results.append(average)
 	except KeyboardInterrupt:

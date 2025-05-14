@@ -602,18 +602,19 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 20, "SchemeHIBME.xlsx"
-	columns = [																						\
-		"curveType", "secparam", "l", "m", "n", "roundCount", "isSystemValid", "isDeriverPassed", "isSchemeCorrect", 	\
-		"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 		\
-		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 							\
-		"mpk (B)", "msk (B)", "EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"								\
+	roundCount, filePath = 100, "SchemeHIBME.xlsx"
+	queries = ["curveType", "secparam", "l", "m", "n", "roundCount"]
+	validators = ["isSystemValid", "isDeriverPassed", "isSchemeCorrect"]
+	metrics = 	[																					\
+		"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "DKGen (s)", "DerivedDKGen (s)", "Enc (s)", "Dec (s)", 	\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 						\
+		"mpk (B)", "msk (B)", "EK (B)", "EK' (B)", "DK (B)", "DK' (B)", "CT (B)"							\
 	]
 	
 	# Scheme #
-	length, results = len(columns), []
+	qLength, columns, results = len(queries), queries + validators + metrics, []
+	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
-		roundCount = max(1, roundCount)
 		for curveType in curveTypes:
 			for l in (5, 10, 15, 20, 25, 30):
 				for m in range(5, l, 5):
@@ -625,7 +626,7 @@ def main() -> int:
 								average[idx] += result[idx]
 							for idx in range(9, length):
 								average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-						average[5] = roundCount
+						average[avgIndex] = roundCount
 						for idx in range(9, length):
 							average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 						results.append(average)

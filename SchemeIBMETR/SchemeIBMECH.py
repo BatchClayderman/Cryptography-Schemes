@@ -298,28 +298,29 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 20, "SchemeIBMECH.xlsx"
-	columns = [																\
-		"curveType", "secparam", "roundCount", "isSystemValid", "isSchemeCorrect", 		\
+	roundCount, filePath = 100, "SchemeIBMECH.xlsx"
+	queries = ["curveType", "secparam", "roundCount"]
+	validators = ["isSystemValid", "isSchemeCorrect"]
+	metrics = 	[																\
 		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 					\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
 		"mpk (B)", "msk (B)", "ek_sigma (B)", "dk_rho (B)", "CT (B)"					\
 	]
 	
 	# Scheme #
-	length, results = len(columns), []
+	qLength, columns, results = len(queries), queries + validators + metrics, []
+	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
-		roundCount = max(1, roundCount)
 		for curveType in curveTypes:
 			average = Scheme(curveType, 0)
 			for round in range(1, roundCount):
 				result = Scheme(curveType, round)
-				for idx in range(3, 5):
+				for idx in range(qLength, qvLength):
 					average[idx] += result[idx]
-				for idx in range(5, length):
+				for idx in range(qvLength, length):
 					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-			average[2] = roundCount
-			for idx in range(5, length):
+			average[avgIndex] = roundCount
+			for idx in range(qvLength, length):
 				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 			results.append(average)
 	except KeyboardInterrupt:
