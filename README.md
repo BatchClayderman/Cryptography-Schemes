@@ -23,9 +23,9 @@ Here are the statements related to inputs and outputs, where the default round c
 
 The rules of exit codes are as follows. 
 
-- For all the Python scripts here, an EXIT_SUCCESS ($0$) signal will be returned to its parent process if some results are obtained and all the results pass all the tests. 
-- For all the Python scripts here, an EXIT_FAILURE ($1$) signal will be returned to its parent process if no results are obtained or any of the results fail any of the tests. 
-- For all the Python scripts here, an EOF ($-1$) signal will be returned to its parent process if the program lacks any of the necessary libraries. 
+- For all the Python scripts here, an ``EXIT_SUCCESS`` ($0$) signal will be returned to its parent process if some results are obtained and all the results pass all the tests. 
+- For all the Python scripts here, an ``EXIT_FAILURE`` ($1$) signal will be returned to its parent process if no results are obtained or any of the results fail any of the tests. 
+- For all the Python scripts here, an ``EOF`` ($-1$) signal will be returned to its parent process if the program lacks any of the necessary libraries. 
 
 The rules of command lines are as follows. 
 
@@ -195,7 +195,7 @@ Here are the equivalent implementations in Java programming language based on th
 - Proposed: 
   - [https://github.com/BatchClayderman/AA-IB-ME](https://github.com/BatchClayderman/AA-IB-ME)
 
-Regardless, using the implementations in Python programming language is more encouraging. 
+Regardless, using the implementations in Python programming language is more encouraging. Out-of-date Java implementations can contain potential errors. 
 
 ## 3. SchemeCANIFPPCT
 
@@ -211,7 +211,7 @@ Here are the equivalent implementations in Java programming language based on th
   - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
 
-Regardless, using the implementations in Python programming language is more encouraging. 
+Regardless, using the implementations in Python programming language is more encouraging. Out-of-date Java implementations can contain potential errors. 
 
 ## 4. SchemeHIBME
 
