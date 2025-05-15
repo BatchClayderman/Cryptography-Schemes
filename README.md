@@ -51,7 +51,7 @@ The rules of type conversion are as follows.
 - From ``bytes`` to ``int``: ``int.from_bytes(x, byteorder = "big")``
 - From ``Element`` to ``bytes``: pairingGroup.serialize(x)`` (``pairingGroup`` is an instance of ``PairingGroup``)
 - From ``bytes`` to ``Element``: ``pairingGroup.hash(x, elementType)`` (``pairingGroup`` is an instance of ``PairingGroup`` while ``elementType`` can be ``ZR`` or ``G1`` only)
-- Non-matrix objects to be concatenated: Convert the objects to ``bytes`` to perform concatenation
+- Objects to be concatenated (Not matrix concatenation): Convert the objects to ``bytes`` to perform concatenation
 - Objects to be $\oplus$: Convert the objects to ``int`` to perform $\oplus$
 
 Vectors, arrays, or lists in theory are stored as Python ``tuple`` objects in practice. This can help
@@ -76,17 +76,11 @@ All the objects during the algebraic operations should belong to the ``Element``
 
 ### 1.3 ``generateSchemeLaTeX.py``
 
-A Python script for generating LaTeX source files of schemes from Python scripts is provided here. 
+A Python script for generating LaTeX source files of schemes from Python scripts is provided here. This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
 
-This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
+The script will try to finish the compilation once a LaTeX source file is generated. Usually, it will succeed if ``pdflatex`` is available and on the path. 
 
-The script will try to finish the compilation once a LaTeX source file is generated. 
-
-Usually, it will succeed if ``pdflatex`` is available and on the path. 
-
-For developers, this script will check the style of the Python scripts. 
-
-Developers can use ``echo "" | python generateSchemeLaTeX.py | grep "^Detail: "`` to help check the non-unified prompts. 
+For developers, this script will check the style of the Python scripts. Please use ``echo "" | python generateSchemeLaTeX.py | grep "^Detail: "`` to help check the non-unified prompts if necessary. 
 
 ### 1.4 Measurements
 
