@@ -260,4 +260,49 @@ The experimental environment details are as follows. Thanks to the developers fo
 - [Official Python charm library](https://github.com/JHUISI/charm)
 - [Python charm library adapted to Python 3.12.x](https://github.com/EliusSolis/charm) (merged to the official one on January 23rd)
 
+Additionally, the following Python script can be used to compare different functions in time consumption. 
+
+```
+from sys import exit
+from math import ceil
+from time import perf_counter
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+
+
+class Algorithms:
+	@staticmethod
+	def func1(n):
+		for i in range(n):
+			ceil(i / 8)
+	@staticmethod
+	def func2(n):
+		for i in range(n):
+			(i + 7) >> 3
+
+
+def main():
+	n = 100000000
+	d = {algorithm:float("inf") for algorithm in dir(Algorithms) if "__" not in algorithm}
+	for func in list(d.keys()):
+		startTime = perf_counter()
+		exec("Algorithms.{0}({1})".format(func, n))
+		endTime = perf_counter()
+		timeDelta = endTime - startTime
+		d[func] = timeDelta
+		print("Finished executing {0} in {1:.9f} second(s). ".format(func, timeDelta))
+	print("The optimal algorithm is {0}. ".format(sorted(d.items(), key = lambda x:x[1])[0][0]))
+	print("Please press the enter key to exit. ")
+	try:
+		input()
+	except:
+		print()
+	return EXIT_SUCCESS
+
+
+
+if "__main__" == __name__:
+	exit(main())
+```
+
 Thanks to [Department of Computer Science](https://www.cs.hku.hk/), [School of Computing and Data Science](https://www.cds.hku.hk/), [The University of Hong Kong](https://www.hku.hk/). 
