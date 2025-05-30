@@ -284,12 +284,11 @@ class SchemeIBPRME:
 			if g ** r != ct2: # \quad\textbf{if} $g^r = \textit{ct}_2$ \textbf{then}
 				m = False # \quad\quad$m \gets \perp$
 			else:
-				m = ct3_H4_H4[:token1]
+				m = int.from_bytes(ct3_H4_H4[:token1], byteorder = "big")
 			# \quad\textbf{end if}
 		else: # \textbf{else}
 			m = False # \quad$m \gets \perp$
 		# \textbf{end if}
-		m = int.from_bytes(m, byteorder = "big")
 		
 		# Return #
 		return m # \textbf{return} $m$
@@ -386,6 +385,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 				print("secparam =", curveType[1])
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
+		else:
+			print("curveType = Unknown")
 		if isinstance(round, int) and round >= 0:
 			print("round =", round)
 		print("Is the system valid? No. \n\t{0}".format(e))

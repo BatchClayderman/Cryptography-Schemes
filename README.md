@@ -72,6 +72,26 @@ When there are hash functions, the following rules will be applied.
 - The statement ``int.from_bytes(x, byteorder = "big")`` will be used to convert the ``bytes`` object into the ``int`` object if a ``bytes`` object is passed as the message for encryption. 
 - The output of the ``Dec`` function is an ``int`` object. 
 
+The following lines can handle the $\hat{H}$, which hashes an element to a ``bytes`` object with a length of $\lambda$ stored as an integer. 
+
+```
+if 512 == self.__group.secparam:
+	HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest(), byteorder = "big")
+elif 384 == self.__group.secparam:
+	HHat = lambda x:int.from_bytes(sha384(self.__group.serialize(x)).digest(), byteorder = "big")
+elif 256 == self.__group.secparam:
+	HHat = lambda x:int.from_bytes(sha256(self.__group.serialize(x)).digest(), byteorder = "big")
+elif 224 == self.__group.secparam:
+	HHat = lambda x:int.from_bytes(sha224(self.__group.serialize(x)).digest(), byteorder = "big")
+elif 160 == self.__group.secparam:
+	HHat = lambda x:int.from_bytes(sha1(self.__group.serialize(x)).digest(), byteorder = "big")
+elif 128 == self.__group.secparam:
+	HHat = lambda x:int.from_bytes(md5(self.__group.serialize(x)).digest(), byteorder = "big")
+else:
+	HHat = lambda x:int.from_bytes(sha512(self.__group.serialize(x)).digest() * (((self.__group.secparam - 1) >> 9) + 1), byteorder = "big") & self.__operand # $\hat{H}: \mathbb{G}_T \rightarrow \{0, 1\}^\lambda$
+	print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
+```
+
 All the objects during the algebraic operations should belong to the ``Element`` type except for series data type, concatenation, $\oplus$, and hashing requirements. 
 
 ### 1.3 ``generateSchemeLaTeX.py``

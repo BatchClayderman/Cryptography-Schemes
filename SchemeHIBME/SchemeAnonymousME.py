@@ -227,7 +227,7 @@ class SchemeAnonymousME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, l:int = 30, k:int = 15, round:int = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(k, int) and 2 <= k < l:
 		try:
@@ -276,7 +276,7 @@ def Scheme(curveType:tuple|list|str, l:int, k:int, round:int = None) -> list:
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeAnonymousME.Setup(l)
+	mpk, msk = schemeAnonymousME.Setup(l = l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -376,9 +376,9 @@ def main() -> int:
 		for curveType in curveTypes:
 			for l in (5, 10, 15, 20, 25, 30):
 				for k in range(5, l, 5):
-					average = Scheme(curveType, l, k, 0)
+					average = Scheme(curveType, l = l, k = k, round = 0)
 					for round in range(1, roundCount):
-						result = Scheme(curveType, l, k, round)
+						result = Scheme(curveType, l = l, k = k, round = round)
 						for idx in range(qLength, qvLength):
 							average[idx] += result[idx]
 						for idx in range(qvLength, length):

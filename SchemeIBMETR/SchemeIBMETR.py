@@ -288,6 +288,8 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 				print("secparam =", curveType[1])
 		elif isinstance(curveType, str):
 			print("curveType =", curveType)
+		else:
+			print("curveType = Unknown")
 		if isinstance(round, int) and round >= 0:
 			print("round =", round)
 		print("Is the system valid? No. \n\t{0}".format(e))

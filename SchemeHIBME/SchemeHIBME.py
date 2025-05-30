@@ -259,7 +259,7 @@ class SchemeHIBME:
 		dk2Prime = tuple(dk2[i] ** a[k - 1] for i in range(k - 1)) # $\textit{dk}'_{2, i} \gets \textit{dk}_{2, i}^{a_k}, \forall i \in \{1, 2, \cdots, k - 1\}$
 		dk2kPrime = H2(ID_k[k - 1]) ** (dk3[0] * a[k - 1]) # $\textit{dk}'_{2, k} \gets H_2(I_k)^{\textit{dk}_{3, 1} a_k}$
 		dk2Prime += (dk2kPrime, ) # $\textit{dk}'_2 \gets \textit{dk}'_2 || \langle\textit{dk}'_{2, k}\rangle$
-		dk3Prime = tuple(dk3[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \{2, 3, \cdots, l - k + 1\}$
+		dk3Prime = tuple(dk3[i] * a[k - 1] for i in range(1, self.__l - k + 1)) # $\textit{dk}'_{3, i} \gets \textit{dk}_{3, i} \cdot a_k, \forall i \in \{2, 3, \cdots, l - k + 1\}$
 		dk4Prime = tuple(a[k + i] for i in range(self.__l - k)) # $\textit{dk}'_4 \gets (a_{k + 1}, a_{k + 2}, \cdots, a_l)$
 		dk_ID_k = (dk1Prime, dk2Prime, dk3Prime, dk4Prime) # $\textit{dk}_{\textit{ID}_k} \gets (\textit{dk}'_1, \textit{dk}'_2, \textit{dk}'_3, \textit{dk}'_4)$
 				
@@ -451,7 +451,7 @@ class SchemeHIBME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, round:int = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(m, int) and isinstance(n, int) and 2 <= m < l and 2 <= n < l: # no need to check the parameters for curve types here
 		try:
@@ -502,7 +502,7 @@ def Scheme(curveType:tuple|list|str, l:int, m:int, n:int, round:int = None) -> l
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeHIBME.Setup(l)
+	mpk, msk = schemeHIBME.Setup(l = l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -616,15 +616,15 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			for l in (5, 10, 15, 20, 25, 30):
+			for l in range(5, 31, 5):
 				for m in range(5, l, 5):
 					for n in range(5, l, 5):
-						average = Scheme(curveType, l, m, n, 0)
+						average = Scheme(curveType, l = l, m = m, n = n, round = 0)
 						for round in range(1, roundCount):
-							result = Scheme(curveType, l, m, n, round)
-							for idx in range(6, 9):
+							result = Scheme(curveType, l = l, m = m, n = n, round = round)
+							for idx in range(qLength, qvLength):
 								average[idx] += result[idx]
-							for idx in range(9, length):
+							for idx in range(qvLength, length):
 								average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
 						average[avgIndex] = roundCount
 						for idx in range(9, length):
