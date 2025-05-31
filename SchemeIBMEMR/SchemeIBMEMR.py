@@ -56,17 +56,7 @@ class SchemeIBMEMR:
 					except:
 						pass
 		return abcBytes
-	def __sum(self:object, vec:tuple|list|set) -> Element:
-		if isinstance(vec, (tuple, list, set)) and vec and all(isinstance(ele, Element) for ele in vec):
-			element = vec[0]
-			print(element, element.type)
-			for ele in vec[1:]:
-				print(ele, ele.type)
-				element += ele
-			return element
-		else:
-			return self.__group.init(ZR, 0)
-	def Setup(self:object, d:int = 30) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
+	def Setup(self:object, d:int = 30) -> tuple: # $\textbf{Setup}(d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
 		if isinstance(d, int) and d >= 0: # boundary check
@@ -97,8 +87,7 @@ class SchemeIBMEMR:
 			print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
 		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_4: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
-		H5 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_5: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
-		H6 = lambda x:self.__group.hash(x, G1) # $H_6: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H5 = lambda x:self.__group.hash(x, G1) # $H_5: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
 		w, alpha, gamma, k, t1, t2 = self.__group.random(ZR, 6) # generate $w, \alpha, \gamma, k, t_1, t_2 \in \mathbb{Z}_r$ randomly
 		Omega = pair(g, g) ** w # $\Omega \gets e(g, g)^w$
@@ -106,7 +95,7 @@ class SchemeIBMEMR:
 		v2 = g ** t2 # $v_2 \gets g^{t_2}$
 		v3 = g ** gamma # $v_3 \gets g^\gamma$
 		v4 = g ** k # $v_4 \gets g^k$
-		self.__mpk = (p, g, g0, g1, v1, v2, v3, v4, Omega, H1, H2, H3, H4, H5, H6, HHat) # $ \textit{mpk} \gets (p, g, g_0, g_1, v_1, v_2, v_3, v_4, \Omega, H_1, H_2, H_3, H_4, H_5, H_6, \hat{H})$
+		self.__mpk = (p, g, g0, g1, v1, v2, v3, v4, Omega, H1, H2, H3, H4, H5, HHat) # $ \textit{mpk} \gets (p, g, g_0, g_1, v_1, v_2, v_3, v_4, \Omega, H_1, H_2, H_3, H_4, H_5, \hat{H})$
 		self.__msk = (w, alpha, gamma, k, t1, t2) # $\textit{msk} \gets (w, \alpha, \gamma, k, t_1, t_2)$
 		
 		# Flag #
@@ -158,7 +147,7 @@ class SchemeIBMEMR:
 	def TDKGen(self:object, idR:Element) -> tuple: # $\textbf{TDKGen}(\textit{id}_R) \rightarrow \textit{td}_{\textit{id}_R}$
 		# Check #
 		if not self.__flag:
-			print("TDKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DKGen`` subsequently. ")
+			print("TDKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TDKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(idR, Element) and idR.type == ZR: # type check
 			id_R = idR
@@ -171,8 +160,8 @@ class SchemeIBMEMR:
 		w, alpha, k, t1, t2 = self.__msk[0], self.__msk[1], self.__msk[3], self.__msk[4], self.__msk[5]
 		
 		# Scheme #
-		td1 = g ** (-(1 / t1)) * (g0 * g1 ** id_R) ** (k / t1) # $\textit{td}_1 \ gets g^{-1 / t_1} (g_0 g_1^{\textit{id}_R})^{k / t_1}$
-		td2 = g ** (-(1 / t2)) * (g0 * g1 ** id_R) ** (k / t2) # $\textit{td}_2 \ gets g^{-1 / t_2} (g_0 g_1^{\textit{id}_R})^{k / t_2}$
+		td1 = g ** (-(1 / t1)) * (g0 * g1 ** id_R) ** (k / t1) # $\textit{td}_1 \gets g^{-1 / t_1} (g_0 g_1^{\textit{id}_R})^{k / t_1}$
+		td2 = g ** (-(1 / t2)) * (g0 * g1 ** id_R) ** (k / t2) # $\textit{td}_2 \gets g^{-1 / t_2} (g_0 g_1^{\textit{id}_R})^{k / t_2}$
 		td_id_R = (td1, td2) # $\textit{td}_{\textit{id}_R} \gets (\textit{td}_1, \textit{td}_2)$
 		
 		# Return #
@@ -205,8 +194,7 @@ class SchemeIBMEMR:
 			print("Enc: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBMEMR\". ")
 		
 		# Unpack #
-		g, g0, g1, v1, v2, v3, v4 = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7]
-		H2, H3, H4, H5, H6, HHat = self.__mpk[10], self.__mpk[11], self.__mpk[12], self.__mpk[13], self.__mpk[14], self.__mpk[15]
+		g, g0, g1, v1, v2, v3, v4, H2, H3, H4, H5, HHat = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7], self.__mpk[10], self.__mpk[11], self.__mpk[12], self.__mpk[13], self.__mpk[14]
 		w = self.__msk[0]
 		S = self.__group.random(ZR, self.__d) if self.__d >= 2 else ((self.__group.random(ZR), ) if self.__d ==1 else tuple())
 		
@@ -222,36 +210,41 @@ class SchemeIBMEMR:
 		s = s1 + s2 # $s \gets s_1 + s_2$
 		RArray = tuple(pair(v3, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $R_i \gets e(v_3, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		bArray = self.__poly(											\
-			tuple(H5(RArray[i] * pair(g, g) ** (w * s)) for i in range(self.__d))	\
-		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_5(R_i \cdot e(g, g)^{ws})) + R = \sum\limits_{i = 0}^d b_i x^i$
+			tuple(H4(RArray[i] * pair(g, g) ** (w * s)) for i in range(self.__d))	\
+		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = \sum\limits_{i = 0}^d b_i x^i$
 		bArray = (bArray[0] + R, ) + bArray[1:]
 		ct4 = HHat(K) ^ HHat(R) ^ int.from_bytes(m.to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big") + self.__group.serialize(sigma), byteorder = "big") # $\textit{ct}_4 \gets \hat{H}(K) \oplus \hat{H}(R) \oplus (m || \sigma)$
-		VArray = tuple(pair(v4, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # V_i \gets e(v_4, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
+		VArray = tuple(pair(v4, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $V_i \gets e(v_4, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		cArray = self.__poly(											\
-			tuple(H5(VArray[i] * pair(g, g) ** (-s)) for i in range(self.__d))		\
-		) # Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_5(V_i \cdot e(g, g)^{-s})) = \sum\limits_{i = 0}^d c_i x^i$
+			tuple(H4(VArray[i] * pair(g, g) ** (-s)) for i in range(self.__d))		\
+		) # Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = \sum\limits_{i = 0}^d c_i x^i$
 		ct5 = g ** r # $\textit{ct}_5 \gets g^r$
-		ct6 = H6(																					\
+		ct6 = H5(																					\
 			self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(		\
 				((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(sigma)), byteorder = "big"			\
 			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)							\
-		) ** r # $\textit{ct}_6 \gets H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots || c_d)^r$
+		) ** r # $\textit{ct}_6 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots || c_d)^r$
 		ct = (ct1, ct2, ct3, ct4, ct5, ct6, aArray, bArray, cArray) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5, \textit{ct}_6)$
 		
 		# Return #
 		return ct # \textbf{return} $\textit{ct}$
-	def Dec(self:object, dkidR:tuple, idR:Element, idS:Element, cipherText:tuple) -> int|bool: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_S, \textit{ct}) \rightarrow m$
+	def Dec(self:object, dkidR:tuple, idR:Element, idS:Element, cipherText:tuple) -> int|bool: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_R, \textit{id}_S, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
-			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
+			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		idRGenerated = self.__group.random(ZR)
-		id_R = idR
-		if isinstance(dkidR, tuple) and len(dkidR) == 3 and all(isinstance(ele, Element) for ele in dkidR): # hybrid check
-			dk_id_R = dkidR
+		if isinstance(idR, Element) and idR.type == ZR: # type check
+			id_R = idR
+			if isinstance(dkidR, tuple) and len(dkidR) == 3 and all(isinstance(ele, Element) for ele in dkidR): # hybrid check
+				dk_id_R = dkidR
+			else:
+				dk_id_R = self.DKGen(id_R)
+				print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ should be a tuple containing 3 elements but it is not, which has been generated accordingly. ")
 		else:
-			dk_id_R = self.DKGen(idRGenerated)
-			print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
+			id_R = self.__group.random(ZR)
+			print("Dec: The variable $\\textit{id}_R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+			dk_id_R = self.DKGen(id_R)
+			print("Dec: The variable $\\textit{dk}_{\\textit{id}_R}$ has been generated accordingly. ")
 		if isinstance(idS, Element) and idS.type == ZR: # type check
 			id_S = idS
 		else:
@@ -265,25 +258,24 @@ class SchemeIBMEMR:
 		else:
 			ct = self.Enc(self.EKGen(id_S), idRGenerated, int.from_bytes(b"SchemeIBMEMR", byteorder = "big"))
 			print("Dec: The variable $\\textit{ct}$ should be a tuple containing 9 objects but it is not, which has been generated with $m$ set to b\"SchemeIBMEMR\". ")
-		del idRGenerated
 		
 		# Unpack #
-		g, H1, H2, H6 = self.__mpk[1], self.__mpk[9], self.__mpk[10], self.__mpk[14]
+		g, H1, H2, H3, H4, H5, HHat = self.__mpk[1], self.__mpk[9], self.__mpk[10], self.__mpk[11], self.__mpk[12], self.__mpk[13], self.__mpk[14]
 		dk1, dk2, dk3 = dk_id_R
 		ct1, ct2, ct3, ct4, ct5, ct6, aArray, bArray, cArray = ct
-		d = len(aArray) - 1
 		
 		# Scheme #
 		if pair(																								\
-			ct5, H6(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(			\
+			ct5, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(			\
 				((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big"		\
 			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 										\
-		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
-			KPrimePrime = pair(dk1, H1(id_S)) * pair(H2(id_R), ct1) # \quad$K'' \gets e(\textit{dk}_1, H_1(\textit{id}_S)) \cdot e(H_2(\textit{id}_R), \textit{ct}_1)$
-			RPrimePrime = pair(dk2, ct2) * pair(dk3, ct3) # \quad$R'' \gets e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3)$
-			KPrime = self.__sum(tuple(aArray[i] * KPrimePrime ** i for i in range(d + 1))) # \quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
-			RPrime = self.__sum(tuple(bArray[i] * RPrimePrime ** i for i in range(d + 1))) # \quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
-			m_sigma = ct4 ^ HHat(KPrime) ^ HHat(RPrime) # \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
+		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
+			KPrimePrime = H4(pair(dk1, H1(id_S)) * pair(H2(id_R), ct1)) # \quad$K'' \gets H_4(e(\textit{dk}_1, H_1(\textit{id}_S)) \cdot e(H_2(\textit{id}_R), \textit{ct}_1))$
+			RPrimePrime = H4(pair(dk2, ct2) * pair(dk3, ct3)) # \quad$R'' \gets H_4(e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3))$
+			KPrime = sum(tuple(aArray[i] * KPrimePrime ** i for i in range(self.__d + 1))) # \quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
+			RPrime = sum(tuple(bArray[i] * RPrimePrime ** i for i in range(self.__d + 1))) # \quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
+			m_sigma = (ct4 ^ HHat(KPrime) ^ HHat(RPrime)).to_bytes(((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big") # \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
+			r = H3(m_sigma) # \quad$r \gets H_3(\sigma || m)$
 			if ct5 != g ** r: # \quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
 				m = False # \quad\quad$m \gets \perp$
 			else:
@@ -312,17 +304,19 @@ class SchemeIBMEMR:
 			print("ReceiverVerify: The variable $\\textit{td}_{\textit{id}_R}$ should be a tuple containing 2 elements but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		g, H6 = self.__mpk[1], self.__mpk[14]
+		g, H4, H5 = self.__mpk[1], self.__mpk[12], self.__mpk[13]
 		ct1, ct2, ct3, ct4, ct5, ct6, aArray, bArray , cArray = ct
+		td1, td2 = td_id_R
 		
 		# Scheme #
 		if pair(																								\
-			ct5, H6(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(			\
+			ct5, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(			\
 				((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big"		\
 			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 										\
-		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
-			VPrime = pair(td1, ct2) * pair(td2, ct3) # \quad$V' \gets e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3)$
-			y = self.__sum(tuple(a[i] * VPrime ** i for i in range(self.__d + 1))) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d a_i V'^i = 0$
+		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
+			VPrime = H4(pair(td1, ct2) * pair(td2, ct3)) # \quad$V' \gets H_4(e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3))$
+			print(sum(tuple(cArray[i] * VPrime ** i for i in range(self.__d + 1))))
+			y = sum(tuple(cArray[i] * VPrime ** i for i in range(self.__d + 1))) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
 		else: # \textbf{else}
 			y = False # \quad$y \gets 0$
 		# \textbf{end if}
