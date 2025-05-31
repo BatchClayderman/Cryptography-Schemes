@@ -56,6 +56,16 @@ class SchemeIBMEMR:
 					except:
 						pass
 		return abcBytes
+	def __sum(self:object, vec:tuple|list|set) -> Element:
+		if isinstance(vec, (tuple, list, set)) and vec and all(isinstance(ele, Element) for ele in vec):
+			element = vec[0]
+			print(element, element.type)
+			for ele in vec[1:]:
+				print(ele, ele.type)
+				element += ele
+			return element
+		else:
+			return self.__group.init(ZR, 0)
 	def Setup(self:object, d:int = 30) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
@@ -230,12 +240,13 @@ class SchemeIBMEMR:
 		
 		# Return #
 		return ct # \textbf{return} $\textit{ct}$
-	def Dec(self:object, dkidR:tuple, idS:Element, cipherText:tuple) -> int|bool: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_S, \textit{ct}) \rightarrow m$
+	def Dec(self:object, dkidR:tuple, idR:Element, idS:Element, cipherText:tuple) -> int|bool: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_S, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
 			self.Setup()
 		idRGenerated = self.__group.random(ZR)
+		id_R = idR
 		if isinstance(dkidR, tuple) and len(dkidR) == 3 and all(isinstance(ele, Element) for ele in dkidR): # hybrid check
 			dk_id_R = dkidR
 		else:
@@ -257,20 +268,21 @@ class SchemeIBMEMR:
 		del idRGenerated
 		
 		# Unpack #
-		g, H6 = self.__mpk[1], self.__mpk[14]
+		g, H1, H2, H6 = self.__mpk[1], self.__mpk[9], self.__mpk[10], self.__mpk[14]
 		dk1, dk2, dk3 = dk_id_R
-		ct1, ct2, ct3, ct4, ct5, aArray, bArray, cArray = ct[0], ct[1], ct[2], ct[3], ct[4], ct[6], ct[7], ct[8]
+		ct1, ct2, ct3, ct4, ct5, ct6, aArray, bArray, cArray = ct
 		d = len(aArray) - 1
 		
 		# Scheme #
-		ct4Bytes = ct4.to_bytes(((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big")
-		if pair(																																						\
-			H6(ct4Bytes), H6(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4Bytes + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 		\
-		) == pair(ct5, g): # \textbf{if} $e(H_6(\textit{ct}_4), H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_5, g)$ \textbf{then}
+		if pair(																								\
+			ct5, H6(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(			\
+				((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big"		\
+			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 										\
+		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
 			KPrimePrime = pair(dk1, H1(id_S)) * pair(H2(id_R), ct1) # \quad$K'' \gets e(\textit{dk}_1, H_1(\textit{id}_S)) \cdot e(H_2(\textit{id}_R), \textit{ct}_1)$
 			RPrimePrime = pair(dk2, ct2) * pair(dk3, ct3) # \quad$R'' \gets e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3)$
-			KPrime = sum(a[i] * KPrimePrime ** i for i in range(d + 1)) # \quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
-			RPrime = sum(a[i] * RPrimePrime ** i for i in range(d + 1)) # \quad$R' \gets \sum\limits_{i = 0}^d a_i R''^i$
+			KPrime = self.__sum(tuple(aArray[i] * KPrimePrime ** i for i in range(d + 1))) # \quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
+			RPrime = self.__sum(tuple(bArray[i] * RPrimePrime ** i for i in range(d + 1))) # \quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
 			m_sigma = ct4 ^ HHat(KPrime) ^ HHat(RPrime) # \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
 			if ct5 != g ** r: # \quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
 				m = False # \quad\quad$m \gets \perp$
@@ -301,15 +313,16 @@ class SchemeIBMEMR:
 		
 		# Unpack #
 		g, H6 = self.__mpk[1], self.__mpk[14]
-		ct1, ct2, ct3, ct4, ct5, aArray, bArray , cArray = ct[0], ct[1], ct[2], ct[3], ct[4], ct[6], ct[7], ct[8]
+		ct1, ct2, ct3, ct4, ct5, ct6, aArray, bArray , cArray = ct
 		
 		# Scheme #
-		ct4Bytes = ct4.to_bytes(((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big")
-		if pair(																																						\
-			H6(ct4Bytes), H6(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4Bytes + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 		\
-		) == pair(ct5, g): # \textbf{if} $e(H_6(\textit{ct}_4), H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_5, g)$ \textbf{then}
+		if pair(																								\
+			ct5, H6(self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(			\
+				((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big"		\
+			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 										\
+		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_6(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
 			VPrime = pair(td1, ct2) * pair(td2, ct3) # \quad$V' \gets e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3)$
-			y = sum(a[i] * VPrime ** i for i in range(self.__d + 1)) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d a_i V'^i = 0$
+			y = self.__sum(tuple(a[i] * VPrime ** i for i in range(self.__d + 1))) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d a_i V'^i = 0$
 		else: # \textbf{else}
 			y = False # \quad$y \gets 0$
 		# \textbf{end if}
@@ -412,7 +425,7 @@ def Scheme(curveType:tuple|list|str, d:int = 30, round:int = None) -> list:
 	
 	# Dec #
 	startTime = perf_counter()
-	m = schemeIBMEMR.Dec(dk_id_R, id_S, ct)
+	m = schemeIBMEMR.Dec(dk_id_R, id_R, id_S, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
