@@ -1,6 +1,7 @@
 import os
 from sys import argv, exit
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
+from secrets import randbelow
 from time import perf_counter, sleep
 try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
@@ -32,12 +33,13 @@ class SchemeIBMEMR:
 		self.__flag = False # to indicate whether it has already set up
 	def __poly(self:object, roots:tuple|list|set) -> tuple:
 		if isinstance(roots, (tuple, list, set)) and all(isinstance(item, Element) and item.type == ZR or isinstance(item, (int, float)) for item in roots):
-			d = len(roots)
+			d, cnt = len(roots), 1
 			arr = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * d
 			for r in roots:
-				for k in range(d, 0, -1):
+				for k in range(cnt, 0, -1):
 					arr[k] += r * arr[k - 1]
-			return tuple((-1) ** i * arr[i] for i in range(d + 1))
+				cnt += 1
+			return tuple(-arr[i] if i & 1 else arr[i] for i in range(d, -1, -1))
 		else:
 			return (1, )
 	def __concat(self:object, *vector:tuple|list) -> bytes:
@@ -56,14 +58,15 @@ class SchemeIBMEMR:
 					except:
 						pass
 		return abcBytes
-	def Setup(self:object, d:int = 30) -> tuple: # $\textbf{Setup}(d) \rightarrow (\textit{mpk}, \textit{msk})$
+	def Setup(self:object, d:int = 30, seed:int|None = None) -> tuple: # $\textbf{Setup}(d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
-		if isinstance(d, int) and d >= 0: # boundary check
+		if isinstance(d, int) and d > 0: # boundary check
 			self.__d = d
 		else:
 			self.__d = 30
-			print("Setup: The variable $d$ should be a non-negative integer but it is not, which has been defaulted to $30$. ")
+			print("Setup: The variable $d$ should be a positive integer but it is not, which has been defaulted to $30$. ")
+		self.__seed = seed % self.__d if isinstance(seed, int) else randbelow(self.__d)
 		
 		# Scheme #
 		p = self.__group.order() # $p \gets \|\mathbb{G}\|$
@@ -196,28 +199,28 @@ class SchemeIBMEMR:
 		# Unpack #
 		g, g0, g1, v1, v2, v3, v4, H2, H3, H4, H5, HHat = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7], self.__mpk[10], self.__mpk[11], self.__mpk[12], self.__mpk[13], self.__mpk[14]
 		w = self.__msk[0]
-		S = self.__group.random(ZR, self.__d) if self.__d >= 2 else ((self.__group.random(ZR), ) if self.__d ==1 else tuple())
 		
 		# Scheme #
+		S = tuple(self.__group.random(ZR) for _ in range(self.__seed)) + (id_R, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - self.__seed - 1)) # generate $S \gets (\textit{id}_1, \textit{id}_2, \cdots, \textit{id}_R, \cdots, \textit{id}_d)$ randomly
 		s1, s2, beta, sigma, K, R = self.__group.random(ZR, 6) # generate $s_1, s_2, \beta, \sigma, K, R \in \mathbb{Z}_r$ randomly
 		r = H3(self.__group.serialize(sigma) + m.to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big")) # $r \gets H_3(\sigma || m)$
 		ct1 = g ** beta # $\textit{ct}_1 \gets g^\beta$
 		ct2 = v1 ** s1 # $\textit{ct}_2 \gets v_1^{s_1}$
 		ct3 = v2 ** s2 # $\textit{ct}_3 \gets v_2^{s_2}$
 		KArray = tuple(pair(H2(S[i]), ek_id_S * ct1) for i in range(self.__d)) # $K_i \gets e(H_2(\textit{id}_i), ek_{\textit{id}_S} \cdot \textit{ct}_1), \forall i \in \{1, 2, \cdots, d\}$
-		aArray = self.__poly(tuple(H4(KArray[i]) for i in range(self.__d))) # Compute $a_0, a_1, a_2, \cdots a_d$ that satisfy $\forall x$, we have $F(x) = \prod\limits_{i = 1}^d (x - H_4(K_i)) + K = \sum\limits_{i = 0}^d a_i x^i$
+		aArray = self.__poly(tuple(H4(KArray[i]) for i in range(self.__d))) # Compute $a_0, a_1, a_2, \cdots a_d$ that satisfy $\forall x$, we have $F(x) = \prod\limits_{i = 1}^d (x - H_4(K_i)) + K = a_0 + \sum\limits_{i = 1}^d a_i x^i$
 		aArray = (aArray[0] + K, ) + aArray[1:]
 		s = s1 + s2 # $s \gets s_1 + s_2$
 		RArray = tuple(pair(v3, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $R_i \gets e(v_3, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		bArray = self.__poly(											\
 			tuple(H4(RArray[i] * pair(g, g) ** (w * s)) for i in range(self.__d))	\
-		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = \sum\limits_{i = 0}^d b_i x^i$
+		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = b_0 + \sum\limits_{i = 1}^d b_i x^i$
 		bArray = (bArray[0] + R, ) + bArray[1:]
 		ct4 = HHat(K) ^ HHat(R) ^ int.from_bytes(m.to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big") + self.__group.serialize(sigma), byteorder = "big") # $\textit{ct}_4 \gets \hat{H}(K) \oplus \hat{H}(R) \oplus (m || \sigma)$
 		VArray = tuple(pair(v4, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $V_i \gets e(v_4, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		cArray = self.__poly(											\
 			tuple(H4(VArray[i] * pair(g, g) ** (-s)) for i in range(self.__d))		\
-		) # Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = \sum\limits_{i = 0}^d c_i x^i$
+		) # Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = c_0 + \sum\limits_{i = 1}^d c_i x^i$
 		ct5 = g ** r # $\textit{ct}_5 \gets g^r$
 		ct6 = H5(																					\
 			self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(		\
@@ -250,13 +253,13 @@ class SchemeIBMEMR:
 		else:
 			id_S = self.__group.random(ZR)
 			print("Dec: The variable $\\textit{id}_S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if (																																															\
-			isinstance(cipherText, tuple) and len(cipherText) == 9 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element) and isinstance(cipherText[5], Element)		\
-			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == ZR for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])					\
+		if (																																																\
+			isinstance(cipherText, tuple) and len(cipherText) == 9 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element) and isinstance(cipherText[5], Element)			\
+			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == ZR or isinstance(sEle, int) for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])	\
 		): # hybrid check
 			ct = cipherText
 		else:
-			ct = self.Enc(self.EKGen(id_S), idRGenerated, int.from_bytes(b"SchemeIBMEMR", byteorder = "big"))
+			ct = self.Enc(self.EKGen(id_S), id_R, int.from_bytes(b"SchemeIBMEMR", byteorder = "big"))
 			print("Dec: The variable $\\textit{ct}$ should be a tuple containing 9 objects but it is not, which has been generated with $m$ set to b\"SchemeIBMEMR\". ")
 		
 		# Unpack #
@@ -274,12 +277,13 @@ class SchemeIBMEMR:
 			RPrimePrime = H4(pair(dk2, ct2) * pair(dk3, ct3)) # \quad$R'' \gets H_4(e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3))$
 			KPrime = sum(tuple(aArray[i] * KPrimePrime ** i for i in range(self.__d + 1))) # \quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
 			RPrime = sum(tuple(bArray[i] * RPrimePrime ** i for i in range(self.__d + 1))) # \quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
-			m_sigma = (ct4 ^ HHat(KPrime) ^ HHat(RPrime)).to_bytes(((self.__group.secparam + 7) >> 3) + len(self.__group.serialize(self.__group.random(ZR))), byteorder = "big") # \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
-			r = H3(m_sigma) # \quad$r \gets H_3(\sigma || m)$
+			token = len(self.__group.serialize(self.__group.random(ZR)))
+			m_sigma = (ct4 ^ HHat(KPrime) ^ HHat(RPrime)).to_bytes(((self.__group.secparam + 7) >> 3) + token, byteorder = "big") # \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
+			r = H3(m_sigma) # \quad$r \gets H_3(m || \sigma)$
 			if ct5 != g ** r: # \quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
 				m = False # \quad\quad$m \gets \perp$
 			else:
-				m = int.from_bytes(m_sigma[:(self.__group.secparam + 7) >> 3], byteorder = "big")
+				m = int.from_bytes(m_sigma[:-token], byteorder = "big")
 			# \quad\textbf{end if}
 		else: # \textbf{else}
 			m = False # \quad$m \gets \perp$
@@ -289,13 +293,13 @@ class SchemeIBMEMR:
 		return m # \textbf{return} $m$
 	def ReceiverVerify(self:object, cipherText:tuple, tdidR:tuple) -> bool: # $\textbf{ReceiverVerify}(\textit{ct}, \textit{td}_{\textit{id}_R}) \rightarrow y, y \in \{0, 1\}$
 		# Check #
-		if (																																															\
-			isinstance(cipherText, tuple) and len(cipherText) == 9 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element) and isinstance(cipherText[5], Element)		\
-			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == ZR for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])					\
+		if (																																																\
+			isinstance(cipherText, tuple) and len(cipherText) == 9 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element) and isinstance(cipherText[5], Element)			\
+			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == ZR or isinstance(sEle, int) for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])	\
 		): # hybrid check
 			ct = cipherText
 		else:
-			ct = self.Enc(self.EKGen(id_S), idRGenerated, int.from_bytes(b"SchemeIBMEMR", byteorder = "big"))
+			ct = self.Enc(self.EKGen(self.__group.random(ZR)), self.__group.random(ZR), int.from_bytes(b"SchemeIBMEMR", byteorder = "big"))
 			print("ReceiverVerify: The variable $\\textit{ct}$ should be a tuple containing 9 objects but it is not, which has been generated with $m$ set to b\"SchemeIBMEMR\". ")
 		if isinstance(tdidR, tuple) and len(tdidR) == 2 and isinstance(tdidR[0], Element) and isinstance(tdidR[1], Element):
 			td_id_R = tdidR
@@ -315,8 +319,7 @@ class SchemeIBMEMR:
 			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 										\
 		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
 			VPrime = H4(pair(td1, ct2) * pair(td2, ct3)) # \quad$V' \gets H_4(e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3))$
-			print(sum(tuple(cArray[i] * VPrime ** i for i in range(self.__d + 1))))
-			y = sum(tuple(cArray[i] * VPrime ** i for i in range(self.__d + 1))) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
+			y = sum(cArray[i] * VPrime ** i for i in range(self.__d + 1)) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
 		else: # \textbf{else}
 			y = False # \quad$y \gets 0$
 		# \textbf{end if}
@@ -339,7 +342,7 @@ class SchemeIBMEMR:
 
 def Scheme(curveType:tuple|list|str, d:int = 30, round:int = None) -> list:
 	# Begin #
-	if isinstance(d, int) and d >= 0: # no need to check the parameters for curve types here
+	if isinstance(d, int) and d > 0: # no need to check the parameters for curve types here
 		try:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				if curveType[1] >= 1:
@@ -367,7 +370,7 @@ def Scheme(curveType:tuple|list|str, d:int = 30, round:int = None) -> list:
 				+ [d if isinstance(d, int) else None, round if isinstance(round, int) else None] + [False] * 3 + [-1] * 16																										\
 			)
 	else:
-		print("Is the system valid? No. The parameter $d$ should be a non-negative integer. ")
+		print("Is the system valid? No. The parameter $d$ should be a positive integer. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
 			+ [d if isinstance(d, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 16																							\
@@ -509,7 +512,7 @@ def main() -> int:
 				results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
+	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #

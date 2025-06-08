@@ -43,7 +43,17 @@ The following command lines can be useful for executing one-stop testing.
 - Execute ``for /r %f in (*.py) do python "%f" Y 0`` in a Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
 - Add `` > NUL`` to the end of the command lines if the printing affects the computation of the time consumption in a Windows terminal. 
 
+If you wish to search a specified string throughout the whole repository in a local clone, the Linux command ``find .. -type f -name "*.py" -exec echo {} \; -exec grep "${stringsToBeSearched}" {} \;`` should be fine. 
+
 ### 1.2 Computation details
+
+Normally, all the objects during the algebraic operations should belong to the ``Element`` type. However, most academic papers do not consider type conversion in a friendly way. Meanwhile, most scholars believe that the design of the schemes is the most important aspect, rendering the engineering implementations perfunctory, not to mention that they will not consider the security verification and the type conversion. These details are actually time-consuming in actual programming and fatal during applications. 
+
+Converting the baseline implementations using the aligned styles is necessary, even though they can be downloaded and run directly. By the way, please be aware that nowadays, many implementations on the Internet cannot be directly downloaded and run. Some of them are just due to outdated relies (V). Some of them require feasible environment configurations or debugging (V). Some of them are modified to let users modify before running due to programmability (V). Some of them are modified not to run conveniently since their authors still want to benefit from them and publish more future papers, but have to open-source them (X). Some of them are modified maliciously since their authors do not want the experiments re-implemented, since the results would be found to be fakes (X). Some of them can be fakes (X). Some of them can even directly contain grammar errors (X). 
+
+Overall, we would like to offer as many computation details as possible here. 
+
+#### 1.2.1 Type conversion
 
 The rules of type conversion are as follows. 
 
@@ -54,12 +64,21 @@ The rules of type conversion are as follows.
 - Objects to be concatenated (Not matrix concatenation): Convert the objects to ``bytes`` to perform concatenation
 - Objects to be $\oplus$: Convert the objects to ``int`` to perform $\oplus$
 
+Among these conversion rules, only the following cases are equivalent. 
+
+- For either an integer or a ``bytes`` object, converting to the other type, performing finite operations, and then converting back to the original type is equivalent to performing the same finite operations on the original type only when a specific byte length is fixed and the operation does not overflow that length. 
+- Only when there are no additional operations, serializing and deserializing elements in the same group can produce the same elements as the original ones. 
+
+#### 1.2.2 Series data type
+
 Vectors, arrays, or lists in theory are stored as Python ``tuple`` objects in practice. This can help
 
 - avoid modifying variables inside a class from outside the class as much as possible; 
 - make the memory computation of an object of a series datum type as exact as possible; 
 - reduce the time consumption since the index lookup is faster compared with the key-value pair one (especially in large dictionaries); and 
 - perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix acceleration computation. 
+
+#### 1.2.3 Hash functions
 
 When there are hash functions, the following rules will be applied. 
 
@@ -92,7 +111,69 @@ else:
 	print("Setup: An irregular security parameter ($\\lambda = {0}$) is specified. It is recommended to use 128, 160, 224, 256, 384, or 512 as the security parameter. ".format(self.__group.secparam))
 ```
 
-All the objects during the algebraic operations should belong to the ``Element`` type except for series data type, concatenation, $\oplus$, and hashing requirements. 
+#### 1.2.4 Product
+
+Since Python does not have a built-in product function, the product function will be executed as follows. 
+
+```
+def __product(self:object, vec:tuple|list|set) -> Element:
+	if isinstance(vec, (tuple, list, set)) and vec:
+		element = vec[0]
+		for ele in vec[1:]:
+			element *= ele
+		return element
+	else:
+		return self.__group.init(ZR, 1)
+```
+
+#### 1.2.5 Comparison
+
+Generally speaking, in a unified computing environment, bitwise operations with the same number of operations will be faster than general addition, subtraction, multiplication, and division. In some cases, equivalent bit operations may require additional processing to achieve a certain function. This may result in the overall operation being inferior to the solution without bit operations. Therefore, the time comparison is required. 
+
+The following Python script can be used to compare different functions in time consumption. You can select to use the optimal one in practice after comparing via this script. 
+
+```
+from sys import exit
+from math import ceil
+from time import perf_counter
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+
+
+class Algorithms:
+	@staticmethod
+	def func1(n):
+		for i in range(n):
+			ceil(i / 8)
+	@staticmethod
+	def func2(n):
+		for i in range(n):
+			(i + 7) >> 3
+
+
+def main():
+	n = 100000000
+	d = {algorithm:float("inf") for algorithm in dir(Algorithms) if "__" not in algorithm}
+	for func in list(d.keys()):
+		startTime = perf_counter()
+		exec("Algorithms.{0}({1})".format(func, n))
+		endTime = perf_counter()
+		timeDelta = endTime - startTime
+		d[func] = timeDelta
+		print("Finished executing {0} in {1:.9f} second(s). ".format(func, timeDelta))
+	print("The optimal algorithm is {0}. ".format(sorted(d.items(), key = lambda x:x[1])[0][0]))
+	print("Please press the enter key to exit. ")
+	try:
+		input()
+	except:
+		print()
+	return EXIT_SUCCESS
+
+
+
+if "__main__" == __name__:
+	exit(main())
+```
 
 ### 1.3 ``generateSchemeLaTeX.py``
 
@@ -231,21 +312,25 @@ Regardless, using the implementations in Python programming language is more enc
 
 Click [here](./SchemeHIBME/README.md) to view details. 
 
-## 5. SchemeIBMETR
+## 5. SchemeIBMEMR
+
+Click [here](./SchemeIBMEMR/README.md) to view details. 
+
+## 6. SchemeIBMETR
 
 Click [here](./SchemeIBMETR/README.md) to view details. 
 
-## 6. SchemeIBPRME
+## 7. SchemeIBPRME
 
 Click [here](./SchemeIBPRME/README.md) to view details. 
 
-## 7. Others
+## 8. Others
 
 Here are some links to my other implemented cryptography schemes, which do not involve the Python charm library. 
 
 By the way, this is not one of the major academic authors of the schemes mentioned in this section. Please only query here about the practical implementations. Thanks. 
 
-### 7.1 C/C++
+### 8.1 C/C++
 
 Here are some links to my other implemented cryptography schemes, which are in C/C++ programming language. 
 
@@ -254,13 +339,13 @@ Here are some links to my other implemented cryptography schemes, which are in C
 3) SPSI-CA-ull: [https://github.com/BatchClayderman/SPSI-CA-ull](https://github.com/BatchClayderman/SPSI-CA-ull)
 4) VPSI-CA-ull: [https://github.com/BatchClayderman/VPSI-CA-ull](https://github.com/BatchClayderman/VPSI-CA-ull)
 
-### 7.2 Java
+### 8.2 Java
 
 Here is a link to my other implemented cryptography scheme, which is in Java programming language based on the JPBC library. 
 
 - GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
 
-### 7.3 Python
+### 8.3 Python
 
 Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
 
@@ -268,7 +353,7 @@ Here are some links to my other implemented cryptography schemes, which are in P
 2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
 3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
 
-## 8. Acknowledgment
+## 9. Acknowledgment
 
 The experimental environment details are as follows. Thanks to the developers for their hard work. 
 
@@ -279,50 +364,5 @@ The experimental environment details are as follows. Thanks to the developers fo
 - [OpenSSL library 3.0.13](https://www.openssl.org/) (``sudo apt-get install libssl-dev``)
 - [Official Python charm library](https://github.com/JHUISI/charm)
 - [Python charm library adapted to Python 3.12.x](https://github.com/EliusSolis/charm) (merged to the official one on January 23rd)
-
-Additionally, the following Python script can be used to compare different functions in time consumption. 
-
-```
-from sys import exit
-from math import ceil
-from time import perf_counter
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
-
-
-class Algorithms:
-	@staticmethod
-	def func1(n):
-		for i in range(n):
-			ceil(i / 8)
-	@staticmethod
-	def func2(n):
-		for i in range(n):
-			(i + 7) >> 3
-
-
-def main():
-	n = 100000000
-	d = {algorithm:float("inf") for algorithm in dir(Algorithms) if "__" not in algorithm}
-	for func in list(d.keys()):
-		startTime = perf_counter()
-		exec("Algorithms.{0}({1})".format(func, n))
-		endTime = perf_counter()
-		timeDelta = endTime - startTime
-		d[func] = timeDelta
-		print("Finished executing {0} in {1:.9f} second(s). ".format(func, timeDelta))
-	print("The optimal algorithm is {0}. ".format(sorted(d.items(), key = lambda x:x[1])[0][0]))
-	print("Please press the enter key to exit. ")
-	try:
-		input()
-	except:
-		print()
-	return EXIT_SUCCESS
-
-
-
-if "__main__" == __name__:
-	exit(main())
-```
 
 Thanks to [Department of Computer Science](https://www.cs.hku.hk/), [School of Computing and Data Science](https://www.cds.hku.hk/), [The University of Hong Kong](https://www.hku.hk/). 

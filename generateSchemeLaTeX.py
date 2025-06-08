@@ -46,7 +46,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"{0}: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``{0}`` subsequently. ".format(functionName), 					\
 				functionName + ": The passed message (bytes) is too long, which has been cast. ", functionName + ": The passed message (int) is too long, which has been cast. ", 			\
 				functionName + ": The variable $M$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
-				functionName + ": The variable $d$ should be a non-negative integer but it is not, which has been defaulted to $30$. ", 												\
+				functionName + ": The variable $d$ should be a positive integer but it is not, which has been defaulted to $30$. ", 													\
 				functionName + ": The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ", 										\
 				functionName + ": The variable $m$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
 				"{0}: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\\\"{1}\\\". ".format(functionName, className), 					\
@@ -100,7 +100,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyDec`` passed? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 			\
 				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 								\
 				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 								\
-				"Is the system valid? No. \\n\\t{0}", "Is the system valid? No. The parameter $d$ should be a non-negative integer. ", "Is the system valid? Yes. ", 	\
+				"Is the system valid? No. \\n\\t{0}", "Is the system valid? No. The parameter $d$ should be a positive integer. ", "Is the system valid? Yes. ", 		\
 				"Is the tracing verified? {0}. YesNo", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 			\
 				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 				\
 				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 					\

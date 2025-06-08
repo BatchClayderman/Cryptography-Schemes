@@ -77,6 +77,8 @@ $\textit{td}_{\textit{id}_R} \gets (\textit{td}_1, \textit{td}_2)$
 
 \subsection{$\textbf{Enc}(\textit{ek}_{\textit{id}_S}, \textit{id}_R, m) \rightarrow \textit{ct}$}
 
+generate $S \gets (\textit{id}_1, \textit{id}_2, \cdots, \textit{id}_R, \cdots, \textit{id}_d)$ randomly
+
 generate $s_1, s_2, \beta, \sigma, K, R \in \mathbb{Z}_r$ randomly
 
 $r \gets H_3(\sigma || m)$
@@ -89,19 +91,19 @@ $\textit{ct}_3 \gets v_2^{s_2}$
 
 $K_i \gets e(H_2(\textit{id}_i), ek_{\textit{id}_S} \cdot \textit{ct}_1), \forall i \in \{1, 2, \cdots, d\}$
 
-Compute $a_0, a_1, a_2, \cdots a_d$ that satisfy $\forall x$, we have $F(x) = \prod\limits_{i = 1}^d (x - H_4(K_i)) + K = \sum\limits_{i = 0}^d a_i x^i$
+Compute $a_0, a_1, a_2, \cdots a_d$ that satisfy $\forall x$, we have $F(x) = \prod\limits_{i = 1}^d (x - H_4(K_i)) + K = a_0 + \sum\limits_{i = 1}^d a_i x^i$
 
 $s \gets s_1 + s_2$
 
 $R_i \gets e(v_3, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 
-Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = \sum\limits_{i = 0}^d b_i x^i$
+Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = b_0 + \sum\limits_{i = 1}^d b_i x^i$
 
 $\textit{ct}_4 \gets \hat{H}(K) \oplus \hat{H}(R) \oplus (m || \sigma)$
 
 $V_i \gets e(v_4, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 
-Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = \sum\limits_{i = 0}^d c_i x^i$
+Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = c_0 + \sum\limits_{i = 1}^d c_i x^i$
 
 $\textit{ct}_5 \gets g^r$
 
@@ -125,7 +127,7 @@ $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, 
 
 \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
 
-\quad$r \gets H_3(\sigma || m)$
+\quad$r \gets H_3(m || \sigma)$
 
 \quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
 
