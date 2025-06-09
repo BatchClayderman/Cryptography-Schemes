@@ -189,21 +189,21 @@ class SchemeIBPRME:
 			^ int.from_bytes(self.__group.serialize(H4(eta)), byteorder = "big")
 		) # $\textit{ct}_3 \gets (m || \sigma) \oplus H_4(e(y, H_1(\textit{id}_2))^r) \oplus H_4(\eta)$
 		ct4 = eta * pair(ek_id_1, H1(id_2)) # $\textit{ct}_4 \gets \eta \cdot e(\textit{ek}_{\textit{id}_1}, H_1(\textit{id}_2))$
-		ct5 = (																																															\
-			H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4)) ** r	\
+		ct5 = (																																												\
+			H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4)) ** r		\
 		) # $\textit{ct}_5 \gets H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)^r$
 		ct = (ct1, ct2, ct3, ct4, ct5) # $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, \textit{ct}_5)$
 		
 		# Return #
 		return ct # \textbf{return} $\textit{ct}$
-	def ReEnc(self:object, cipher:tuple, reKey:tuple) -> tuple|bool: # $\textbf{ReEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$
+	def ReEnc(self:object, cipherText:tuple, reKey:tuple) -> tuple|bool: # $\textbf{ReEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{ct}'$
 		# Check #
 		if not self.__flag:
 			print("ReEnc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ReEnc`` subsequently. ")
 			self.Setup()
 		id2Generated = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
-		if isinstance(cipher, tuple) and len(cipher) == 5 and all(isinstance(ele, Element) for ele in cipher[:2]) and isinstance(cipher[2], int) and all(isinstance(ele, Element) for ele in cipher[3:]): # hybrid check
-			ct = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 5 and all(isinstance(ele, Element) for ele in cipherText[:2]) and isinstance(cipherText[2], int) and all(isinstance(ele, Element) for ele in cipherText[3:]): # hybrid check
+			ct = cipherText
 		else:
 			ct = self.Enc(self.EKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemeIBPRME", byteorder = "big"))
 			print("ReEnc: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemeIBPRME\". ")
@@ -224,8 +224,8 @@ class SchemeIBPRME:
 		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
-		if (																																																					\
-			pair(ct1, g) == pair(h, ct2)																																															\
+		if (																																																	\
+			pair(ct1, g) == pair(h, ct2)																																											\
 			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4))) == pair(h, ct5)	\
 		): # \textbf{if} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 			ct4Prime = ct4 / rk3 # \quad$\textit{ct}_4' \gets \frac{\textit{ct}_4}{\textit{rk}_3}$
@@ -238,7 +238,7 @@ class SchemeIBPRME:
 		
 		# Return #
 		return ctPrime # \textbf{return} $\textit{ct}'$
-	def Dec1(self:object, dkid2:tuple, id1:Element, cipher:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
+	def Dec1(self:object, dkid2:tuple, id1:Element, cipherText:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
@@ -254,8 +254,8 @@ class SchemeIBPRME:
 		else:
 			id_1 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec1: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 5 and all(isinstance(ele, Element) for ele in cipher[:2]) and isinstance(cipher[2], int) and all(isinstance(ele, Element) for ele in cipher[3:]): # hybrid check
-			ct = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 5 and all(isinstance(ele, Element) for ele in cipherText[:2]) and isinstance(cipherText[2], int) and all(isinstance(ele, Element) for ele in cipherText[3:]): # hybrid check
+			ct = cipherText
 		else:
 			ct = self.Enc(self.EKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemeIBPRME", byteorder = "big"))
 			print("Dec1: The variable $\\textit{ct}$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemeIBPRME\". ")
@@ -267,8 +267,8 @@ class SchemeIBPRME:
 		ct1, ct2, ct3, ct4, ct5 = ct
 		
 		# Scheme #
-		if (																																																						\
-			pair(ct1, g) == pair(h, ct2)																																																\
+		if (																																																		\
+			pair(ct1, g) == pair(h, ct2)																																												\
 			and pair(ct1, H5(self.__group.serialize(ct1) + self.__group.serialize(ct2) + ct3.to_bytes(ceil(self.__group.secparam / 8) + len(self.__group.serialize(self.__group.random(G1))), byteorder = "big") + self.__group.serialize(ct4))) == pair(h, ct5)		\
 		): # \textbf{if} $e(\textit{ct}_1, g) = e(h, \textit{ct}_2) \land e(\textit{ct}_1, H_5(\textit{ct}_1 || \textit{ct}_2 || \textit{ct}_3 || \textit{ct}_4)) = e(h, \textit{ct}_5)$ \textbf{then}
 			V = pair(dk_id_2[1], H2(id_1)) # \quad$V \gets e(\textit{dk}_{\textit{id}_2, 2}, H_2(\textit{id}_1))$
@@ -292,7 +292,7 @@ class SchemeIBPRME:
 		
 		# Return #
 		return m # \textbf{return} $m$
-	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, id3:Element, cipherPrime:tuple|bool) -> int|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m'$
+	def Dec2(self:object, dkid3:tuple, id1:Element, id2:Element, id3:Element, cipherTextPrime:tuple|bool) -> int|bool: # $\textbf{Dec}_2(\textit{dk}_{\textit{id}_3}, \textit{id}_1, \textit{id}_2, \textit{id}_3, \textit{ct}') \rightarrow m'$
 		# Check #
 		if not self.__flag:
 			print("Dec2: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec2`` subsequently. ")
@@ -319,9 +319,9 @@ class SchemeIBPRME:
 		else:
 			id_2 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec2: The variable $\\textit{id}_2$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(cipherPrime, tuple) and len(cipherPrime) == 6 and isinstance(cipherPrime[0], Element) and isinstance(cipherPrime[1], int) and all(isinstance(ele, Element) for ele in cipherPrime[2:]): # hybrid check
-			ctPrime = cipherPrime
-		elif isinstance(cipherPrime, bool):
+		if isinstance(cipherTextPrime, tuple) and len(cipherTextPrime) == 6 and isinstance(cipherTextPrime[0], Element) and isinstance(cipherTextPrime[1], int) and all(isinstance(ele, Element) for ele in cipherTextPrime[2:]): # hybrid check
+			ctPrime = cipherTextPrime
+		elif isinstance(cipherTextPrime, bool):
 			return False
 		else:
 			ctPrime = self.ReEnc(self.Enc(self.EKGen(id_1), id_2, int.from_bytes(b"SchemeIBPRME", byteorder = "big")), self.ReEKGen(self.EKGen(id_2), self.DKGen(id_2), id_1, id_2, id_3))

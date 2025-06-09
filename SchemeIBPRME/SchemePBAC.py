@@ -203,7 +203,7 @@ class SchemePBAC:
 		
 		# Return #
 		return rk # \textbf{return} $\textit{rk}$
-	def ProxyEnc(self:object, reKey:tuple, cipher:tuple) -> tuple|bool: # $\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{CT}$
+	def ProxyEnc(self:object, reKey:tuple, cipherText:tuple) -> tuple|bool: # $\textbf{ProxyEnc}(\textit{ct}, \textit{rk}) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("ProxyEnc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``ProxyEnc`` subsequently. ")
@@ -217,8 +217,8 @@ class SchemePBAC:
 				id2Generated, randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")										\
 			)
 			print("ProxyEnc: The variable $\\textit{rk}$ should be a tuple containing 2 ``bytes`` object and 2 tuples but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 5 and all(isinstance(ele, Element) for ele in cipher[:3]) and isinstance(cipher[3], int) and isinstance(cipher[4], Element): # hybrid check
-			C = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 5 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element): # hybrid check
+			C = cipherText
 		else:
 			C = self.Enc(self.SKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id2Generated, int.from_bytes(b"SchemePBAC", byteorder = "big"))
 			print("ProxyEnc: The variable $C$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemePBAC\". ")
@@ -242,7 +242,7 @@ class SchemePBAC:
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Dec1(self:object, dkid2:tuple, id2:bytes, id1:bytes, cipher:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$
+	def Dec1(self:object, dkid2:tuple, id2:bytes, id1:bytes, cipherText:tuple) -> int|bool: # $\textbf{Dec}_1(\textit{dk}_{\textit{id}_2}, \textit{id}_2, \textit{id}_1, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec1: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec1`` subsequently. ")
@@ -264,8 +264,8 @@ class SchemePBAC:
 		else:
 			id_1 = randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")
 			print("Dec1: The variable $\\textit{id}_1$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 5 and all(isinstance(ele, Element) for ele in cipher[:3]) and isinstance(cipher[3], int) and isinstance(cipher[4], Element): # hybrid check
-			C = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 5 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element): # hybrid check
+			C = cipherText
 		else:
 			C = self.Enc(self.SKGen(randbelow(1 << self.__group.secparam).to_bytes(ceil(self.__group.secparam / 8), byteorder = "big")), id_2, int.from_bytes(b"SchemePBAC", byteorder = "big"))
 			print("Dec1: The variable $C$ should be a tuple containing 4 elements and an integer but it is not, which has been generated with $m$ set to b\"SchemePBAC\". ")

@@ -134,7 +134,7 @@ class SchemeARES:
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Decrypt(self:object, PvkId:tuple, cipher:tuple) -> Element: # $\textbf{Decrypt}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow M$
+	def Decrypt(self:object, PvkId:tuple, cipherText:tuple) -> Element: # $\textbf{Decrypt}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Decrypt`` subsequently. ")
@@ -144,8 +144,8 @@ class SchemeARES:
 		else:
 			Pvk_Id = self.Extract(self.__group.random(ZR))
 			print("Decrypt: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and all(isinstance(ele, Element) for ele in cipher): # hybrid check
-			CT = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 6 and all(isinstance(ele, Element) for ele in cipherText): # hybrid check
+			CT = cipherText
 		else:
 			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
 			print("Decrypt: The variable $\\textit{CT}$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
@@ -159,7 +159,7 @@ class SchemeARES:
 		
 		# Return #
 		return M # \textbf{return} $M$
-	def TVerify(self:object, PvkId:tuple, cipher:tuple) -> bool: # $\textbf{TVerify}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow y, y \in \{0, 1\}$
+	def TVerify(self:object, PvkId:tuple, cipherText:tuple) -> bool: # $\textbf{TVerify}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow y, y \in \{0, 1\}$
 		# Check #
 		if not self.__flag:
 			print("TVerify: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TVerify`` subsequently. ")
@@ -169,8 +169,8 @@ class SchemeARES:
 		else:
 			Pvk_Id = self.Extract(self.__group.random(ZR))
 			print("TVerify: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and all(isinstance(ele, Element) for ele in cipher): # hybrid check
-			CT = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 6 and all(isinstance(ele, Element) for ele in cipherText): # hybrid check
+			CT = cipherText
 		else:
 			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
 			print("TVerify: The variable $\\textit{CT}$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")

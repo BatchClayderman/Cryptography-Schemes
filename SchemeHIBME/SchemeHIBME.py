@@ -353,7 +353,7 @@ class SchemeHIBME:
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Dec(self:object, dkIDR:tuple, IDRev:tuple, IDSnd:tuple, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Rev}, \textit{ID}_\textit{Snd}, \textit{CT}) \rightarrow M$
+	def Dec(self:object, dkIDR:tuple, IDRev:tuple, IDSnd:tuple, cipherText:tuple) -> bytes: # $\textbf{Dec}(\textit{dk}_{\textit{ID}_R}, \textit{ID}_\textit{Rev}, \textit{ID}_\textit{Snd}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
@@ -396,8 +396,8 @@ class SchemeHIBME:
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
-		if isinstance(cipher, tuple) and len(cipher) == 5 and isinstance(cipher[0], int) and all(isinstance(ele, Element) for ele in cipher[1:]): # hybrid check
-			CT = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 5 and isinstance(cipherText[0], int) and all(isinstance(ele, Element) for ele in cipherText[1:]): # hybrid check
+			CT = cipherText
 		else:
 			CT = self.Enc(self.EKGen(ID_Snd), ID_Snd, ID_Rev, int.from_bytes(b"SchemeHIBME", byteorder = "big") & self.__operand)
 			print("Dec: The variable $\\textit{CT}$ should be a tuple containing an integer and 4 elements but it is not, which has been generated with $M$ set to b\"SchemeHIBME\". ")

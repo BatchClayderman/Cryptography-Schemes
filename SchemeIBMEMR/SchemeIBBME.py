@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from secrets import randbelow
 from time import perf_counter, sleep
 try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
@@ -18,7 +19,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeAIBE:
+class SchemeIBBME:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		try:
@@ -29,6 +30,7 @@ class SchemeAIBE:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
+		self.__operand = (1 << self.__group.secparam) - 1 # use to cast binary strings
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -37,99 +39,136 @@ class SchemeAIBE:
 		self.__flag = False
 		
 		# Scheme #
-		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
-		g0, g1 = self.__group.random(G1), self.__group.random(G1) # generate $g_0, g_1 \in \mathbb{G}_1$ randomly
-		w, t1, t2, t3, t4 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $w, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$
-		Omega = pair(g, g) ** (t1 * t2 * w) # $\Omega \gets e(g, g)^{t_1 t_2 w}$
-		v1 = g ** t1 # $v \gets g^{t_1}$
-		v2 = g ** t2 # $v \gets g^{t_2}$
-		v3 = g ** t3 # $v \gets g^{t_3}$
-		v4 = g ** t4 # $v \gets g^{t_4}$
-		self.__mpk = (Omega, g, g0, g1, v1, v2, v3, v4) # $\textit{mpk} \gets (Omega, g, g_0, g_1, v_1, v_2, v_3, v_4)$
-		self.__msk = (w, t1, t2, t3, t4) # $\textit{msk} \gets (w, t_1, t_2, t_3, t_4)$
+		r, s = self.__group.random(ZR), self.__group.random(ZR) # generate $r, s \in \mathbb{Z}_r$ randomly
+		P = self.__group.init(G1, 1) # $P \gets 1{\mathbb{G}_1}$
+		P0 = r * P # $P_0 \gets r \cdot P$
+		H = lambda x:self.__group.hash(x, G1) # $H_1: \mathbb{Z}_r \rightarrow \mathbb{G}_1$
+		mask = bytes([randbelow(256) for _ in range(len(self.__group.serialize(self.__group.random(ZR))))]) # generate $\textit{mask}, \|\textit{mask}\| \gets \|e\|, e \in \mathbb{Z}_r$ randomly
+		HPrime = lambda x:self.__group.hash(bytes([a ^ b for a, b in zip(self.__group.serialize(x), mask)]), G1) # $H': \mathbb{Z}_r \oplus \textit{mask} \rightarrow \mathbb{G}_1$
+		self.__mpk = (P, P0, H, HPrime) # $\textit{mpk} \gets (P, P_0, H, H')$
+		self.__msk = (r, s) # $\textit{msk} \gets (r, s)$
 		
-		# Flag #
+		# Return #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
-	def Extract(self:object, identity:Element) -> tuple: # $\textbf{Extract}(\textit{Id}) \rightarrow \textit{Pvk}_\textit{Id}$
+	def SKGen(self:object, sender:Element) -> Element: # $\textbf{SKGen}(S) \rightarrow \textit{ek}_S$
 		# Check #
 		if not self.__flag:
-			print("Extract: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Extract`` subsequently. ")
 			self.Setup()
-		if isinstance(identity, Element) and identity.type == ZR: # type check
-			Id = identity
+			print("SKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``SKGen`` subsequently. ")
+		if isinstance(sender, Element) and sender.type == ZR: # type check
+			S = sender
 		else:
-			Id = self.__group.random(ZR)
-			print("Extract: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+			S = self.__group.random(ZR)
+			print("SKGen: The variable $S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		g, g0, g1 = self.__mpk[1], self.__mpk[2], self.__mpk[3]
-		w, t1, t2, t3, t4 = self.__msk
+		HPrime = self.__mpk[-1]
+		s = self.__msk[1]
 		
 		# Scheme #
-		r1, r2 = self.__group.random(ZR), self.__group.random(ZR) # generate $r1, r2 \in \mathbb{Z}_r$ randomly
-		d0 = g ** (r1 * t1 * t2 + r2 * t3 * t4) # $d_0 \gets g^{r_1 t_1 t_2 + r_2 t_3 t_4}$
-		d1 = g ** (-(w * t2)) * (g0 * g1 ** Id) ** (-(r1 * t2)) # $d_1 \gets g^{- w t_2} \cdot (g_0 g_1^\textit{Id})^{-  r_1 t_2}$
-		d2 = g ** (-(w * t1)) * (g0 * g1 ** Id) ** (-(r1 * t1)) # $d_2 \gets g^{- w t_1} \cdot (g_0 g_1^\textit{Id})^{-  r_1 t_1}$
-		d3 = (g0 * g1 ** Id) ** (-(r2 * t4)) # $d_3 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_4}$
-		d4 = (g0 * g1 ** Id) ** (-(r2 * t3)) # $d_4 \gets (g_0 g_1^\textit{Id})^{-  r_2 t_3}$
-		Pvk_Id = (d0, d1, d2, d3, d4) # $\textit{Pvk}_\textit{Id} \gets (d_0, d_1, d_2, d_3, d_4)$
+		ek_S = s * HPrime(S) # $\textit{ek}_S \gets s \cdot H'(S)$
 		
 		# Return #
-		return Pvk_Id # \textbf{return} $\textit{Pvk}_\textit{Id}$
-	def Encrypt(self:object, identity:Element, message:Element) -> tuple: # $\textbf{Encrypt}(\textit{Id}, m) \rightarrow \textit{CT}$
+		return ek_S # \textbf{return} $\textit{ek}_S$
+	def RKGen(self:object, receiver:Element) -> Element: # $\textbf{RKGen}(S) \rightarrow \textit{dk}_R$
 		# Check #
 		if not self.__flag:
-			print("Encrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Encrypt`` subsequently. ")
 			self.Setup()
-		if isinstance(identity, Element) and identity.type == ZR: # type check
-			Id = identity
+			print("RKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``RKGen`` subsequently. ")
+		if isinstance(receiver, Element) and receiver.type == ZR: # type check
+			R = receiver
 		else:
-			Id = self.__group.random(ZR)
-			print("Encrypt: The variable $\\textit{Id}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(message, Element) and message.type == GT: # type check
-			M = message
-		else:
-			M = self.__group.random(GT)
-			print("Encrypt: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			R = self.__group.random(ZR)
+			print("RKGen: The variable $R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		Omega, g0, g1, v1, v2, v3, v4 = self.__mpk[0], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7]
+		H = self.__mpk[-2]
+		r, s = self.__msk
 		
 		# Scheme #
-		s, s1, s2 = self.__group.random(ZR), self.__group.random(ZR), self.__group.random(ZR) # generate $s, s_1, s_2 \in \mathbb{Z}_r$ randomly
-		CPi = Omega ** s * M # $C' \gets \Omega^s M$
-		C0 = (g0 * g1 ** Id) ** s # $(g_0 g_1^\textit{Id})^s$
-		C1 = v1 ** (s - s1) # $C_1 \gets v_1^{s - s_1}$
-		C2 = v2 ** s1 # $C_2 \gets v_2^{s_1}$
-		C3 = v3 ** (s - s2) # $C_3 \gets v_3^{s - s_2}$
-		C4 = v4 ** s2 # $C_4 \gets v_4^{s_2}$
-		CT = (CPi, C0, C1, C2, C3, C4) # $\textit{CT} \gets (C', C_0, C_1, C_2, C_3, C_4)$
+		H_R = H(R) # $H_R \gets H(R)$
+		dk1 = r * H_R # $\textit{dk}_1 \gets r \cdot H_R$
+		dk2 = s * H_R # $\textit{dk}_2 \gets s \cdot H_R$
+		dk3 = H_R # $\textit{dk}_3 \gets H_R$
+		dk_R = (dk1, dk2, dk3) # $\textit{dk}_R \gets (\textit{dk}_1, \textit{dk}_2, \textit{dk}_3)$
 		
 		# Return #
-		return CT # \textbf{return} $\textit{CT}$
-	def Decrypt(self:object, PvkId:tuple, cipherText:tuple) -> Element: # $\textbf{Decrypt}(\textit{Pvk}_\textit{id}, \textit{CT}) \rightarrow M$
+		return dk_R # \textbf{return} $\textit{dk}_R$
+	def Enc(self:object, ekS:Element, receiver:Element, message:int|bytes) -> tuple: # $\textbf{Enc}(\textit{ek}_S, R, M) \rightarrow C$
 		# Check #
 		if not self.__flag:
-			print("Decrypt: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Decrypt`` subsequently. ")
 			self.Setup()
-		if isinstance(PvkId, tuple) and len(PvkId) == 5 and all(isinstance(ele, Element) for ele in PvkId): # hybrid check
-			Pvk_Id = PvkId
+			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
+		if isinstance(ekS, Element):
+			ek_S = ekS
 		else:
-			Pvk_Id = self.Extract(self.__group.random(ZR))
-			print("Decrypt: The variable $\\textit{Pvk}_\\textit{Id}$ should be a tuple containing 5 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipherText, tuple) and len(cipherText) == 6 and all(isinstance(ele, Element) for ele in cipherText): # hybrid check
-			CT = cipherText
+			ek_S = self.SKGen(self.__group.random(ZR))
+			print("Enc: The variable $\\textit{ek}_S$ should be an element but it is not, which has been generated randomly. ")
+		if isinstance(receiver, Element) and receiver.type == ZR: # type check
+			R = receiver
 		else:
-			CT = self.Encrypt(self.__group.random(ZR), self.__group.random(ZR))
-			print("Decrypt: The variable $\\textit{CT}$ should be a tuple containing 6 elements but it is not, which has been generated randomly. ")
+			R = self.__group.random(ZR)
+			print("Enc: The variable $R$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+		if isinstance(message, int) and message >= 0: # type check
+			M = message & self.__operand
+			if message != M:
+				print("Enc: The passed message (int) is too long, which has been cast. ")
+		elif isinstance(message, bytes):
+			M = int.from_bytes(message, byteorder = "big") & self.__operand
+			if len(message) << 3 > self.__group.secparam:
+				print("Enc: The passed message (bytes) is too long, which has been cast. ")
+		else:
+			M = int.from_bytes(b"SchemeIBBME", byteorder = "big") & self.__operand
+			print("Enc: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\"SchemeIBBME\". ")
 		
 		# Unpack #
-		d0, d1, d2, d3, d4 = Pvk_Id
-		CPi, C0, C1, C2, C3, C4 = CT
+		H = self.__mpk[-2]
+		P, P0 = self.__mpk[0], self.__mpk[1]
 		
 		# Scheme #
-		M = CPi * pair(C0, d0) * pair(C1, d1) * pair(C2, d2) * pair(C3, d3) * pair(C4, d4) # $M \gets C' \cdot e(C_0, d_0) \cdot e(C_1, d_1) \cdot e(C_2, d_2) \cdot e(C_3, d_3) \cdot e(C_4, d_4)$
+		u, t = self.__group.random(ZR), self.__group.random(ZR) # generate $u, t \in \mathbb{Z}_r$ randomly
+		T = t * P # $T \gets t \cdot P$
+		U = u * P # $U \gets u \cdot P$
+		H_R = H(R) # $H_R \gets H(R)$
+		k_R = pair(H_R, u * P0) # $k_R \gets e(H_R, u \cdot P_0)$
+		k_S = pair(H_R, T + ek_S) # $k_S \gets e(H_R, T + \textit{ek}_S)$
+		V = M ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $V \gets M \oplus k_R \oplus k_S$
+		C = (T, U, V) # $C \gets (T, U, V)$
+		
+		# Return #
+		return C # \textbf{return} $C$	
+	def Dec(self:object, dkR:tuple, sender:Element, cipher:tuple) -> int: # $\textbf{Dec}(\textit{dk}_R, S, C) \rightarrow M$
+		# Check #
+		if not self.__flag:
+			self.Setup()
+			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
+		if isinstance(dkR, tuple) and len(dkR) == 3 and all(isinstance(ele, Element) for ele in dkR): # hybrid check
+			dk_R = dkR
+		else:
+			dk_R = self.RKGen(self.__group.random(ZR))
+			print("Dec: The variable $\\textit{dk}_R$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
+		if isinstance(sender, Element) and sender.type == ZR: # type check
+			S = sender
+		else:
+			S = self.__group.random(ZR)
+			print("Dec: The variable $S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+		if isinstance(cipher, tuple) and len(cipher) == 3 and isinstance(cipher[0], Element) and isinstance(cipher[1], Element) and isinstance(cipher[2], int): # hybrid check
+			C = cipher
+		else:
+			C = self.Enc(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), b"SchemeIBBME")
+			print("Dec: The variable $C$ should be a tuple containing 2 elements and an ``int`` object but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		HPrime = self.__mpk[-1]
+		dk1, dk2, dk3 = dk_R
+		T, U, V = C
+		
+		# Scheme #
+		k_R = pair(dk1, U) # $k_R \gets e(\textit{dk}_1, U)$
+		HPrime_S = HPrime(S) # $H'_S \gets H'(S)$
+		k_S = pair(dk3, T) * pair(HPrime_S, dk2) # $k_S \gets e(\textit{dk}_3, T)$
+		M = V ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $M \gets V \oplus k_R \oplus k_S$
 		
 		# Return #
 		return M # \textbf{return} $M$
@@ -172,7 +211,7 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 11																														\
+			+ [round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13																																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -181,42 +220,49 @@ def Scheme(curveType:tuple|list|str, round:int = None) -> list:
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeAIBE = SchemeAIBE(group)
+	schemeIBBME = SchemeIBBME(group)
 	timeRecords = []
-	
+
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeAIBE.Setup()
+	mpk, msk = schemeIBBME.Setup()
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# Extract #
+	# SKGen #
 	startTime = perf_counter()
-	Id = group.random(ZR)
-	Pvk_Id = schemeAIBE.Extract(Id)
+	S = group.random(ZR)
+	ek_S = schemeIBBME.SKGen(S)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# Encrypt #
+	# RKGen #
 	startTime = perf_counter()
-	message = group.random(GT)
-	CT = schemeAIBE.Encrypt(Id, message)
+	R = group.random(ZR)
+	dk_R = schemeIBBME.RKGen(R)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# Decrypt #
+	# Enc #
 	startTime = perf_counter()
-	M = schemeAIBE.Decrypt(Pvk_Id, CT)
+	message = int.from_bytes(b"SchemeIBBME", byteorder = "big")
+	C = schemeIBBME.Enc(ek_S, R, message)
+	endTime = perf_counter()
+	timeRecords.append(endTime - startTime)
+	
+	# Dec #
+	startTime = perf_counter()
+	M = schemeIBBME.Dec(dk_R, S, C)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	booleans = [True, message == M]
-	spaceRecords = [																												\
-		schemeAIBE.getLengthOf(group.random(ZR)), schemeAIBE.getLengthOf(group.random(G1)), schemeAIBE.getLengthOf(group.random(GT)), 		\
-		schemeAIBE.getLengthOf(mpk), schemeAIBE.getLengthOf(msk), schemeAIBE.getLengthOf(Pvk_Id), schemeAIBE.getLengthOf(CT)			\
+	spaceRecords = [																																	\
+		schemeIBBME.getLengthOf(group.random(ZR)), schemeIBBME.getLengthOf(group.random(G1)), schemeIBBME.getLengthOf(group.random(GT)), 						\
+		schemeIBBME.getLengthOf(mpk), schemeIBBME.getLengthOf(msk), schemeIBBME.getLengthOf(ek_S), schemeIBBME.getLengthOf(dk_R), schemeIBBME.getLengthOf(C)		\
 	]
-	del schemeAIBE
+	del schemeIBBME
 	print("Original:", message)
 	print("Decrypted:", M)
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[1] else "No"))
@@ -260,13 +306,13 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 100, "SchemeAIBE.xlsx"
+	roundCount, filePath = 100, "SchemeIBBME.xlsx"
 	queries = ["curveType", "secparam", "roundCount"]
 	validators = ["isSystemValid", "isSchemeCorrect"]
 	metrics = 	[													\
-		"Setup (s)", "Extract (s)", "Encrypt (s)", "Decrypt (s)", 			\
+		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 		\
 		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 	\
-		"mpk (B)", "msk (B)", "Pvk_Id (B)", "CT (B)"					\
+		"mpk (B)", "msk (B)", "ek_S (B)", "dk_R (B)", "C (B)"			\
 	]
 	
 	# Scheme #

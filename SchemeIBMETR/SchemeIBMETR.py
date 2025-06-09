@@ -191,7 +191,7 @@ class SchemeIBMETR:
 		
 		# Return #
 		return ct # \textbf{return} $\textit{ct}$
-	def Dec(self:object, dkidR:tuple, idRev:Element, idSnd:Element, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_\textit{Rev}, \textit{id}_\textit{Snd}, \textit{ct}) \rightarrow m$
+	def Dec(self:object, dkidR:tuple, idRev:Element, idSnd:Element, cipherText:tuple) -> bytes: # $\textbf{Dec}(\textit{dk}_{\textit{id}_R}, \textit{id}_\textit{Rev}, \textit{id}_\textit{Snd}, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
@@ -213,8 +213,8 @@ class SchemeIBMETR:
 		else:
 			id_Snd = self.__group.random(ZR)
 			print("Dec: The variable $\\textit{id}_\textit{Snd}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all(isinstance(ele, Element) for ele in cipher[1:]): # hybrid check
-			ct = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 6 and isinstance(cipherText[0], int) and all(isinstance(ele, Element) for ele in cipherText[1:]): # hybrid check
+			ct = cipherText
 		else:
 			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), int.from_bytes(b"SchemeIBMETR", byteorder = "big"))
 			print("Dec: The variable $\\textit{ct}$ should be a tuple containing an integer and 5 elements but it is not, which has been generated randomly. ")
@@ -231,7 +231,7 @@ class SchemeIBMETR:
 		
 		# Return #
 		return m # \textbf{return} $m$
-	def TVerify(self:object, tkidR:tuple, cipher:tuple) -> bool: # $\textbf{TVerify}(\textit{tk}_{\textit{id}_R}, \textit{ct}) \rightarrow y, y \in \{0, 1\}$
+	def TVerify(self:object, tkidR:tuple, cipherText:tuple) -> bool: # $\textbf{TVerify}(\textit{tk}_{\textit{id}_R}, \textit{ct}) \rightarrow y, y \in \{0, 1\}$
 		# Check #
 		if not self.__flag:
 			print("TVerify: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``TVerify`` subsequently. ")
@@ -241,8 +241,8 @@ class SchemeIBMETR:
 		else:
 			tk_id_R = self.TKGen(self.__group.random(ZR))
 			print("TVerify: The variable $\\textit{tk}_{\\textit{id}_R}$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 6 and isinstance(cipher[0], int) and all(isinstance(ele, Element) for ele in cipher[1:]): # hybrid check
-			ct = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 6 and isinstance(cipherText[0], int) and all(isinstance(ele, Element) for ele in cipherText[1:]): # hybrid check
+			ct = cipherText
 		else:
 			ct = self.Enc(self.__group.random(ZR), self.__group.random(ZR), int.from_bytes(b"SchemeIBMETR", byteorder = "big"))
 			print("TVerify: The variable $\\textit{ct}$ should be a tuple containing an integer and 5 elements but it is not, which has been generated with $m$ set to b\"SchemeIBMETR\". ")

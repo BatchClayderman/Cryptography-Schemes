@@ -188,7 +188,7 @@ class SchemeAnonymousME:
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Dec(self:object, skIDk:tuple, cipher:tuple) -> bytes: # $\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$
+	def Dec(self:object, skIDk:tuple, cipherText:tuple) -> bytes: # $\textbf{Dec}(\textit{sk}_{\textit{ID}_k}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
@@ -198,8 +198,8 @@ class SchemeAnonymousME:
 		else:
 			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
 			print("Dec: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
-		if isinstance(cipher, tuple) and len(cipher) == 4 and all(isinstance(ele, Element) for ele in cipher):# hybrid check
-			CT = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 4 and all(isinstance(ele, Element) for ele in cipherText):# hybrid check
+			CT = cipherText
 		else:
 			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
 			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated with $M \\in \\mathbb{G}_T$ generated randomly. ")

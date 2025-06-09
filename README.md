@@ -47,11 +47,22 @@ If you wish to search a specified string throughout the whole repository in a lo
 
 ### 1.2 Computation details
 
-Normally, all the objects during the algebraic operations should belong to the ``Element`` type. However, most academic papers do not consider type conversion in a friendly way. Meanwhile, most scholars believe that the design of the schemes is the most important aspect, rendering the engineering implementations perfunctory, not to mention that they will not consider the security verification and the type conversion. These details are actually time-consuming in actual programming and fatal during applications. 
+Normally, all the objects during the algebraic operations should belong to the ``Element`` type. However, most academic papers introduce other types but do not consider type conversion in a friendly way. A variable is treated as equivalent in different types, which can simultaneously complete all the Pairing operations and all other operations from all other types like $||$ and $\oplus$. Actually, this is incorrect. 
 
-Converting the baseline implementations using the aligned styles is necessary, even though they can be downloaded and run directly. By the way, please be aware that nowadays, many implementations on the Internet cannot be directly downloaded and run. Some of them are just due to outdated relies (V). Some of them require feasible environment configurations or debugging (V). Some of them are modified to let users modify before running due to programmability (V). Some of them are modified not to run conveniently since their authors still want to benefit from them and publish more future papers, but have to open-source them (X). Some of them are modified maliciously since their authors do not want the experiments re-implemented, since the results would be found to be fakes (X). Some of them can be fakes (X). Some of them can even directly contain grammar errors (X). 
+Meanwhile, most scholars believe that the design of the schemes is the most important aspect, rendering the engineering implementations perfunctory, not to mention that they will not consider the security verification and the type conversion. These details are actually time-consuming in actual programming and fatal during applications. 
 
-Overall, we would like to offer as many computation details as possible here. 
+Nowadays, many published implementations cannot run directly after they are downloaded. 
+
+- Some of them are just due to outdated relies (V). 
+- Some require feasible environment configurations or debugging (V). 
+- Some are abstracted or interactive to let users specify values for important parameters before running due to programmability (V). 
+- Some are modified not to run conveniently since their authors still want to benefit from them and publish more future papers, but have to open-source them (X). 
+- Some are modified maliciously since their authors do not want the experiments re-implemented, where the results would be found to be fakes (X). 
+- Some are fakes. 
+- Some are inconsistent with or unrelated to the content of the paper (X). 
+- Some even contain grammar errors (X). 
+
+Anyway, re-implementing baselines is always a wise choice. Converting the baseline implementations using the aligned styles is also necessary, even though they can be downloaded and run directly. Therefore, we would like to offer as many computation details as possible here. 
 
 #### 1.2.1 Type conversion
 
@@ -74,7 +85,7 @@ Among these conversion rules, only the following cases are equivalent.
 Vectors, arrays, or lists in theory are stored as Python ``tuple`` objects in practice. This can help
 
 - avoid modifying variables inside a class from outside the class as much as possible; 
-- make the memory computation of an object of a series datum type as exact as possible; 
+- make the memory computation of an object of a series datum type as exact as possible (though ; 
 - reduce the time consumption since the index lookup is faster compared with the key-value pair one (especially in large dictionaries); and 
 - perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix acceleration computation. 
 
@@ -126,7 +137,44 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 		return self.__group.init(ZR, 1)
 ```
 
-#### 1.2.5 Comparison
+#### 1.2.5 Poly
+
+The ``poly`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
+
+Although the numpy library provides such functions, we need to implement it manually to avoid unfair time computations and arrange the coefficients from the constant term to the highest degree term. 
+
+For $d = 3$ roots 2, 3, and 5, we have the following computing procedure to proceed iteration to avoid combinatorial multiplication. 
+
+| Operation | [0] | [1] | [2] | [3] |
+| - | - | - | - | - |
+| Initial [1] + [0] * d | 1 | 0 | 0 | 0 |
+| [1] += 2 * [0] | 1 | 2 | 0 | 0 |
+| [2] += 3 * [1] | 1 | 2 | 6 | 0 |
+| [1] += 3 * [0] | 1 | 5 | 6 | 0 |
+| [3] += 5 * [2] | 1 | 5 | 6 | 30 |
+| [2] += 5 * [1] | 1 | 5 | 31 | 30 |
+| [1] += 5 * [0] | 1 | 10 | 31 | 30 |
+| Alternate +- signs | 1 | -10 | 31 | -30 |
+| Reverse | -30 | 31 | -10 | 1 |
+
+Let $a, b, c$ donates the roots, the principle behind this can be shown as follows. 
+
+| Operation | [0] | [1] | [2] | [3] |
+| - | - | - | - | - |
+| Initial [1] + [0] * d | 1 | 0 | 0 | 0 |
+| [1] += a * [0] | 1 | a | 0 | 0 |
+| [2] += b * [1] | 1 | a | ab | 0 |
+| [1] += b * [0] | 1 | a + b | ab | 0 |
+| [3] += c * [2] | 1 | a + b | ab | abc |
+| [2] += 5 * [1] | 1 | a + b | ab + (a + b)c | abc |
+| that is | 1 | a + b | ab + ac + bc | abc |
+| [1] += 5 * [0] | 1 | a + b + c | ab +ac + bc | abc |
+| Alternate +- signs | 1 | -(a + b + c) | ab +ac + bc | -(abc) |
+| Reverse | -(abc) | ab + ac + bc | -(a + b + c) | 1 |
+
+The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. 
+
+#### 1.2.6 Comparison
 
 Generally speaking, in a unified computing environment, bitwise operations with the same number of operations will be faster than general addition, subtraction, multiplication, and division. In some cases, equivalent bit operations may require additional processing to achieve a certain function. This may result in the overall operation being inferior to the solution without bit operations. Therefore, the time comparison is required. 
 
@@ -175,15 +223,7 @@ if "__main__" == __name__:
 	exit(main())
 ```
 
-### 1.3 ``generateSchemeLaTeX.py``
-
-A Python script for generating LaTeX source files of schemes from Python scripts is provided here. This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
-
-The script will try to finish the compilation once a LaTeX source file is generated. Usually, it will succeed if ``pdflatex`` is available and on the path. 
-
-For developers, this script will check the style of the Python scripts. Please use ``echo "" | python generateSchemeLaTeX.py | grep "^Detail: "`` to help check the non-unified prompts if necessary. 
-
-### 1.4 Measurements
+### 1.3 Measurements
 
 To compute the time consumption (time complexity) of a set of codes, please refer to the following codes. 
 
@@ -237,6 +277,14 @@ except:
 process = Process(os.getpid())
 memory = process.memory_info().rss # Byte(s)
 ```
+
+### 1.4 ``generateSchemeLaTeX.py``
+
+A Python script for generating LaTeX source files of schemes from Python scripts is provided here. This script helps convert each Python script into the corresponding LaTeX source file in the folder where the script is located. 
+
+The script will try to finish the compilation once a LaTeX source file is generated. Usually, it will succeed if ``pdflatex`` is available and on the path. 
+
+For developers, this script will check the style of the Python scripts. Please use ``echo "" | python generateSchemeLaTeX.py | grep "^Detail: "`` to help check the non-unified prompts if necessary. 
 
 ### 1.5 Git issues
 

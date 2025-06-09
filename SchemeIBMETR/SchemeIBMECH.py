@@ -134,7 +134,7 @@ class SchemeIBMECH:
 		
 		# Return #
 		return ct # \textbf{return} $\textit{ct}$
-	def Dec(self:object, dkrho:tuple, sender:Element, cipher:tuple) -> Element: # $\textbf{Dec}(\textit{dk}_\rho, \textit{snd}, \textit{ct}) \rightarrow m$
+	def Dec(self:object, dkrho:tuple, sender:Element, cipherText:tuple) -> Element: # $\textbf{Dec}(\textit{dk}_\rho, \textit{snd}, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
@@ -152,8 +152,8 @@ class SchemeIBMECH:
 		else:
 			snd = self.__group.random(ZR)
 			print("Dec: The variable $\\textit{snd}$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 2 and isinstance(cipher[0], tuple) and len(cipher[0]) == 8 and all(isinstance(ele, Element) for ele in cipher[0]) and isinstance(cipher[1], Element): # hybrid check
-			ct = cipher
+		if isinstance(cipherText, tuple) and len(cipherText) == 2 and isinstance(cipherText[0], tuple) and len(cipherText[0]) == 8 and all(isinstance(ele, Element) for ele in cipherText[0]) and isinstance(cipherText[1], Element): # hybrid check
+			ct = cipherText
 		else:
 			ct = self.Enc(self.SKGen(self.__group.random(ZR)), self.__group.random(ZR), self.__group.random(GT))
 			print("Dec: The variable $\textit{ct}$ should be a tuple containing a tuple and an element but it is not, which has been generated randomly. ")
