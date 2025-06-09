@@ -31,21 +31,30 @@ class SchemeIBMEMR:
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
-	def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
-		if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type in (ZR, G1) for root in roots):
-			d, cnt = len(roots), 1
-			coefficients = [self.__group.init(G1, 1)] + [self.__group.init(G1, 0)] * d
-			for r in roots:
-				for k in range(cnt, 0, -1):
+	def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float|None = None) -> tuple:
+		flag = False
+		if isinstance(roots, (tuple, list, set)) and roots:
+			d = len(roots)
+			if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
+				flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (d - 1)
+				constant = w if isinstance(w, Element) and w.type == roots[0].type else None
+			elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots) and isinstance(w, (int, float)):
+				flag, coefficients = True, [1, roots[0]] + [None] * (d - 1)
+				constant = w if isinstance(w, (int, float)) else None
+		if flag:
+			cnt = 2
+			for r in roots[1:]:
+				coefficients[cnt] = r * coefficients[cnt - 1]
+				for k in range(cnt - 1, 1, -1):
 					coefficients[k] += r * coefficients[k - 1]
-					print(r, coefficients[k - 1], r * coefficients[k - 1])
-					input()
+				coefficients[1] += r
 				cnt += 1
-			if isinstance(w, Element) and w.type in (ZR, G1):
-				coefficients[-1] += w * self.__group.init(G1, 1)
-			return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
+			coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
+			if constant is not None:
+				coefficients[0] += constant
+			return tuple(coefficients)
 		else:
-			return (self.__group.init(G1, 1), )
+			return (w, )
 	def __concat(self:object, *vector:tuple|list) -> bytes:
 		abcBytes = b""
 		if isinstance(vector, (tuple, list)):
@@ -62,21 +71,24 @@ class SchemeIBMEMR:
 					except:
 						pass
 		return abcBytes
-	def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Element:
-		if isinstance(x, Element) and x.type in (ZR, G1) and isinstance(coefficients, (tuple, list)) and all(isinstance(coefficient, Element) and coefficient.type == G1 for coefficient in coefficients):
-			eleResult = coefficients[0]
-			for i in range(1, len(coefficients)):
-				eResult = self.__group.init(G1, 1)
-				for _ in range(i):
+	def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
+		if isinstance(coefficients, (tuple, list)) and coefficients and (																\
+			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
+			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
+		):
+			d, eleResult = len(coefficients) - 1, coefficients[0]
+			for i in range(1, d):
+				eResult = x
+				for _ in range(i - 1):
 					eResult *= x
 				eleResult += coefficients[i] * eResult
-				print(x, coefficients, eleResult)
-			print(eleResult)
-			input("A")
+			eResult = x
+			for _ in range(d - 1):
+				eResult *= x
+			eleResult += eResult
 			return eleResult
 		else:
-			input("B")
-			return self.__group.init(G1, 0)
+			return None
 	def Setup(self:object, d:int = 30, seed:int|None = None) -> tuple: # $\textbf{Setup}(d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
@@ -234,7 +246,6 @@ class SchemeIBMEMR:
 			tuple(H4(RArray[i] * pair(g, g) ** (w * s)) for i in range(self.__d)), w = R		\
 		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = b_0 + \sum\limits_{i = 1}^d b_i x^i$
 		ct4 = HHat(K) ^ HHat(R) ^ int.from_bytes(m.to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big") + self.__group.serialize(sigma), byteorder = "big") # $\textit{ct}_4 \gets \hat{H}(K) \oplus \hat{H}(R) \oplus (m || \sigma)$
-		print(HHat(K) ^ HHat(R))#####
 		VArray = tuple(pair(v4, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $V_i \gets e(v_4, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		cArray = self.__computeCoefficients(								\
 			tuple(H4(VArray[i] * pair(g, g) ** (-s)) for i in range(self.__d))		\
@@ -273,7 +284,7 @@ class SchemeIBMEMR:
 			print("Dec: The variable $\\textit{id}_S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if (																																															\
 			isinstance(cipherText, tuple) and len(cipherText) == 9 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element) and isinstance(cipherText[5], Element)		\
-			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == G1 for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])					\
+			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == ZR for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])					\
 		): # hybrid check
 			ct = cipherText
 		else:
@@ -297,7 +308,6 @@ class SchemeIBMEMR:
 			RPrime = self.__computePolynomial(RPrimePrime, bArray) # \quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
 			token = len(self.__group.serialize(self.__group.random(ZR)))
 			m_sigma = (ct4 ^ HHat(KPrime) ^ HHat(RPrime)).to_bytes(((self.__group.secparam + 7) >> 3) + token, byteorder = "big") # \quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
-			print(HHat(KPrime) ^ HHat(RPrime))#####
 			r = H3(m_sigma) # \quad$r \gets H_3(m || \sigma)$
 			if ct5 != g ** r: # \quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
 				m = False # \quad\quad$m \gets \perp$
@@ -314,7 +324,7 @@ class SchemeIBMEMR:
 		# Check #
 		if (																																															\
 			isinstance(cipherText, tuple) and len(cipherText) == 9 and all(isinstance(ele, Element) for ele in cipherText[:3]) and isinstance(cipherText[3], int) and isinstance(cipherText[4], Element) and isinstance(cipherText[5], Element)		\
-			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == G1 for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])					\
+			and all(isinstance(ele, tuple) and len(ele) >= 1 and all(isinstance(sEle, Element) and sEle.type == ZR for sEle in ele) for ele in cipherText[6:]) and len(cipherText[6]) == len(cipherText[7]) == len(cipherText[8])					\
 		): # hybrid check
 			ct = cipherText
 		else:
@@ -338,7 +348,7 @@ class SchemeIBMEMR:
 			) + self.__group.serialize(ct5) + self.__concat(aArray, bArray, cArray)) 										\
 		) == pair(ct6, g): # \textbf{if} $e(\textit{ct}_5, H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
 			VPrime = H4(pair(td1, ct2) * pair(td2, ct3)) # \quad$V' \gets H_4(e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3))$
-			y = self.__computePolynomial(VPrime, cArray) == self.__group.init(G1, 0) # \quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
+			y = self.__computePolynomial(VPrime, cArray) == self.__group.init(ZR, 0) # \quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
 		else: # \textbf{else}
 			y = False # \quad$y \gets 0$
 		# \textbf{end if}
@@ -502,7 +512,7 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = (("SS512", 512), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 100, "SchemeIBMEMR.xlsx"
 	queries = ["curveType", "secparam", "d", "roundCount"]
 	validators = ["isSystemValid", "isSchemeCorrect", "isTracingVerified"]
@@ -531,7 +541,7 @@ def main() -> int:
 				results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
+	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #

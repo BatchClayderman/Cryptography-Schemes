@@ -2,8 +2,6 @@
 
 This is the category of the proposed IBMEMR cryptography scheme, which outperforms the baselines, the IBME and the IBBME cryptography schemes. 
 
-This category is still under development. 
-
 ### ``SchemeIBMEMR.py``
 
 This is the official implementation of the IBMEMR cryptography scheme in Python programming language based on the Python charm library. 

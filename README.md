@@ -137,48 +137,177 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 		return self.__group.init(ZR, 1)
 ```
 
-#### 1.2.5 Poly
+#### 1.2.5 Coefficient computation
 
-The ``poly`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
+The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
 
-Although the numpy library provides such functions, we need to implement it manually to avoid unfair time computations and arrange the coefficients from the constant term to the highest degree term. 
+Although the numpy library provides such functions, we need to implement it manually to achieve the following targets. 
 
-For $d = 3$ roots 2, 3, and 5, we have the following computing procedure to proceed iteration to avoid combinatorial multiplication. 
+- Avoid unfair time computations for comparison purposes; 
+- Arrange the coefficients from the constant term to the highest degree term; 
+- Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively; and
+- Maintain the type of all the coefficients the same as that of the roots passed. 
+
+To begin with, we need to see a simple example first. For $d = 3$ roots 2, 3, and 5, we have the following computing procedure to proceed iteration to avoid combinatorial multiplication. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
-| Initial [1] + [0] * d | 1 | 0 | 0 | 0 |
+| Initial [1] + [0] * $d$ | 1 | 0 | 0 | 0 |
 | [1] += 2 * [0] | 1 | 2 | 0 | 0 |
 | [2] += 3 * [1] | 1 | 2 | 6 | 0 |
 | [1] += 3 * [0] | 1 | 5 | 6 | 0 |
 | [3] += 5 * [2] | 1 | 5 | 6 | 30 |
 | [2] += 5 * [1] | 1 | 5 | 31 | 30 |
 | [1] += 5 * [0] | 1 | 10 | 31 | 30 |
-| Alternate +- signs | 1 | -10 | 31 | -30 |
-| Reverse | -30 | 31 | -10 | 1 |
+| Alternate $\pm$ signs | 1 | $-10$ | 31 | $-30$ |
+| Reverse | $-30$ | 31 | $-10$ | 1 |
 
-Let $a, b, c$ donates the roots, the principle behind this can be shown as follows. 
+That is, we get $(x - 2)(x - 3)(x - 5) = -30 + 31x - 10x^2 + x^3$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
+
+More generally, according to the feature of the cyclic polynomia, let $\left{a, b, c\right} = \left{2, 3, 5\right}$ denote the roots. The principle behind this can be shown as follows. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
-| Initial [1] + [0] * d | 1 | 0 | 0 | 0 |
-| [1] += a * [0] | 1 | a | 0 | 0 |
-| [2] += b * [1] | 1 | a | ab | 0 |
-| [1] += b * [0] | 1 | a + b | ab | 0 |
-| [3] += c * [2] | 1 | a + b | ab | abc |
-| [2] += 5 * [1] | 1 | a + b | ab + (a + b)c | abc |
-| that is | 1 | a + b | ab + ac + bc | abc |
-| [1] += 5 * [0] | 1 | a + b + c | ab +ac + bc | abc |
-| Alternate +- signs | 1 | -(a + b + c) | ab +ac + bc | -(abc) |
-| Reverse | -(abc) | ab + ac + bc | -(a + b + c) | 1 |
+| Initial [1] + [0] * $d$ | 1 | 0 | 0 | 0 |
+| [1] += $a$ * [0] | 1 | $a$ | 0 | 0 |
+| [2] += $b$ * [1] | 1 | $a$ | $ab$ | 0 |
+| [1] += $b$ * [0] | 1 | $a + b$ | $ab$ | 0 |
+| [3] += $c$ * [2] | 1 | $a + b$ | $ab$ | $abc$ |
+| [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
+| that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
+| [1] += $c$ * [0] | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
+| Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $-(abc)$ |
+| Reverse | $-(abc)$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
-The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. 
+The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. 
 
-#### 1.2.6 Comparison
+```
+def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
+	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
+		d = len(roots)
+		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * d
+		for r in roots:
+			for k in range(d, 0, -1):
+				coefficients[k] += r * coefficients[k - 1]
+		coefficients = [(-1) ** i * coefficients[i] for i in range(d, -1, -1)]
+		if isinstance(w, Element) and w.type == ZR  or isinstance(w, int):
+			coefficients[-1] += w * self.__group.init(G1, 1)
+		return tuple(coefficients)
+	else:
+		return (self.__group.init(ZR, 1), )
+```
+
+The time complexity of this algorithm is $O(n^2)$. As the inner loop starts from ``coefficients[cnt]`` where ``cnt`` is the current count of the roots that are proceeded and being proceeded, we can use the ``cnt`` to optimize the method to $O\left(\cfrac{n(n + 1)}{2}\right)$. An improved method is shown as follows, with bitwise operations used for optimization. 
+
+```
+def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
+	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
+		d, cnt = len(roots), 1
+		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * d
+		for r in roots:
+			for k in range(cnt, 0, -1):
+				coefficients[k] += r * coefficients[k - 1]
+			cnt += 1
+		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
+		if isinstance(w, Element) and w.type == ZR  or isinstance(w, int):
+			coefficients[0] += w
+		return tuple(coefficients)
+	else:
+		return (w, )
+```
+
+After multiple experiments, we found the following issues, some of which lead to computation errors in coefficient computation and polynomial computation. Especially, the polynomial computation result of one of the roots based on the corresponding coefficients figured out is always non-zero. 
+
+- When ZR elements are used to express the coefficients, the following issues occur. 
+  - ``self.__group.init(ZR, 1)`` multiplied by the ZR element from the same ``PairingGroup`` object does not equal to the ZR element itself. 
+  - Although some implementations ask users to specify ``0`` and ``1`` in the ZR field, the polynomial computation result of one of the roots, based on the corresponding coefficients figured out, is still always non-zero. 
+- When G1 elements are used to express the coefficients, the following issues occur. 
+  - ``self.__group.init(G1, 1)`` shows ``O``, and it is multiplied by any ZR element, integer, or ``float`` object is always ``O``. 
+  - While ``self.__group.init(G1, 1)`` (``O``) plus any G1 element is the G1 element itself, ``O`` multiplied by any G1 element itself is also the G1 element, which is strange. 
+- Exponentiation does not appear to be a repetition of multiplication. 
+  - Neither ``x ** 2`` nor ``x ** self.__group.init(ZR, 2)`` is the same as ``x * x`` for any ``x`` belonging to the ``Element`` type. 
+  - While ``2 == self.__group.init(ZR, 2)`` returns ``False``, ``x ** 2`` returns the same as ``x ** self.__group.init(ZR, 2)`` where ``x`` is a G1 element, which is strange. 
+- The type of roots passed to the method is limited, which is not flexible enough. 
+- $\cdots$
+
+Therefore, we have to avoid using the ``1`` or ``0`` in any coefficient computation in ``PairingGroup`` environments. The final method is shown as follows. 
+
+```
+def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float|None = None) -> tuple:
+	flag = False
+	if isinstance(roots, (tuple, list, set)) and roots:
+		d = len(roots)
+		if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
+			flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (d - 1)
+			constant = w if isinstance(w, Element) and w.type == roots[0].type else None
+		elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots) and isinstance(w, (int, float)):
+			flag, coefficients = True, [1, roots[0]] + [None] * (d - 1)
+			constant = w if isinstance(w, (int, float)) else None
+	if flag:
+		cnt = 2
+		for r in roots[1:]:
+			coefficients[cnt] = r * coefficients[cnt - 1]
+			for k in range(cnt - 1, 1, -1):
+				coefficients[k] += r * coefficients[k - 1]
+			coefficients[1] += r
+			cnt += 1
+		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
+		if constant is not None:
+			coefficients[0] += constant
+		return tuple(coefficients)
+	else:
+		return (w, )
+```
+
+#### 1.2.6 Polynomial computation
+
+The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(d + 1))``. 
+
+However, since neither ``x ** 2`` nor ``x ** self.__group.init(ZR, 2)`` is the same as ``x * x`` for any ``x`` belonging to the ``Element`` type, the following method is designed. 
+
+```
+def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Element:
+	if isinstance(x, Element) and x.type == ZR and isinstance(x, int) and isinstance(coefficients, (tuple, list)) and all(isinstance(coefficient, Element) and coefficient.type == ZR and isinstance(coefficient, int) for coefficient in coefficients):
+		eleResult = coefficients[0]
+		for i in range(1, len(coefficients)):
+			eResult = self.__group.init(ZR, 1)
+			for _ in range(i):
+				eResult *= x
+			eleResult += coefficients[i] * eResult
+			print(x, coefficients, eleResult)
+		return eleResult
+	else:
+		return self.__group.init(ZR, 0)
+```
+
+However, due to similar issues, this method is revised as follows. 
+
+```
+def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
+	if isinstance(coefficients, (tuple, list)) and coefficients and (																\
+		isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
+		or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
+	):
+		d, eleResult = len(coefficients) - 1, coefficients[0]
+		for i in range(1, d):
+			eResult = x
+			for _ in range(i - 1):
+				eResult *= x
+			eleResult += coefficients[i] * eResult
+		eResult = x
+		for _ in range(d - 1):
+			eResult *= x
+		eleResult += eResult
+		return eleResult
+	else:
+		return None
+```
+
+#### 1.2.7 Time consumption comparison for different implementations of the same solution
 
 Generally speaking, in a unified computing environment, bitwise operations with the same number of operations will be faster than general addition, subtraction, multiplication, and division. In some cases, equivalent bit operations may require additional processing to achieve a certain function. This may result in the overall operation being inferior to the solution without bit operations. Therefore, the time comparison is required. 
 
-The following Python script can be used to compare different functions in time consumption. You can select to use the optimal one in practice after comparing via this script. 
+The following Python script can be used to compare different implementations of the same solution in time consumption. You can select to use the optimal one in practice after comparing via this script. 
 
 ```
 from sys import exit
