@@ -31,7 +31,7 @@ The rules of command lines are as follows.
 
 - The program scans the command-line options in sequence. 
   - If the option can be converted to an ``int`` object, the program will set the value as the countdown time after the program finishes running. 
-  - Otherwise, the program will try to recognize whether the overwriting should be proceeded when an output already exists. 
+  - Otherwise, the program will try to recognize whether the overwriting should have proceeded when an output already exists. 
 - You can use ``inf`` or ``0`` to indicate an interactive or immediate action after the program finishes the scheme, respectively. 
 
 The following command lines can be useful for executing one-stop testing. 
@@ -84,10 +84,10 @@ Among these conversion rules, only the following cases are equivalent.
 
 Vectors, arrays, or lists in theory are stored as Python ``tuple`` objects in practice. This can help
 
-- avoid modifying variables inside a class from outside the class as much as possible; 
-- make the memory computation of an object of a series datum type as exact as possible (though ; 
-- reduce the time consumption since the index lookup is faster compared with the key-value pair one (especially in large dictionaries); and 
-- perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix acceleration computation. 
+- Avoid modifying variables inside a class from outside the class as much as possible; 
+- Make the memory computation of an object of a series datum type as exact as possible (though no practical memory computation from the engineering aspect is officially embedded in the scripts here); 
+- Reduce the time consumption since the index lookup is faster compared with the key-value pair one (especially in large dictionaries); and 
+- Perform fair comparisons without using third-party libraries like the ``ndarray`` from the ``numpy`` library for matrix acceleration computation. 
 
 #### 1.2.3 Hash functions
 
@@ -98,7 +98,7 @@ When there are hash functions, the following rules will be applied.
 - The ``int`` object instead of any series datum type storing $\lambda$ ``bool`` value(s) is designed to store the bit array and accomplish the $\oplus$ operation to accelerate the $\oplus$ operation and reduce memory consumption.
 - The bit arrays will be aligned to the right by being filled with 0's (``b"\0"`` or ``0b0``) on the left when they are of different lengths. As ``int`` objects are used for storing bit arrays and performing the $\oplus$ operation for binary strings, this will be done automatically during the ``int ^ int``. 
 - The message inputted to the ``Enc`` function can be an ``int`` or a ``bytes`` object, where the overflowed values will be cast by performing the ``&`` operation on the message and the operand indicating the maximum value of the limited count of bits.
-- The ``str`` object is not accepted as a possible form of the message inputted to the ``Enc`` function since the encoding and decoding are not the things should be considered in these scripts. 
+- The ``str`` object is not accepted as a possible form of the message inputted to the ``Enc`` function since the encoding and decoding are not the things that should be considered in these scripts. 
 - The statement ``int.from_bytes(x, byteorder = "big")`` will be used to convert the ``bytes`` object into the ``int`` object if a ``bytes`` object is passed as the message for encryption. 
 - The output of the ``Dec`` function is an ``int`` object. 
 
@@ -164,7 +164,7 @@ To begin with, we need to see a simple example first. For $d = 3$ roots 2, 3, an
 
 That is, we get $(x - 2)(x - 3)(x - 5) = -30 + 31x - 10x^2 + x^3$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
 
-More generally, according to the feature of the cyclic polynomia, let $\left{a, b, c\right} = \left{2, 3, 5\right}$ denote the roots. The principle behind this can be shown as follows. 
+More generally, according to the feature of the cyclic polynomial, let $\left{a, b, c\right} = \left{2, 3, 5\right}$ denote the roots. The principle behind this can be shown as follows. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -216,7 +216,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = No
 		return (w, )
 ```
 
-After multiple experiments, we found the following issues, some of which lead to computation errors in coefficient computation and polynomial computation. Especially, the polynomial computation result of one of the roots based on the corresponding coefficients figured out is always non-zero. 
+After multiple experiments, we found the following issues, some of which led to computation errors in coefficient computation and polynomial computation. Especially, the polynomial computation result of one of the roots based on the corresponding coefficients figured out is always non-zero. 
 
 - When ZR elements are used to express the coefficients, the following issues occur. 
   - ``self.__group.init(ZR, 1)`` multiplied by the ZR element from the same ``PairingGroup`` object does not equal to the ZR element itself. 
@@ -303,7 +303,30 @@ def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|lis
 		return None
 ```
 
-#### 1.2.7 Time consumption comparison for different implementations of the same solution
+#### 1.2.7 Concatenation for multiple objects
+
+On some occasions, we need to concatenate multiple objects, acting as byte concatenation. Please kindly refer to the following lines. 
+
+```
+def __concat(self:object, *vector:tuple|list) -> bytes:
+	abcBytes = b""
+	if isinstance(vector, (tuple, list)):
+		for item in vector:
+			if isinstance(item, (tuple, list)):
+				abcBytes += self.__concat(*item)
+			elif isinstance(item, Element):
+				abcBytes += self.__group.serialize(item)
+			elif isinstance(item, bytes):
+				abcBytes += item
+			else:
+				try:
+					abcBytes += bytes(item)
+				except:
+					pass
+	return abcBytes
+```
+
+#### 1.2.8 Time consumption comparison for different implementations of the same solution
 
 Generally speaking, in a unified computing environment, bitwise operations with the same number of operations will be faster than general addition, subtraction, multiplication, and division. In some cases, equivalent bit operations may require additional processing to achieve a certain function. This may result in the overall operation being inferior to the solution without bit operations. Therefore, the time comparison is required. 
 
@@ -354,7 +377,7 @@ if "__main__" == __name__:
 
 ### 1.3 Measurements
 
-To compute the time consumption (time complexity) of a set of codes, please refer to the following codes. 
+To compute the time consumption (time complexity) of a code set, please refer to the following lines. Remember to perform a division if a procedure contains computation for multiple objects, while only the computation procedure of one of those objects should be counted. 
 
 ```
 from time import perf_counter
@@ -365,7 +388,7 @@ endTime = perf_counter()
 timeDelta = endTime - startTime # second(s)
 ```
 
-To compute the memory consumption (space complexity) of a variable for academic purposes (actually the byte length of the serialized element), please refer to the following codes. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. 
+To compute the memory consumption (space complexity) of a variable for academic purposes (actually, the byte length of the serialized element), please refer to the following lines. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. Specifically, some hash functions and concatenated ``bytes`` objects may return an integer whose actual byte length is longer than $\lambda$. This case is seldom, but actually exists. When designing the measurement function in the scripts containing such a situation, the space complexity of the special variables needs to be assigned manually.  
 
 ```
 def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)
@@ -382,7 +405,7 @@ def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # By
 		return -1
 ```
 
-To compute the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following codes. These codes are not used in the official implementations of the cryptography schemes here. Please adjust the codes in your own repositories if you wish to compute this measurement. 
+To compute the memory consumption (space complexity) of a variable for engineering purposes, please refer to the following lines. These codes are not used in the official implementations of the cryptography schemes here. Please adjust the codes in your own repositories if you wish to compute this measurement. 
 
 ```
 from sys import getsizeof
@@ -390,7 +413,7 @@ from sys import getsizeof
 s = getsizeof(group.random(ZR)) # Byte(s)
 ```
 
-To compute the overall runtime memory consumption (space complexity) of the Python program, please refer to the following codes. These codes are not used in the official implementations of the cryptography schemes here. Please adjust the codes in your own repositories if you wish to compute this measurement. 
+To compute the overall runtime memory consumption (space complexity) of the Python program, please refer to the following lines. These codes are not used in the official implementations of the cryptography schemes here. Please adjust the codes in your own repositories if you wish to compute this measurement. 
 
 ```
 import os
@@ -453,13 +476,13 @@ git commit -m Update
 git push
 ```
 
-Eventually, submit a Pull Request (PR) after pushing. If you are required to log in during pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
+Eventually, submit a Pull Request (PR) after pushing. If you are required to log in while pushing, try to use ``gh`` (recommended) or generate a token from your GitHub account. 
 
 ## 2. SchemeAAIBME
 
 Click [here](./SchemeAAIBME/README.md) to view details. 
 
-Here are the equivalent implementations in Java programming language based on the JPBC library. 
+Here are the equivalent implementations in the Java programming language based on the JPBC library. 
 
 - Baselines: 
   - [https://github.com/BatchClayderman/Fuzzy_IB_ME](https://github.com/BatchClayderman/Fuzzy_IB_ME)
@@ -467,13 +490,13 @@ Here are the equivalent implementations in Java programming language based on th
 - Proposed: 
   - [https://github.com/BatchClayderman/AA-IB-ME](https://github.com/BatchClayderman/AA-IB-ME)
 
-Regardless, using the implementations in Python programming language is more encouraging. Out-of-date Java implementations can contain potential errors. 
+Regardless, using the implementations in the Python programming language is more encouraging. Out-of-date Java implementations can contain potential errors. 
 
 ## 3. SchemeCANIFPPCT
 
 Click [here](./SchemeCANIFPPCT/README.md) to view details. 
 
-Here are the equivalent implementations in Java programming language based on the JPBC library. 
+Here are the equivalent implementations in the Java programming language based on the JPBC library. 
 
 - Baselines: 
   - Version 1: [https://github.com/BatchClayderman/FEPPCT](https://github.com/BatchClayderman/FEPPCT)
@@ -483,7 +506,7 @@ Here are the equivalent implementations in Java programming language based on th
   - Version 1: [https://github.com/BatchClayderman/II-FPPCT](https://github.com/BatchClayderman/II-FPPCT)
   - Version 2: [https://github.com/BatchClayderman/CA-NI-FPPCT](https://github.com/BatchClayderman/CA-NI-FPPCT)
 
-Regardless, using the implementations in Python programming language is more encouraging. Out-of-date Java implementations can contain potential errors. 
+Regardless, using the implementations in the Python programming language is more encouraging. Out-of-date Java implementations can contain potential errors. 
 
 ## 4. SchemeHIBME
 
@@ -509,7 +532,7 @@ By the way, this is not one of the major academic authors of the schemes mention
 
 ### 8.1 C/C++
 
-Here are some links to my other implemented cryptography schemes, which are in C/C++ programming language. 
+Here are some links to my other implemented cryptography schemes, which are in the C/C++ programming languages. 
 
 1) OPSI-CA-ull: [https://github.com/BatchClayderman/OPSI-CA-ull](https://github.com/BatchClayderman/OPSI-CA-ull)
 2) PSI-CA-ull: [https://github.com/BatchClayderman/PSI-CA-ull](https://github.com/BatchClayderman/PSI-CA-ull)
@@ -518,13 +541,13 @@ Here are some links to my other implemented cryptography schemes, which are in C
 
 ### 8.2 Java
 
-Here is a link to my other implemented cryptography scheme, which is in Java programming language based on the JPBC library. 
+Here is a link to my other implemented cryptography scheme, which is in the Java programming language based on the JPBC library. 
 
 - GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
 
 ### 8.3 Python
 
-Here are some links to my other implemented cryptography schemes, which are in Python programming language but not based on the Python charm library. 
+Here are some links to my other implemented cryptography schemes, which are in the Python programming language but not based on the Python charm library. 
 
 1) LB-PEAKS: [https://github.com/BatchClayderman/LB-PEAKS](https://github.com/BatchClayderman/LB-PEAKS)
 2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
