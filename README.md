@@ -164,7 +164,7 @@ To begin with, we need to see a simple example first. For $d = 3$ roots 2, 3, an
 
 That is, we get $(x - 2)(x - 3)(x - 5) = -30 + 31x - 10x^2 + x^3$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
 
-More generally, according to the feature of the cyclic polynomial, let $\left\{a, b, c\right\} = \left\{2, 3, 5\right\}$ denote the roots. The principle behind this can be shown as follows. 
+More generally, according to the feature of the cyclic polynomial, let {$a, b, c$}$ = {$2, 3, 5$} denote the roots. The principle behind this can be shown as follows. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
