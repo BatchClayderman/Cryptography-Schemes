@@ -164,7 +164,7 @@ To begin with, we need to see a simple example first. For $d = 3$ roots 2, 3, an
 
 That is, we get $(x - 2)(x - 3)(x - 5) = -30 + 31x - 10x^2 + x^3$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
 
-More generally, according to the feature of the cyclic polynomial, let $\left{a, b, c\right} = \left{2, 3, 5\right}$ denote the roots. The principle behind this can be shown as follows. 
+More generally, according to the feature of the cyclic polynomial, let $\left\{a, b, c\right\} = \left\{2, 3, 5\right\}$ denote the roots. The principle behind this can be shown as follows. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -259,6 +259,21 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float
 		return (w, )
 ```
 
+The corresponding procedures of the final method are shown as follows. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
+
+| Operation | [0] | [1] | [2] | [3] |
+| - | - | - | - | - |
+| Initial [1] + [None] * $d$ | 1 | 0 | 0 | 0 |
+| [1] = $a$ | 1 | $a$ | 0 | 0 |
+| [2] = $b$ * [1] | 1 | $a$ | $ab$ | 0 |
+| [1] += $b$ | 1 | $a + b$ | $ab$ | 0 |
+| [3] = $c$ * [2] | 1 | $a + b$ | $ab$ | $abc$ |
+| [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
+| that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
+| [1] += $c$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
+| Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $-(abc)$ |
+| Reverse | $-(abc)$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
+
 #### 1.2.6 Polynomial computation
 
 The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(d + 1))``. 
@@ -280,7 +295,7 @@ def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Elem
 		return self.__group.init(ZR, 0)
 ```
 
-However, due to similar issues, this method is revised as follows. 
+However, due to similar issues, this method is revised as follows. The $d$ here corresponds to that in the coefficient computation. Similarly, the coefficient of the highest-order term, $1$, never involves any computation throughout the script. 
 
 ```
 def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
