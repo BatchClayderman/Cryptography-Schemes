@@ -284,7 +284,7 @@ However, due to similar issues, this method is revised as follows.
 
 ```
 def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
-	if isinstance(coefficients, (tuple, list)) and coefficients and (																\
+	if isinstance(coefficients, (tuple, list)) and coefficients and (															\
 		isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
 		or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
 	):
