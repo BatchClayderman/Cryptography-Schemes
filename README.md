@@ -141,13 +141,16 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 
 The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
 
-Although the numpy library provides such functions, we need to implement it manually to achieve the following targets. 
+Although the numpy library provides such functions, we need to implement them manually to achieve the following targets. 
 
 - Avoid unfair time computations for comparison purposes; 
 - Arrange the coefficients from the constant term to the highest degree term; 
 - Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively; and
 - Maintain the type of all the coefficients the same as that of the roots passed. 
 
+Here come the issues of manual computing. If we directly compute the coefficients as the equation shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
+
+First, we need to look at a simple example. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication.
 To begin with, we need to see a simple example first. For $d = 3$ roots 2, 3, and 5, we have the following computing procedure to proceed iteration to avoid combinatorial multiplication. 
 
 | Operation | [0] | [1] | [2] | [3] |
@@ -263,7 +266,7 @@ The corresponding procedures of the final method are shown as follows. In this p
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
-| Initial [1] + [None] * $d$ | 1 | 0 | 0 | 0 |
+| Initial [1] + [None] * $d$ | 1 | None | None | None |
 | [1] = $a$ | 1 | $a$ | 0 | 0 |
 | [2] = $b$ * [1] | 1 | $a$ | $ab$ | 0 |
 | [1] += $b$ | 1 | $a + b$ | $ab$ | 0 |
