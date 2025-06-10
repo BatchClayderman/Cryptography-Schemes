@@ -139,7 +139,7 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 
 #### 1.2.5 Coefficient computation
 
-The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
+The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. After adding a variable $w$ as a constant other than the left-hand multiplication, we get to resolve the coefficients for $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
 
 Although the numpy library provides such functions, we need to implement them manually to achieve the following targets. 
 
@@ -150,8 +150,7 @@ Although the numpy library provides such functions, we need to implement them ma
 
 Here come the issues of manual computing. If we directly compute the coefficients as the equation shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
 
-First, we need to look at a simple example. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication.
-To begin with, we need to see a simple example first. For $d = 3$ roots 2, 3, and 5, we have the following computing procedure to proceed iteration to avoid combinatorial multiplication. 
+To begin with, we need to look at a simple example without considering $w$ first. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -182,7 +181,7 @@ More generally, according to the feature of the cyclic polynomial, let $\lbrace 
 | Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $-(abc)$ |
 | Reverse | $-(abc)$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
-The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots and a constant other than the left-hand multiplication as input and outputs the coefficients. 
+The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots and the constant other than the left-hand multiplication as input and outputs the coefficients. 
 
 ```
 def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
@@ -193,7 +192,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = No
 			for k in range(d, 0, -1):
 				coefficients[k] += r * coefficients[k - 1]
 		coefficients = [(-1) ** i * coefficients[i] for i in range(d, -1, -1)]
-		if isinstance(w, Element) and w.type == ZR  or isinstance(w, int):
+		if isinstance(w, Element) and w.type == ZR or isinstance(w, int):
 			coefficients[-1] += w * self.__group.init(G1, 1)
 		return tuple(coefficients)
 	else:
@@ -212,7 +211,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = No
 				coefficients[k] += r * coefficients[k - 1]
 			cnt += 1
 		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
-		if isinstance(w, Element) and w.type == ZR  or isinstance(w, int):
+		if isinstance(w, Element) and w.type == ZR or isinstance(w, int):
 			coefficients[0] += w
 		return tuple(coefficients)
 	else:
@@ -261,7 +260,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float
 		return (w, )
 ```
 
-The corresponding procedures of the final method are shown as follows. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
+The corresponding procedures of the final method are shown as follows, with $w$ shown. We can see that the variable $w$ is always being added finally no matter whether $2 \nmid d$. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -273,8 +272,9 @@ The corresponding procedures of the final method are shown as follows. In this p
 | [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
 | that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
 | [1] += $c$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
-| Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $-(abc)$ |
-| Reverse | $-(abc)$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
+| Proceed $w$ | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $abc - w$ if $2 \nmid d$ else $abc + w$ |
+| Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $w - abc$ if $2 \nmid d$ else $abc + w$ |
+| Reverse | $w - abc$ if $2 \nmid d$ else $abc + w$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
 #### 1.2.6 Polynomial computation
 
@@ -404,7 +404,7 @@ endTime = perf_counter()
 timeDelta = endTime - startTime # second(s)
 ```
 
-To compute the memory consumption (space complexity) of a variable for academic purposes (actually, the byte length of the serialized element), please refer to the following lines. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. Specifically, some hash functions and concatenated ``bytes`` objects may return an integer whose actual byte length is longer than $\lambda$. This case is seldom, but actually exists. When designing the measurement function in the scripts containing such a situation, the space complexity of the special variables needs to be assigned manually.  
+To compute the memory consumption (space complexity) of a variable for academic purposes (actually, the byte length of the serialized element), please refer to the following lines. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. Specifically, some hash functions and concatenated ``bytes`` objects may return an integer whose actual byte length is longer than $\lambda$. This case is seldom, but actually exists. When designing the measurement function in the scripts containing such a situation, the space complexity of the special variables needs to be assigned manually. 
 
 ```
 def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)
