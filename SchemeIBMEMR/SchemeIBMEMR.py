@@ -49,10 +49,9 @@ class SchemeIBMEMR:
 					coefficients[k] += r * coefficients[k - 1]
 				coefficients[1] += r
 				cnt += 1
-			coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
 			if constant is not None:
-				coefficients[0] += constant
-			return tuple(coefficients)
+				coefficients[-1] += -constant if d & 1 else constant
+			return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
 		else:
 			return (w, )
 	def __concat(self:object, *vector:tuple|list) -> bytes:

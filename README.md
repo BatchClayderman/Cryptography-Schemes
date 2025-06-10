@@ -255,7 +255,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float
 			coefficients[1] += r
 			cnt += 1
 		if constant is not None:
-			coefficients[-1] += constant if d & 1 else -constant
+			coefficients[-1] += -constant if d & 1 else constant
 		return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
 	else:
 		return (w, )
