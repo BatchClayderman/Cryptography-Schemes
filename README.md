@@ -182,7 +182,7 @@ More generally, according to the feature of the cyclic polynomial, let $\lbrace 
 | Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $-(abc)$ |
 | Reverse | $-(abc)$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
-The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. 
+The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots and a constant other than the left-hand multiplication as input and outputs the coefficients. 
 
 ```
 def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
@@ -254,10 +254,9 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float
 				coefficients[k] += r * coefficients[k - 1]
 			coefficients[1] += r
 			cnt += 1
-		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
 		if constant is not None:
-			coefficients[0] += constant
-		return tuple(coefficients)
+			coefficients[-1] += constant if d & 1 else -constant
+		return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
 	else:
 		return (w, )
 ```
@@ -292,7 +291,6 @@ def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Elem
 			for _ in range(i):
 				eResult *= x
 			eleResult += coefficients[i] * eResult
-			print(x, coefficients, eleResult)
 		return eleResult
 	else:
 		return self.__group.init(ZR, 0)
