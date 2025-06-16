@@ -569,6 +569,12 @@ Here are some links to my other implemented cryptography schemes, which are in t
 2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
 3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
 
+### 8.4 MATLAB
+
+Here is a link to my other implemented cryptography scheme, which is in the MATLAB programming language. 
+
+- LWE-PEKS: [https://github.com/BatchClayderman/LWE-PEKS](https://github.com/BatchClayderman/LWE-PEKS)
+
 ## 9. Acknowledgment
 
 The experimental environment details are as follows. Thanks to the developers for their hard work. 
