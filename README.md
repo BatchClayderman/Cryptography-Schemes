@@ -575,6 +575,12 @@ Here is a link to my other implemented cryptography scheme, which is in the MATL
 
 - LWE-PEKS: [https://github.com/BatchClayderman/LWE-PEKS](https://github.com/BatchClayderman/LWE-PEKS)
 
+### 8.5 Mixtures
+
+Here is a link to my other implemented cryptography scheme, which is in mixed programming languages. 
+
+- [https://github.com/BatchClayderman/libsigma](https://github.com/BatchClayderman/libsigma)
+
 ## 9. Acknowledgment
 
 The experimental environment details are as follows. Thanks to the developers for their hard work. 
