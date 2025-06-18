@@ -8,7 +8,7 @@ This section will first introduce the implementation and computation details. Su
 
 ### 1.1 Implementation details
 
-Please deploy the Python (3.x) and the Python charm library environments correctly. 
+Please deploy the Python (3.x) and the Python charm library environments correctly. Please try to keep the Python charm library up to date. 
 
 A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. If you are a Chinese beginner, [https://blog.csdn.net/weixin_45726033/article/details/144822018](https://blog.csdn.net/weixin_45726033/article/details/144822018) may be helpful. 
 
@@ -145,7 +145,7 @@ Although the numpy library provides such functions, we need to implement them ma
 
 - Avoid unfair time computations for comparison purposes; 
 - Arrange the coefficients from the constant term to the highest degree term; 
-- Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively; and
+- Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively, in some versions of the Python charm library; and
 - Maintain the type of all the coefficients the same as that of the roots passed. 
 
 Here come the issues of manual computing. If we directly compute the coefficients as the equation shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
@@ -218,18 +218,19 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = No
 		return (w, )
 ```
 
-After multiple experiments, we found the following issues, some of which led to computation errors in coefficient computation and polynomial computation. Especially, the polynomial computation result of one of the roots based on the corresponding coefficients figured out is always non-zero. 
+After multiple experiments, we found the following issues in some versions of the Python charm library, some of which led to computation errors in coefficient computation and polynomial computation. Especially, the polynomial computation result of one of the roots based on the corresponding coefficients figured out is always non-zero. 
 
-- When ZR elements are used to express the coefficients, the following issues occur. 
+- When ZR elements are used to express the coefficients, the following issues occur. These issues are fixed in [https://github.com/JHUISI/charm/pull/328](https://github.com/JHUISI/charm/pull/328). 
   - ``self.__group.init(ZR, 1)`` multiplied by the ZR element from the same ``PairingGroup`` object does not equal to the ZR element itself. 
   - Although some implementations ask users to specify ``0`` and ``1`` in the ZR field, the polynomial computation result of one of the roots, based on the corresponding coefficients figured out, is still always non-zero. 
 - When G1 elements are used to express the coefficients, the following issues occur. 
   - ``self.__group.init(G1, 1)`` shows ``O``, and it is multiplied by any ZR element, integer, or ``float`` object is always ``O``. 
   - While ``self.__group.init(G1, 1)`` (``O``) plus any G1 element is the G1 element itself, ``O`` multiplied by any G1 element itself is also the G1 element, which is strange. 
-- Exponentiation does not appear to be a repetition of multiplication. 
+- Exponentiation does not appear to be a repetition of multiplication. These issues are fixed in [https://github.com/JHUISI/charm/pull/328](https://github.com/JHUISI/charm/pull/328). 
   - Neither ``x ** 2`` nor ``x ** self.__group.init(ZR, 2)`` is the same as ``x * x`` for any ``x`` belonging to the ``Element`` type. 
   - While ``2 == self.__group.init(ZR, 2)`` returns ``False``, ``x ** 2`` returns the same as ``x ** self.__group.init(ZR, 2)`` where ``x`` is a G1 element, which is strange. 
 - The type of roots passed to the method is limited, which is not flexible enough. 
+- The last inner loop of each outer loop performs a multiplication by 1, which is unnecessary. 
 - $\cdots$
 
 Therefore, we have to avoid using the ``1`` or ``0`` in any coefficient computation in ``PairingGroup`` environments. The final method is shown as follows. 
