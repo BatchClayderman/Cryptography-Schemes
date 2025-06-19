@@ -43,6 +43,8 @@ The following command lines can be useful for executing one-stop testing.
 - Execute ``for /r %f in (*.py) do python "%f" Y 0`` in a Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
 - Add `` > NUL`` to the end of the command lines if the printing affects the computation of the time consumption in a Windows terminal. 
 
+To enhance the robustness, type checks will be performed in each scheme procedure. Scheme procedures will be surrounded by the ``try--except`` structure. 
+
 If you wish to search a specified string throughout the whole repository in a local clone, the Linux command ``find .. -type f -name "*.py" -exec echo {} \; -exec grep "${stringsToBeSearched}" {} \;`` should be fine. 
 
 ### 1.2 Computation details
@@ -139,7 +141,7 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 
 #### 1.2.5 Coefficient computation
 
-The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d)$, that is, $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. After adding a variable $w$ as a constant other than the left-hand multiplication, we get to resolve the coefficients for $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = x^d - \left(\sum_\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + (-1)^d \prod\limits_{i = 1}^d x_i$. 
+The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w$. That is, we need to compute $\lbrace y_0, y_1, \cdots, y_d\rbrace$ satisfying $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i, \forall x \in \mathbb{R}$. 
 
 Although the numpy library provides such functions, we need to implement them manually to achieve the following targets. 
 
@@ -148,7 +150,10 @@ Although the numpy library provides such functions, we need to implement them ma
 - Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively, in some versions of the Python charm library; and
 - Maintain the type of all the coefficients the same as that of the roots passed. 
 
-Here come the issues of manual computing. If we directly compute the coefficients as the equation shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
+Therefore, we come to talk about the manual computing. By expanding the expression directly, we seem to successfully resolve the coefficients for $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = x^d - \left(\sum\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum\limits_{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i$. That is, we can get $y_d = 1, y_{d - 1} = -\sum\limits{i = 1}^d x_i, y_{d - 2} = \sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j, \cdots, y_0 = \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w$ by the method of undetermined coefficients.
+
+Here come the issues of the computing methodology above. If we directly compute the coefficients as the equation shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. 
+This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
 
 To begin with, we need to look at a simple example without considering $w$ first. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication. 
 
