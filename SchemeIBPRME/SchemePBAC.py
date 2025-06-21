@@ -24,6 +24,11 @@ EOF = (-1)
 class SchemePBAC:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
+		try:
+			pair(self.__group.random(G1), self.__group.random(G1))
+		except:
+			self.__group = PairingGroup("SS512", secparam = self.__group.secparam)
+			print("Init: This scheme is only applicable to symmetric groups of prime orders. The curve type has been defaulted to \"SS512\". ")
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
@@ -351,7 +356,7 @@ class SchemePBAC:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, round:int|None = None) -> list:
 	# Begin #
 	try:
 		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
@@ -510,9 +515,9 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			average = Scheme(curveType, 0)
+			average = Scheme(curveType, round = 0)
 			for round in range(1, roundCount):
-				result = Scheme(curveType, round)
+				result = Scheme(curveType, round = round)
 				for idx in range(qLength, qvLength):
 					average[idx] += result[idx]
 				for idx in range(qvLength, length):

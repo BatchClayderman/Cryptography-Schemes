@@ -43,9 +43,9 @@ The following command lines can be useful for executing one-stop testing.
 - Execute ``for /r %f in (*.py) do python "%f" Y 0`` in a Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
 - Add `` > NUL`` to the end of the command lines if the printing affects the computation of the time consumption in a Windows terminal. 
 
-To enhance the robustness, type checks will be performed in each scheme procedure. Scheme procedures will be surrounded by the ``try--except`` structure. 
+To enhance the robustness, type checks will be performed in each scheme procedure whether or not they are explicitly required in the paper. Scheme procedures will be surrounded by the ``try--except`` structure. 
 
-If you wish to search a specified string throughout the whole repository in a local clone, the Linux command ``find .. -type f -name "*.py" -exec echo {} \; -exec grep "${stringsToBeSearched}" {} \;`` should be fine. 
+For Linux users who wish to search a specified string throughout the whole repository or category in a local clone, the Linux command ``find . -type f -name "*.py" ! -name "generateSchemeLaTeX.py" -exec grep -H --color=always -E "${stringsToBeSearched}" {} \;`` after switching to the specified directory should be fine. Using the ``sed`` or other Linux commands equipped with ``find`` and its ``--exec`` is also wise. 
 
 ### 1.2 Computation details
 
@@ -58,9 +58,9 @@ Nowadays, many published implementations cannot run directly after they are down
 - Some of them are just due to outdated relies (V). 
 - Some require feasible environment configurations or debugging (V). 
 - Some are abstracted or interactive to let users specify values for important parameters before running due to programmability (V). 
-- Some are modified not to run conveniently since their authors still want to benefit from them and publish more future papers, but have to open-source them (X). 
+- Some are modified not to run conveniently since their authors still want to benefit from them and publish more future papers, but have to make them open-source (X). 
 - Some are modified maliciously since their authors do not want the experiments re-implemented, where the results would be found to be fakes (X). 
-- Some are fakes. 
+- Some are fakes in either methodologies designed or practical implementations, or in both. (X)
 - Some are inconsistent with or unrelated to the content of the paper (X). 
 - Some even contain grammar errors (X). 
 
@@ -143,19 +143,46 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 
 The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w$. That is, we need to compute $\lbrace y_0, y_1, \cdots, y_d\rbrace$ satisfying $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i, \forall x \in \mathbb{R}$. 
 
+In the numpy library, this can be handled by the ``poly`` (the earlier solution from ``from numpy import poly``) outputting from the highest order term coefficient to the constant term coefficient and the ``Polynomial`` (the later solution from ``from numpy.polynomial import Polynomial``) outputting from the constant term coefficient to the highest order term coefficient. 
+
+```
+>>> from numpy import poly
+>>> poly([2, 3, 5])
+array([  1., -10.,  31., -30.])
+>>> from numpy.polynomial import Polynomial
+>>> Polynomial.fromroots([2, 3, 5]).coef
+array([-30.,  31., -10.,   1.])
+>>>
+```
+
 Although the numpy library provides such functions, we need to implement them manually to achieve the following targets. 
 
 - Avoid unfair time computations for comparison purposes; 
+- Avoid API issues caused by different Python and numpy versions; 
 - Arrange the coefficients from the constant term to the highest degree term; 
-- Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively, in some versions of the Python charm library; and
-- Maintain the type of all the coefficients the same as that of the roots passed. 
+- Maintain the type of all the coefficients the same as that of the roots passed; and
+- Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively, in some versions of the Python charm library. 
 
-Therefore, we come to talk about the manual computing. By expanding the expression directly, we seem to successfully resolve the coefficients for $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = x^d - \left(\sum\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum\limits_{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i$. That is, we can get $y_d = 1, y_{d - 1} = -\sum\limits{i = 1}^d x_i, y_{d - 2} = \sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j, \cdots, y_0 = \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w$ by the method of undetermined coefficients.
+Therefore, we come to talk about the manual computing. By expanding the expression directly as follows, we seem to successfully resolve the coefficients by the method of undetermined coefficients.
 
-Here come the issues of the computing methodology above. If we directly compute the coefficients as the equation shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. 
+$$F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = x^d - \left(\sum\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum\limits_{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i$$
+
+That is, we can get $\lbrace y_0, y_1, \cdots, y_d\rbrace$ according to the following system of equations. 
+
+$$
+\begin{align}
+y_d &= 1\\
+y_{d - 1} &= -\sum\limits{i = 1}^d x_i\\
+y_{d - 2} &= \sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j\\
+\vdots\\
+y_0 &= \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w\\
+\end{align}
+$$
+
+Here come the issues of the computing methodology above. If we directly compute the coefficients as the system of equations shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. 
 This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
 
-To begin with, we need to look at a simple example without considering $w$ first. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication. 
+To begin with, we need to look at a simple example with $w = 0$ first. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication, where performing negation means taking the negation of [1], then negating every other element at alternating indices. That is, take the negation of [1], [3], [5], $\cdots. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -166,12 +193,12 @@ To begin with, we need to look at a simple example without considering $w$ first
 | [3] += 5 * [2] | 1 | 5 | 6 | 30 |
 | [2] += 5 * [1] | 1 | 5 | 31 | 30 |
 | [1] += 5 * [0] | 1 | 10 | 31 | 30 |
-| Alternate $\pm$ signs | 1 | $-10$ | 31 | $-30$ |
+| Perform negation | 1 | $-10$ | 31 | $-30$ |
 | Reverse | $-30$ | 31 | $-10$ | 1 |
 
 That is, we get $(x - 2)(x - 3)(x - 5) = -30 + 31x - 10x^2 + x^3$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
 
-More generally, according to the feature of the cyclic polynomial, let $\lbrace a, b, c\rbrace = \lbrace 2, 3, 5\rbrace$ denote the roots. The principle behind this can be shown as follows. 
+More generally, according to the feature of the cyclic polynomial, let $\lbrace a, b, c\rbrace = \lbrace 2, 3, 5\rbrace$ denote the roots. As the equation still holds after adding $w$ to both sides of the equation, adding $w$ directly after alternating $\pm$ signs should be correct. No need to consider whether the  The principle behind this can be shown as follows. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -183,8 +210,9 @@ More generally, according to the feature of the cyclic polynomial, let $\lbrace 
 | [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
 | that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
 | [1] += $c$ * [0] | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
-| Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $-(abc)$ |
-| Reverse | $-(abc)$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
+| Proceed $w$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc - w$ if $2 \nmid d$ else $abc + w$ |
+| Perform negation | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $abc$ if $2 \mid d$ else $-abc$ |
+| Reverse | $w - abc$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
 The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots and the constant other than the left-hand multiplication as input and outputs the coefficients. 
 
@@ -266,7 +294,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float
 		return (w, )
 ```
 
-The corresponding procedures of the final method are shown as follows, with $w$ shown. We can see that the variable $w$ is always being added finally no matter whether $2 \nmid d$. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
+The corresponding procedures of the final method are shown as follows. We can see that the variable $w$ is always being added finally no matter whether $2 \nmid d$. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
@@ -278,13 +306,13 @@ The corresponding procedures of the final method are shown as follows, with $w$ 
 | [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
 | that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
 | [1] += $c$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
-| Proceed $w$ | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $abc - w$ if $2 \nmid d$ else $abc + w$ |
+| Proceed $w$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc - w$ if $2 \nmid d$ else $abc + w$ |
 | Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $w - abc$ if $2 \nmid d$ else $abc + w$ |
 | Reverse | $w - abc$ if $2 \nmid d$ else $abc + w$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
 #### 1.2.6 Polynomial computation
 
-The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(d + 1))``. 
+The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(n + 1))``. 
 
 However, since neither ``x ** 2`` nor ``x ** self.__group.init(ZR, 2)`` is the same as ``x * x`` for any ``x`` belonging to the ``Element`` type, the following method is designed. 
 
@@ -302,7 +330,7 @@ def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Elem
 		return self.__group.init(ZR, 0)
 ```
 
-However, due to similar issues, this method is revised as follows. The $d$ here corresponds to that in the coefficient computation. Similarly, the coefficient of the highest-order term, $1$, never involves any computation throughout the script. 
+However, due to similar issues, this method is revised as follows. The $n$ here corresponds to that in the coefficient computation. Similarly, the coefficient of the highest-order term, $1$, never involves any computation throughout the script. 
 
 ```
 def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
@@ -310,14 +338,14 @@ def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|lis
 		isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
 		or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
 	):
-		d, eleResult = len(coefficients) - 1, coefficients[0]
-		for i in range(1, d):
+		n, eleResult = len(coefficients) - 1, coefficients[0]
+		for i in range(1, n):
 			eResult = x
 			for _ in range(i - 1):
 				eResult *= x
 			eleResult += coefficients[i] * eResult
 		eResult = x
-		for _ in range(d - 1):
+		for _ in range(n - 1):
 			eResult *= x
 		eleResult += eResult
 		return eleResult

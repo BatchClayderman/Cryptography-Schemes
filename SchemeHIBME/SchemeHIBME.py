@@ -91,9 +91,9 @@ class SchemeHIBME:
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																\
-				"EKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$ but it is not, "		\
-				+ "which has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l)												\
+			print(																																				\
+				"EKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+				+ "which has been generated randomly with a length of ${1} - 1 = {0}$. ".format(self.__l - 1, self.__l)																\
 			)
 		
 		# Unpack #
@@ -133,11 +133,11 @@ class SchemeHIBME:
 				)
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																			\
-				(																																			\
-					"DerivedEKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$ but it is not, "		\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																				\
-				).format(self.__l - 1, self.__l)																														\
+			print(																																							\
+				(																																							\
+					"DerivedEKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																								\
+				).format(self.__l - 1, self.__l)																																		\
 			)
 			ek_ID_kMinus1 = self.EKGen(ID_k[:-1])
 			print("DerivedEKGen: The variable $\\textit{ek}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
@@ -167,11 +167,11 @@ class SchemeHIBME:
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																	\
-				(																																	\
-					"DKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$ but it is not, "		\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																		\
-				).format(self.__l - 1, self.__l)																												\
+			print(																																					\
+				(																																					\
+					"DKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
+				).format(self.__l - 1, self.__l)																																\
 			)
 		
 		# Unpack #
@@ -225,11 +225,11 @@ class SchemeHIBME:
 				)
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																		\
-				(																																		\
-					"DerivedDKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																			\
-				).format(self.__l - 1, self.__l)																													\
+			print(																																							\
+				(																																							\
+					"DerivedDKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																								\
+				).format(self.__l - 1, self.__l)																																		\
 			)
 			dk_ID_kMinus1 = self.DKGen(ID_k[:-1])
 			print("DerivedDKGen: The variable $\\textit{dk}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
@@ -287,11 +287,11 @@ class SchemeHIBME:
 				)
 		else:
 			ID_Snd = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																					\
-				(																																					\
-					"Enc: The variable $\\textit{{ID}}_\textit{{Snd}}$ should be a tuple containing $n = \\|\\textit{{ID}}_\\textit{{Snd}}\\|$ elements where the integer $n \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
-				).format(self.__l - 1, self.__l)																																\
+			print(																																										\
+				(																																										\
+					"Enc: The variable $\\textit{{ID}}_\textit{{Snd}}$ should be a tuple containing $n = \\|\\textit{{ID}}_\\textit{{Snd}}\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $n \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																											\
+				).format(self.__l - 1, self.__l)																																					\
 			)
 			ek_ID_S = self.EKGen(ID_Snd)
 			print("Enc: The variable $\\textit{ek}_{\\textit{ID}_S}$ has been generated accordingly. ")
@@ -299,11 +299,11 @@ class SchemeHIBME:
 			ID_Rev = IDRev
 		else:
 			ID_Rev = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																					\
-				(																																					\
-					"Enc: The variable $\\textit{{ID}}_\textit{{Rev}}$ should be a tuple containing $m = \\|\\textit{{ID}}_\\textit{{Rev}}\\|$ elements where the integer $m \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
-				).format(self.__l - 1, self.__l)																																\
+			print(																																										\
+				(																																										\
+					"Enc: The variable $\\textit{{ID}}_\textit{{Rev}}$ should be a tuple containing $m = \\|\\textit{{ID}}_\\textit{{Rev}}\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $m \\in [2, {0}]$ but it is not, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																											\
+				).format(self.__l - 1, self.__l)																																					\
 			)
 		if isinstance(message, int) and message >= 0: # type check
 			M = message & self.__operand
@@ -378,11 +378,11 @@ class SchemeHIBME:
 				)
 		else:
 			ID_Rev = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																						\
-				(																																						\
-					"Dec: The variable $\\textit{{ID}}_\\textit{{Rev}}$ should be a tuple containing $m = \\|\\textit{{ID}}_\\textit{{Rev}}\\|$ elements where the integer $m \\in [2, {0}]$ but it is not, "		\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																							\
-				).format(self.__l - 1, self.__l)																																	\
+			print(																																										\
+				(																																										\
+					"Dec: The variable $\\textit{{ID}}_\\textit{{Rev}}$ should be a tuple containing $m = \\|\\textit{{ID}}_\\textit{{Rev}}\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $m \\in [2, {0}]$ but it is not, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																											\
+				).format(self.__l - 1, self.__l)																																					\
 			)
 			dk_ID_R = self.DKGen(ID_Rev)
 			print("Dec: The variable $\\textit{dk}_{\\textit{ID}_R}$ has been generated accordingly. ")
@@ -390,11 +390,11 @@ class SchemeHIBME:
 			ID_Snd = IDSnd
 		else:
 			ID_Snd = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																					\
-				(																																					\
-					"Dec: The variable $\\textit{{ID}}_\\textit{{Snd}}$ should be a tuple containing $n = \\|\\textit{{ID}}_\\textit{{Snd}}\\|$ elements where the integer $n \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
-				).format(self.__l - 1, self.__l)																																\
+			print(																																										\
+				(																																										\
+					"Dec: The variable $\\textit{{ID}}_\\textit{{Snd}}$ should be a tuple containing $n = \\|\\textit{{ID}}_\\textit{{Snd}}\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $n \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																											\
+				).format(self.__l - 1, self.__l)																																					\
 			)
 		if isinstance(cipherText, tuple) and len(cipherText) == 5 and isinstance(cipherText[0], int) and all(isinstance(ele, Element) for ele in cipherText[1:]): # hybrid check
 			CT = cipherText
@@ -451,7 +451,7 @@ class SchemeHIBME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(m, int) and isinstance(n, int) and 2 <= m < l and 2 <= n < l: # no need to check the parameters for curve types here
 		try:
@@ -627,7 +627,7 @@ def main() -> int:
 							for idx in range(qvLength, length):
 								average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
 						average[avgIndex] = roundCount
-						for idx in range(9, length):
+						for idx in range(qvLength, length):
 							average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 						results.append(average)
 	except KeyboardInterrupt:

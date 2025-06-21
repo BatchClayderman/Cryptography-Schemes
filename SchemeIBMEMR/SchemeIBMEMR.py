@@ -23,6 +23,11 @@ EOF = (-1)
 class SchemeIBMEMR:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
+		try:
+			pair(self.__group.random(G1), self.__group.random(G1))
+		except:
+			self.__group = PairingGroup("SS512", secparam = self.__group.secparam)
+			print("Init: This scheme is only applicable to symmetric groups of prime orders. The curve type has been defaulted to \"SS512\". ")
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
@@ -31,29 +36,31 @@ class SchemeIBMEMR:
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
-	def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float|None = None) -> tuple:
+	def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
 		flag = False
 		if isinstance(roots, (tuple, list, set)) and roots:
-			d = len(roots)
+			n = len(roots)
 			if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
-				flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (d - 1)
-				constant = w if isinstance(w, Element) and w.type == roots[0].type else None
-			elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots) and isinstance(w, (int, float)):
-				flag, coefficients = True, [1, roots[0]] + [None] * (d - 1)
-				constant = w if isinstance(w, (int, float)) else None
+				flag, coefficients = True, [None] * (n - 1) + [roots[0], self.__group.init(roots[0].type, 1)]
+				offset = k if isinstance(k, Element) and k.type == roots[0].type else None
+			elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots):
+				flag, coefficients = True, [None] * (n - 1) + [roots[0], 1]
+				offset = k if isinstance(k, (int, float)) else None
 		if flag:
-			cnt = 2
+			cnt = n - 2
 			for r in roots[1:]:
-				coefficients[cnt] = r * coefficients[cnt - 1]
-				for k in range(cnt - 1, 1, -1):
-					coefficients[k] += r * coefficients[k - 1]
-				coefficients[1] += r
-				cnt += 1
-			if constant is not None:
-				coefficients[-1] += -constant if d & 1 else constant
-			return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
+				coefficients[cnt] = r * coefficients[cnt + 1]
+				for i in range(cnt + 1, n - 1):
+					coefficients[i] += r * coefficients[i + 1]
+				coefficients[n - 1] += r
+				cnt -= 1
+			for i in range(n - 1, -1, -2):
+				coefficients[i] = -coefficients[i]
+			if offset is not None:
+				coefficients[0] += offset
+			return tuple(coefficients)
 		else:
-			return (w, )
+			return (k, )
 	def __concat(self:object, *vector:tuple|list) -> bytes:
 		abcBytes = b""
 		if isinstance(vector, (tuple, list)):
@@ -75,14 +82,14 @@ class SchemeIBMEMR:
 			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
 			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
 		):
-			d, eleResult = len(coefficients) - 1, coefficients[0]
-			for i in range(1, d):
+			n, eleResult = len(coefficients) - 1, coefficients[0]
+			for i in range(1, n):
 				eResult = x
 				for _ in range(i - 1):
 					eResult *= x
 				eleResult += coefficients[i] * eResult
 			eResult = x
-			for _ in range(d - 1):
+			for _ in range(n - 1):
 				eResult *= x
 			eleResult += eResult
 			return eleResult
@@ -239,18 +246,18 @@ class SchemeIBMEMR:
 		ct3 = v2 ** s2 # $\textit{ct}_3 \gets v_2^{s_2}$
 		KArray = tuple(pair(H2(S[i]), ek_id_S * ct1) for i in range(self.__d)) # $K_i \gets e(H_2(\textit{id}_i), ek_{\textit{id}_S} \cdot \textit{ct}_1), \forall i \in \{1, 2, \cdots, d\}$
 		aArray = self.__computeCoefficients(					\
-			tuple(H4(KArray[i]) for i in range(self.__d)), w = K	\
-		) # Compute $a_0, a_1, a_2, \cdots a_d$ that satisfy $\forall x \in \mathbb{R}$, we have $F(x) = \prod\limits_{i = 1}^d (x - H_4(K_i)) + K = a_0 + \sum\limits_{i = 1}^d a_i x^i$
+			tuple(H4(KArray[i]) for i in range(self.__d)), k = K	\
+		) # Compute $a_0, a_1, a_2, \cdots a_d$ that satisfy $\forall x \in \mathbb{Z}_r$, we have $F(x) = \prod\limits_{i = 1}^d (x - H_4(K_i)) + K = a_0 + \sum\limits_{i = 1}^d a_i x^i$
 		s = s1 + s2 # $s \gets s_1 + s_2$
 		RArray = tuple(pair(v3, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $R_i \gets e(v_3, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		bArray = self.__computeCoefficients(										\
-			tuple(H4(RArray[i] * pair(g, g) ** (w * s)) for i in range(self.__d)), w = R		\
-		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x \in \mathbb{R}$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = b_0 + \sum\limits_{i = 1}^d b_i x^i$
+			tuple(H4(RArray[i] * pair(g, g) ** (w * s)) for i in range(self.__d)), k = R		\
+		) # Compute $b_0, b_1, b_2, \cdots, b_d$ that satisfy $\forall x \in \mathbb{Z}_r$, we have $L(x) = \prod\limits_{i = 1}^d (x - H_4(R_i \cdot e(g, g)^{ws})) + R = b_0 + \sum\limits_{i = 1}^d b_i x^i$
 		ct4 = HHat(K) ^ HHat(R) ^ int.from_bytes(m.to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big") + self.__group.serialize(sigma), byteorder = "big") # $\textit{ct}_4 \gets \hat{H}(K) \oplus \hat{H}(R) \oplus (m || \sigma)$
 		VArray = tuple(pair(v4, (g0 * g1 ** S[i]) ** s) for i in range(self.__d)) # $V_i \gets e(v_4, (g_0 g_1^{\textit{id}_i})^s), \forall i \in \{1, 2, \cdots, d\}$
 		cArray = self.__computeCoefficients(								\
 			tuple(H4(VArray[i] * pair(g, g) ** (-s)) for i in range(self.__d))		\
-		) # Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x \in \mathbb{R}$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = c_0 + \sum\limits_{i = 1}^d c_i x^i$
+		) # Compute $c_0, c_1, c_2, \cdots, c_d$ that satisfy $\forall x \in \mathbb{Z}_r$, we have $G(x) = \prod\limits_{i = 1}^d (x - H_4(V_i \cdot e(g, g)^{-s})) = c_0 + \sum\limits_{i = 1}^d c_i x^i$
 		ct5 = g ** r # $\textit{ct}_5 \gets g^r$
 		ct6 = H5(																					\
 			self.__group.serialize(ct1) + self.__group.serialize(ct2) + self.__group.serialize(ct3) + ct4.to_bytes(		\
@@ -370,7 +377,7 @@ class SchemeIBMEMR:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, d:int = 30, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, d:int = 30, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(d, int) and d > 0: # no need to check the parameters for curve types here
 		try:

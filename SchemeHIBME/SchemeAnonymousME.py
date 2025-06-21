@@ -72,7 +72,7 @@ class SchemeAnonymousME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																					\
 				(																																					\
-					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
@@ -227,7 +227,7 @@ class SchemeAnonymousME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int = 30, k:int = 15, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, l:int = 30, k:int = 10, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(k, int) and 2 <= k < l:
 		try:
@@ -374,8 +374,8 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			for l in (5, 10, 15, 20, 25, 30):
-				for k in range(5, l, 5):
+			for l in range(5, 31, 5):
+				for k in range(5, l , 5):
 					average = Scheme(curveType, l = l, k = k, round = 0)
 					for round in range(1, roundCount):
 						result = Scheme(curveType, l = l, k = k, round = round)

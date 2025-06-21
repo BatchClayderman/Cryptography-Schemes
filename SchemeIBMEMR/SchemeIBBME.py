@@ -22,11 +22,6 @@ EOF = (-1)
 class SchemeIBBME:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
-		try:
-			pair(self.__group.random(G1), self.__group.random(G1))
-		except:
-			self.__group = PairingGroup("SS512", secparam = self.__group.secparam)
-			print("Init: This scheme is only applicable to symmetric groups of prime orders. The curve type has been defaulted to \"SS512\". ")
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
@@ -34,42 +29,52 @@ class SchemeIBBME:
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
-	def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float|None = None) -> tuple:
+	def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
 		flag = False
 		if isinstance(roots, (tuple, list, set)) and roots:
-			d = len(roots)
+			n = len(roots)
 			if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
-				flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (d - 1)
-				constant = w if isinstance(w, Element) and w.type == roots[0].type else None
-			elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots) and isinstance(w, (int, float)):
-				flag, coefficients = True, [1, roots[0]] + [None] * (d - 1)
-				constant = w if isinstance(w, (int, float)) else None
+				flag, coefficients = True, [None] * (n - 1) + [roots[0], self.__group.init(roots[0].type, 1)]
+				offset = k if isinstance(k, Element) and k.type == roots[0].type else None
+			elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots):
+				flag, coefficients = True, [None] * (n - 1) + [roots[0], 1]
+				offset = k if isinstance(k, (int, float)) else None
 		if flag:
-			cnt = 2
+			cnt = n - 2
 			for r in roots[1:]:
-				coefficients[cnt] = r * coefficients[cnt - 1]
-				for k in range(cnt - 1, 1, -1):
-					coefficients[k] += r * coefficients[k - 1]
-				coefficients[1] += r
-				cnt += 1
-			if constant is not None:
-				coefficients[-1] += -constant if d & 1 else constant
-			return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
+				coefficients[cnt] = r * coefficients[cnt + 1]
+				for i in range(cnt + 1, n - 1):
+					coefficients[i] += r * coefficients[i + 1]
+				coefficients[n - 1] += r
+				cnt -= 1
+			for i in range(n - 1, -1, -2):
+				coefficients[i] = -coefficients[i]
+			if offset is not None:
+				coefficients[0] += offset
+			return tuple(coefficients)
 		else:
-			return (w, )
+			return (k, )
+	def __product(self:object, vec:tuple|list|set) -> Element:
+		if isinstance(vec, (tuple, list, set)) and vec:
+			element = vec[0]
+			for ele in vec[1:]:
+				element *= ele
+			return element
+		else:
+			return self.__group.init(ZR, 1)
 	def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
 		if isinstance(coefficients, (tuple, list)) and coefficients and (															\
 			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
 			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
 		):
-			d, eleResult = len(coefficients) - 1, coefficients[0]
-			for i in range(1, d):
+			n, eleResult = len(coefficients) - 1, coefficients[0]
+			for i in range(1, n):
 				eResult = x
 				for _ in range(i - 1):
 					eResult *= x
 				eleResult += coefficients[i] * eResult
 			eResult = x
-			for _ in range(d - 1):
+			for _ in range(n - 1):
 				eResult *= x
 			eleResult += eResult
 			return eleResult
@@ -87,20 +92,20 @@ class SchemeIBBME:
 		# Scheme #
 		g, v = self.__group.random(G1), self.__group.random(G1) # generate $g, v \in \mathbb{G}_1$ randomly
 		h = self.__group.random(G2) # generate $h \in \mathbb{G}_2$ randomly
-		r1 = tuple(self.__group.random(ZR) for _ in range(self.__l + 1)) # generate $\vec{r}_1 = (r_{1, 0}, r_{1, 1}, \cdots, r{1, l}) \in \mathbb{Z}_r^{l + 1}$ randomly
-		r2 = tuple(self.__group.random(ZR) for _ in range(self.__l + 1)) # generate $\vec{r}_2 = (r_{2, 0}, r_{2, 1}, \cdots, r{2, l}) \in \mathbb{Z}_r^{l + 1}$ randomly
+		rVec1 = tuple(self.__group.random(ZR) for _ in range(self.__l + 1)) # generate $\vec{r}_1 = (r_{1, 0}, r_{1, 1}, \cdots, r{1, l}) \in \mathbb{Z}_r^{l + 1}$ randomly
+		rVec2 = tuple(self.__group.random(ZR) for _ in range(self.__l + 1)) # generate $\vec{r}_2 = (r_{2, 0}, r_{2, 1}, \cdots, r{2, l}) \in \mathbb{Z}_r^{l + 1}$ randomly
 		t1, t2, beta1, beta2, alpha, rho, b, tau = self.__group.random(ZR, 8) # generate $t_1, t_2, \beta_1, \beta_2, \alpha, \rho, b, \tau \in \mathbb{Z}_r$ randomly
-		r = tuple(r1[i] + b * r2[i] for i in range(self.__l + 1)) # $\vec{r} = (r_0, r_1, \cdots, r_l) \gets \vec{r}_1 + b\vec{r}_2 = (r_{1, 0} + br_{2, 0}, r_{1, 1} + br_{2, 1}, \cdots, r_{1, l} + br_{2, l})$
+		rVec = tuple(rVec1[i] + b * rVec2[i] for i in range(self.__l + 1)) # $\vec{r} = (r_0, r_1, \cdots, r_l) \gets \vec{r}_1 + b\vec{r}_2 = (r_{1, 0} + br_{2, 0}, r_{1, 1} + br_{2, 1}, \cdots, r_{1, l} + br_{2, l})$
 		t = t1 + b * t2 # $t \gets t_1 + bt_2$
 		beta = beta1 + b * beta2 # $\beta \gets \beta_1 + b\beta_2$
-		R = tuple(g ** r[i] for i in range(self.__l + 1)) # $\vec{R} \gets g^\vec{r} = (g^{r_0}, g^{r_1}, \cdots, g^{r_l})$
+		RVec = tuple(g ** rVec[i] for i in range(self.__l + 1)) # $\vec{R} \gets g^{\vec{r}} = (g^{r_0}, g^{r_1}, \cdots, g^{r_l})$
 		T = g ** t # $T \gets g^t$
 		H0 = lambda x:self.__group.hash(x, G2) # $H_0: \{0, 1\}^* \rightarrow \mathbb{G}_2$
 		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		H2 = lambda x:self.__group.hash(x, ZR) # $H_2: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
 		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_3: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
-		self.__mpk = (																																													\
-			v, v ** rho, g, g ** b, R, T, pair(g, h) ** beta, h, tuple(h ** r1[i] for i in range(l + 1)), tuple(h ** r2[i] for i in range(l + 1)), h ** t1, h ** t2, g ** (tau * beta), h ** (tau * beta1), h ** (tau * beta2), h ** (1 / tau), H0, H1, H2, H3		\
+		self.__mpk = (																																															\
+			v, v ** rho, g, g ** b, RVec, T, pair(g, h) ** beta, h, tuple(h ** rVec1[i] for i in range(l + 1)), tuple(h ** rVec2[i] for i in range(l + 1)), h ** t1, h ** t2, g ** (tau * beta), h ** (tau * beta1), h ** (tau * beta2), h ** (1 / tau), H0, H1, H2, H3	\
 		) # $\textit{mpk} \gets (v, v^\rho, g, g^b, \vec{R}, T, e(g, h)^\beta, h, h^{\vec{r}_1}, h^{\vec{r}_2}, h^{t_1}, h^{t_2}, g^{\tau\beta}, h^{\tau\beta_1}, h^{\tau\beta_2}, h^{1/\tau}, H_0, H_1, H_2, H_3)$
 		self.__msk = (h ** beta1, h ** beta2, alpha, rho) # $\textit{msk} \gets (h^{\beta_1}, h^{\beta_2}, \alpha, \rho)$
 		
@@ -166,11 +171,11 @@ class SchemeIBBME:
 		if not self.__flag:
 			self.Setup()
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
-		if isinstance(_S, tuple) and _S and all(isinstance(ele, bytes) for ele in _S):
+		if isinstance(_S, tuple) and _S and all(isinstance(ele, bytes) for ele in _S): # hybrid check
 			S = _S
 		else:
 			S = tuple(randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big") for _ in range(self.__l))
-			print("Enc: The variable $S$ should be a tuple containing $n$ ``bytes`` objects but it is not, which has been generated randomly with $n$ set to $l$. ")
+			print("Enc: The variable $S$ should be a tuple containing $n = \\|S\\|$ ``bytes`` objects where the integer $n \\in [1, {0}]$ but it is not, which has been generated randomly with a length of $l = {0}$. ".format(self.__l))
 		if isinstance(ekidStar, Element) and ekidStar.type == G1: # type check
 			ek_idStar = ekidStar
 		else:
@@ -183,55 +188,75 @@ class SchemeIBBME:
 			print("Enc: The variable $m$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		H = self.__mpk[-2]
-		P, P0 = self.__mpk[0], self.__mpk[1]
+		v, vToThePowerOfRho, g, gToThePowerOfB, R, T, eGHToThePowerOfBeta, H0, H2, H3 = self.__mpk[0], self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[16], self.__mpk[18], self.__mpk[19]
+		n = len(S)
 		
 		# Scheme #
-		y = self.__computeCoefficients(tuple(H2(ele) for ele in S)) # Compute $y_0, y_1, y_2, \cdots y_n$ that satisfy $\forall x \in \mathbb{R}$, we have $F(x) = \prod\limits_{i = 1}^n (x - H_2(S_i)) = y_0 + \sum\limits_{i = 1}^n y_i x^i$
-		T = t * P # $T \gets t \cdot P$
-		U = u * P # $U \gets u \cdot P$
-		H_R = H(R) # $H_R \gets H(R)$
-		k_R = pair(H_R, u * P0) # $k_R \gets e(H_R, u \cdot P_0)$
-		k_S = pair(H_R, T + ek_S) # $k_S \gets e(H_R, T + \textit{ek}_S)$
-		V = M ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $V \gets M \oplus k_R \oplus k_S$
-		C = (T, U, V) # $C \gets (T, U, V)$
+		y = self.__computeCoefficients(tuple(H2(ele) for ele in S)) # Compute $y_0, y_1, y_2, \cdots y_n$ that satisfy $\forall x \in \mathbb{Z}_r$, we have $F(x) = \prod\limits_{\textit{id}_j \in S} (x - H_2(\textit{id}_j)) = y_0 + \sum\limits_{i = 1}^n y_i x^i$
+		yVec = y + (self.__group.init(ZR, 0), ) * (self.__l - n) # $\vec{y} \gets (y_0, y_1, \cdots, y_n, y_{n + 1}, y_{n + 2}, \cdots, y_l) = (y_0, y_1, \cdots, y_n, 0, 0, \cdots, 0)$
+		del y
+		s, d2, ctag = self.__group.random(ZR, 3) # generate $s, d_2, \textit{ctag} \in \mathbb{Z}_r$ randomly
+		C0 = m * eGHToThePowerOfBeta ** s # $C_0 \gets m \cdot e(g, h)^{\beta s}$
+		C1 = g ** s # $C_1 \gets g^s$
+		C2 = gToThePowerOfB ** s # $C_2 \gets g^{bs}$
+		C3 = (T ** ctag * self.__product(tuple(R[i] ** yVec[i] for i in range(n + 1)))) ** (d2 * s) # $C_3 \gets \left(T^{\textit{ctag}}\prod\limits_{i = 0}^n (g^{r_i})^{y_i}\right)^{d_2 s}$
+		C4 = v ** s # $C_4 \gets v^s$
+		V_id = tuple(H3(pair(H0(S[i]), ek_idStar * gToThePowerOfB ** s * vToThePowerOfRho ** s)) for i in range(n)) # $V_{\textit{id}_i} \gets H_3(e(H_0(\textit{id}_i), \textit{ek}_{\textit{id}^*} \cdot g^{bs} \cdot v^{\rho s})), \forall \textit{id}_i \in S$
+		bVec = self.__computeCoefficients(	\
+			V_id, k = d2					\
+		) # Compute $\vec{b} \gets (b_0, b_1, b_2, \cdots b_n)$ that satisfy $\forall y \in \mathbb{Z}_r$, we have $g(y) = \prod\limits_{V_{\textit{id}_k} \in V_{\textit{id}}} (y - V_{\textit{id}_k}) + d_2 = b_0 + \sum\limits_{k = 1}^n b_k y^k$
+		ct = (C0, C1, C2, C3, C4, ctag, yVec, bVec) # $\textit{ct} \gets (C_0, C_1, C_2, C_3, C_4, \textit{ctag}, \vec{y}, \vec{b})
 		
 		# Return #
-		return C # \textbf{return} $C$	
-	def Dec(self:object, dkR:tuple, sender:Element, cipher:tuple) -> int: # $\textbf{Dec}(\textit{dk}_R, S, C) \rightarrow M$
+		return ct # \textbf{return} $\textit{ct}$
+	def Dec(self:object, _S:tuple, dkidi:tuple, _idStar:bytes, cipherText:tuple) -> Element|bool: # $\textbf{Dec}(S, \textit{dk}_{\textit{id}_i}, \textit{id}^*, \textit{ct}) \rightarrow m$
 		# Check #
 		if not self.__flag:
 			self.Setup()
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
-		if isinstance(dkR, tuple) and len(dkR) == 3 and all(isinstance(ele, Element) for ele in dkR): # hybrid check
-			dk_R = dkR
+		if isinstance(_S, tuple) and _S and all(isinstance(ele, bytes) for ele in _S): # hybrid check
+			S = _S
 		else:
-			dk_R = self.DKGen(self.__group.random(ZR))
-			print("Dec: The variable $\\textit{dk}_R$ should be a tuple containing 3 elements but it is not, which has been generated randomly. ")
-		if isinstance(sender, Element) and sender.type == ZR: # type check
-			S = sender
+			S = tuple(randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big") for _ in range(self.__l))
+			print("Dec: The variable $S$ should be a tuple containing $n = \\|S\\|$ ``bytes`` objects where the integer $n \\in [1, {0}]$ but it is not, which has been generated randomly with a length of $l = {0}$. ".format(self.__l))
+		if isinstance(dkidi, tuple) and len(dkidi) == 9 and all(isinstance(ele, Element) for ele in dkidi[:6]) and all(isinstance(ele, tuple) for ele in dkidi[6:]): # hybrid check
+			dk_id_i = dkidi
 		else:
-			S = self.__group.random(ZR)
-			print("Dec: The variable $S$ should be an element of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(cipher, tuple) and len(cipher) == 3 and isinstance(cipher[0], Element) and isinstance(cipher[1], Element) and isinstance(cipher[2], int): # hybrid check
-			C = cipher
+			dk_id_i = self.DKGen(randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big"))
+			print("Dec: The variable $\\textit{dk}_{\textit{id}_i}$ should be a tuple containing 6 elements and 3 tuples but it is not, which has been generated randomly. ")
+		if isinstance(_idStar, bytes): # type check
+			idStar = _idStar
 		else:
-			C = self.Enc(self.EKGen(self.__group.random(ZR)), self.__group.random(ZR), b"SchemeIBBME")
-			print("Dec: The variable $C$ should be a tuple containing 2 elements and an ``int`` object but it is not, which has been generated randomly. ")
+			idStar = randbelow(1 << self.__group.secparam).to_bytes((self.__group.secparam + 7) >> 3, byteorder = "big")
+			print("Dec: The variable $\textit{id}^*$ should be a ``bytes`` object but it is not, which has been generated randomly. ")
+		if isinstance(cipherText, tuple) and len(cipherText) == 8 and all(isinstance(ele, Element) for ele in cipherText[:6]) and isinstance(cipherText[-2], tuple) and isinstance(cipherText[-1], tuple): # hybrid check
+			ct = cipherText
+		else:
+			ct = self.Enc(S, self.EKGen(idStar), self.__group.random(GT))
+			print("Dec: The variable $\\textit{ct}$ should be a tuple containing 6 elements and 2 tuples but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		HPrime = self.__mpk[-1]
-		dk1, dk2, dk3 = dk_R
-		T, U, V = C
+		H0, H1, H3 = self.__mpk[16], self.__mpk[17], self.__mpk[19]
+		n = len(S)
+		dki1, dki2, dki3, dki4, dki5, dki6, dki7, dki8, rtags = dk_id_i
+		C0, C1, C2, C3, C4, ctag, yVec, bVec = ct
 		
 		# Scheme #
-		k_R = pair(dk1, U) # $k_R \gets e(\textit{dk}_1, U)$
-		HPrime_S = HPrime(S) # $H'_S \gets H'(S)$
-		k_S = pair(dk3, T) * pair(HPrime_S, dk2) # $k_S \gets e(\textit{dk}_3, T)$
-		M = V ^ int.from_bytes(self.__group.serialize(k_R), byteorder = "big") ^ int.from_bytes(self.__group.serialize(k_S), byteorder = "big") # $M \gets V \oplus k_R \oplus k_S$
+		V_id_i = H3(pair(dki3, C2) * pair(dki2, H1(idStar)) * pair(dki1, C4)) # $V(\textit{id}_i) \gets H_3(e(\textit{dk}_{i, 3}, C_2)e(\textit{dk}_{i, 2}, H_1(\textit{id}^*))e(\textit{dk}_{i, 1}, C_4))$
+		d2 = self.__computePolynomial(V_id_i, bVec) # d_2 \gets g(V_{\textit{id}_i}) = b_0 + \sum\limits_{j = 1}^n b_j V_{\textit{id}_i}^j$
+		rtag = sum(yVec[i + 1] * rtags[i] for i in range(self.__l)) # $\textit{rtag} \gets \sum\limits_{i = 1}^l y_i \textit{rtags}_i$
+		if rtag == ctag: # \textbf{if} $\textit{rtag} = \textit{ctag}$ \textbf{then}
+			m = False # \quad$m \gets \perp$
+		else:
+			A = (																																					\
+				pair(C1, self.__product(tuple(dki7[j] ** yVec[j + 1] for j in range(self.__l)))) * pair(C2, self.__product(tuple(dki8[j] ** yVec[j + 1] for j in range(self.__l)))) / pair(C3 ** (1 / d2), dki6)	\
+			) # \quad$A \gets e(C_1, \prod\limits_{j = 1}^l \textit{dk}_{7, j}^{y_j})e(C_2, \prod\limits_{j = 1}^l \textit{dk}_{8, j}^{y_j}) / e(C_3^{1 / d_2}, \textit{dk}_6)
+			B = pair(C1, dki4) * pair(C2, dki5) # \quad$B \gets e(C_1, \textit{dk}_4) \cdot e(C_2, \textit{dk}_5)$
+			m = C0 * A ** (1 / (rtag - ctag)) * B ** (-1) # $m \gets C_0 \cdot A^{1 / (\textit{rtag} - \textit{ctag})} \cdot B^{-1}$
+		# \textbf{end if}
 		
 		# Return #
-		return M # \textbf{return} $M$
+		return m # \textbf{return} $m$
 	def getLengthOf(self:object, obj:Element|tuple|list|set|bytes|int) -> int:
 		if isinstance(obj, Element):
 			return len(self.__group.serialize(obj))
@@ -246,9 +271,9 @@ class SchemeIBBME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, n:int = 30, round:int = None) -> list:
+def Scheme(curveType:tuple|list|str, l:int = 30, n:int = 10, _seed:int|None = None, round:int|None = None) -> list:
 	# Begin #
-	if isinstance(n, int) and n > 0: # no need to check the parameters for curve types here
+	if isinstance(l, int) and isinstance(n, int) and 0 < n <= l: # no need to check the parameters for curve types here
 		try:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				if curveType[1] >= 1:
@@ -266,21 +291,26 @@ def Scheme(curveType:tuple|list|str, n:int = 30, round:int = None) -> list:
 				print("curveType =", curveType)
 			else:
 				print("curveType = Unknown")
+			print("l =", l)
+			print("n =", n)
 			if isinstance(round, int) and round >= 0:
 				print("round =", round)
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-				+ [n if isinstance(n, int) else None, round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13																											\
+				+ [l if isinstance(l, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) else None] + [False] * 2 + [-1] * 14																					\
 			)
+		seed = _seed if isinstance(_seed, int) and 0 <= _seed < n else randbelow(n)
 	else:
-		print("Is the system valid? No. The parameter $n$ should be a positive integer. ")
+		print("Is the system valid? No. The parameter $l$ and $n$ should be two positive integers satisfying $1 \\leqslant n \\leqslant l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 13																							\
+			+ [l if isinstance(l, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 14																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
+	print("l =", l)
+	print("n =", n)
 	if isinstance(round, int) and round >= 0:
 		print("round =", round)
 	print("Is the system valid? Yes. ")
@@ -311,7 +341,10 @@ def Scheme(curveType:tuple|list|str, n:int = 30, round:int = None) -> list:
 	
 	# Enc #
 	startTime = perf_counter()
-	S = tuple(randbelow(1 << group.secparam).to_bytes((group.secparam + 7) >> 3, byteorder = "big") for _ in range(n))
+	S = (																												\
+		tuple(randbelow(1 << group.secparam).to_bytes((group.secparam + 7) >> 3, byteorder = "big") for _ in range(seed)) + (identity, )		\
+		+ tuple(randbelow(1 << group.secparam).to_bytes((group.secparam + 7) >> 3, byteorder = "big") for _ in range(n - seed - 1))			\
+	)
 	message = group.random(GT)
 	ct = schemeIBBME.Enc(S, ek_idStar, message)
 	endTime = perf_counter()
@@ -319,24 +352,24 @@ def Scheme(curveType:tuple|list|str, n:int = 30, round:int = None) -> list:
 	
 	# Dec #
 	startTime = perf_counter()
-	M = schemeIBBME.Dec(dk_R, S, C)
+	m = schemeIBBME.Dec(S, dk_id, idStar, ct)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
-	booleans = [True, message == M]
-	spaceRecords = [																																				\
-		schemeIBBME.getLengthOf(group.random(ZR)), schemeIBBME.getLengthOf(group.random(G1)), schemeIBBME.getLengthOf(group.random(GT)), 								\
-		schemeIBBME.getLengthOf(mpk), schemeIBBME.getLengthOf(msk), schemeIBBME.getLengthOf(ek_idStar), schemeIBBME.getLengthOf(dk_R), schemeIBBME.getLengthOf(C)		\
+	booleans = [True, message == m]
+	spaceRecords = [																																							\
+		schemeIBBME.getLengthOf(group.random(ZR)), schemeIBBME.getLengthOf(group.random(G1)), schemeIBBME.getLengthOf(group.random(G2)), schemeIBBME.getLengthOf(group.random(GT)), 	\
+		schemeIBBME.getLengthOf(mpk), schemeIBBME.getLengthOf(msk), schemeIBBME.getLengthOf(ek_idStar), schemeIBBME.getLengthOf(dk_id), schemeIBBME.getLengthOf(ct)					\
 	]
 	del schemeIBBME
 	print("Original:", message)
-	print("Decrypted:", M)
-	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[1] else "No"))
+	print("Decrypted:", m)
+	print("Is the scheme correct (message == m)? {0}. ".format("Yes" if booleans[1] else "No"))
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, l, n, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
@@ -372,14 +405,14 @@ def handleFolder(fd:str) -> bool:
 
 def main() -> int:
 	# Begin #
-	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 100, "SchemeIBBME.xlsx"
-	queries = ["curveType", "secparam", "roundCount"]
+	queries = ["curveType", "secparam", "l", "n", "roundCount"]
 	validators = ["isSystemValid", "isSchemeCorrect"]
-	metrics = 	[													\
-		"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 		\
-		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 	\
-		"mpk (B)", "msk (B)", "ek_idStar (B)", "dk_R (B)", "C (B)"		\
+	metrics = 	[																\
+		"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 					\
+		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
+		"mpk (B)", "msk (B)", "ek_idStar (B)", "dk_id (B)", "ct (B)"					\
 	]
 	
 	# Scheme #
@@ -387,20 +420,22 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			average = Scheme(curveType, 0)
-			for round in range(1, roundCount):
-				result = Scheme(curveType, round)
-				for idx in range(qLength, qvLength):
-					average[idx] += result[idx]
-				for idx in range(qvLength, length):
-					average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-			average[avgIndex] = roundCount
-			for idx in range(qvLength, length):
-				average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
-			results.append(average)
+			for l in range(5, 31, 5):
+				for n in range(5, l + 1, 5):
+					average = Scheme(curveType, l = l, n = n, round = 0)
+					for round in range(1, roundCount):
+						result = Scheme(curveType, l = l, n = n, round = round)
+						for idx in range(qLength, qvLength):
+							average[idx] += result[idx]
+						for idx in range(qvLength, length):
+							average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
+					average[avgIndex] = roundCount
+					for idx in range(qvLength, length):
+						average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
+					results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
+	except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #

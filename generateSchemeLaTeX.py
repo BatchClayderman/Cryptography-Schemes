@@ -1,7 +1,7 @@
 import os
 from sys import argv, executable, exit
 from re import findall
-from subprocess import Popen
+from subprocess import Popen, PIPE
 from time import sleep, time
 try:
 	os.chdir(os.path.abspath(os.path.dirname(__file__)))
@@ -25,6 +25,16 @@ def getTxt(filePath:str) -> str|None: # get ``*.txt`` content
 			return None
 	return None
 
+def callSleep(sleepingTime:int = 3) -> bool:
+	try:
+		sleep(sleepingTime)
+		return True
+	except KeyboardInterrupt:
+		print()
+	except BaseException:
+		pass
+	return False
+
 def convertEscaped(string:str) -> str:
 	if isinstance(string, str):
 		vec = list(string)
@@ -38,6 +48,66 @@ def convertEscaped(string:str) -> str:
 	else:
 		return str(string)
 
+if __import__("platform").system().upper() == "WINDOWS":
+	def checkFile(filePath:str, lines:tuple|list|set, sleepingTime:int = 3) -> bool:
+		patterns = (																						\
+			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 				\
+			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, ]+round:int\\|None = None\\)", 	\
+			" = Scheme\\(curveType[A-Za-z, ]+\\)", "for idx in range\\([0-9]+, [A-Za-z]+\\)"								\
+		)
+		if isinstance(filePath, str) and isinstance(lines, (tuple, list, set)):
+			cnt = 0
+			for pattern in patterns:
+				invalidLines = []
+				for idx, line in enumerate(lines):
+					if isinstance(line, str):
+						if findall(pattern, line):
+							invalidLines.append((idx, line))
+					else:
+						print("** Warning: An unofficial statement detected or an unofficial generator used, please check whether official Python scripts are used. **")
+						print("Detail: \"{0}\"".format(filePath))
+						callSleep(sleepingTime)
+						return len(patterns)
+				if invalidLines:
+					cnt += 1
+					print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
+					for idx, line in invalidLines:
+						print("Detail: \"{0}\" ({1}): {2}".format(filePath, idx, convertEscaped(line)))
+					callSleep(sleepingTime)
+			return cnt
+		else:
+			print("** Warning: An unofficial statement detected or an unofficial generator used, please check whether official Python scripts are used. **")
+			callSleep(sleepingTime)
+			return len(patterns)
+else:
+	def checkFile(filePath:str, lines:None = None, sleepingTime:int = 3) -> int:
+		patterns = (																								\
+			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 				\
+			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 	\
+			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)"									\
+		)
+		if isinstance(filePath, str):
+			cnt = 0
+			for pattern in patterns:
+				commandline = "grep -H --color=always -E \"{0}\" \"{1}\"".format(pattern, filePath)
+				with Popen(commandline, stdout = PIPE, stderr = PIPE, shell = True) as process:
+					output, error = process.communicate()
+					if error:
+						print("** Warning: An unofficial statement detected or an unofficial generator used, please check whether official Python scripts are used. **")
+						print("Detail: \"{0}\": {1}".format(filePath, error))
+						callSleep(sleepingTime)
+						return len(patterns)
+					elif output:
+						cnt += 1
+						print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
+						os.system(commandline + " | sed \'s/^/Detail: /\'")
+						callSleep(sleepingTime)
+			return cnt
+		else:
+			print("** Warning: An unofficial statement detected or an unofficial generator used, please check whether official Python scripts are used. **")
+			callSleep(sleepingTime)
+			return len(patterns)
+
 def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionName:str|None, sleepingTime:int = 3) -> bool:
 	if isinstance(filePath, str) and isinstance(idx, (int, str)) and isinstance(s, str):
 		if isinstance(className, str) and className.isalnum() and isinstance(functionName, str) and functionName.isalnum():
@@ -46,7 +116,9 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"{0}: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``{0}`` subsequently. ".format(functionName), 					\
 				functionName + ": The passed message (bytes) is too long, which has been cast. ", functionName + ": The passed message (int) is too long, which has been cast. ", 			\
 				functionName + ": The variable $M$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
+				functionName + ": The variable $\\textit{ek}_{\\textit{id}^*}$ should be an element of $\\\\mathbb{G}_1$ but it is not, which has been generated randomly. ", 				\
 				functionName + ": The variable $d$ should be a positive integer but it is not, which has been defaulted to $30$. ", 													\
+				functionName + ": The variable $l$ should be a positive integer but it is not, which has been defaulted to $30$. ", 													\
 				functionName + ": The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ", 										\
 				functionName + ": The variable $m$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
 				"{0}: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\\\"{1}\\\". ".format(functionName, className), 					\
@@ -58,12 +130,15 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				or findall("^{0}: The variable \\$.+\\$ should be a ``bytes`` object but it is not\\, which has been generated randomly\\. $".format(functionName), s)																			\
 				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)												\
 				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$(?:M|m)\\$ set to b\\\\\\\"{1}\\\\\\\"\\. $".format(functionName, className), s)						\
-				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$M \\\\\\\\in \\\\\\\\mathbb{{G}}_T\\$ generated randomly\\. $".format(functionName, className), s)		\
+				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$M \\\\\\\\in \\\\\\\\mathbb{{G}}_T\\$ generated randomly\\. $".format(functionName), s)				\
+				or findall(																																														\
+					"^{0}: The variable \\$.+\\$ should be a tuple containing \\$.+ = .+\\$ ``bytes`` objects where the integer \\$.+ \\\\\\\\in .+\\$ but it is not\\, which has been generated randomly with a length of \\$.+ = .+\\$\\. $".format(functionName), s	\
+				)																																															\
 				or findall(																																														\
 					(																																														\
 						"^{0}: The variable \\$.+\\$ should be a tuple containing \\$.+ = .+\\$ elements(?: of \\$\\\\\\\\mathbb\\{{\\{{Z\\}}\\}}_r\\$)?(?: where the integer \\$.+ \\\\\\\\in .+\\$)? but it is not\\, "											\
 						+ "which has been generated (?:randomly with a length of \\$.+\\$|accordingly)\\. $"																													\
-					).format(functionName, className), s																																							\
+					).format(functionName), s																																									\
 				)																																															\
 				or findall("^{0}: The variable \\$.+\\$ should be an element(?: of \\$\\\\\\\\mathbb\\{{Z\\}}_r\\$)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)										\
 			):
@@ -71,12 +146,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 			else:
 				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
 				print("Detail: \"{0}\" ({1}): {2} (in Function ``{3}`` of Class ``{4}``)".format(filePath, idx, convertEscaped(s), functionName, className))
-				try:
-					sleep(sleepingTime)
-				except KeyboardInterrupt:
-					print()
-				except BaseException:
-					pass
+				callSleep(sleepingTime)
 				return False
 		elif isinstance(className, str) and className.isalnum() and functionName is None:
 			if s in (																										\
@@ -87,12 +157,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 			else:
 				print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
 				print("Detail: \"{0}\" ({1}): {2} (in Function ``{3}``)".format(filePath, idx, convertEscaped(s), functionName))
-				try:
-					sleep(sleepingTime)
-				except KeyboardInterrupt:
-					print()
-				except BaseException:
-					pass
+				callSleep(sleepingTime)
 				return False
 		elif className is None and functionName is None and (
 			s in (																														\
@@ -100,7 +165,8 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyDec`` passed? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 			\
 				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 								\
 				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 								\
-				"Is the system valid? No. \\n\\t{0}", "Is the system valid? No. The parameter $d$ should be a positive integer. ", "Is the system valid? Yes. ", 		\
+				"Is the system valid? No. \\n\\t{0}", "Is the system valid? No. The parameter $d$ should be a positive integer. ", 							\
+				"Is the system valid? No. The parameter $l$ should be a positive integer. ", "Is the system valid? Yes. ", 									\
 				"Is the tracing verified? {0}. YesNo", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 			\
 				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 				\
 				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 					\
@@ -118,21 +184,11 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 		else:
 			print("** Warning: An unofficial statement detected, please check whether official Python scripts are used. **")
 			print("Detail: \"{0}\" ({1}): {2}".format(filePath, idx, convertEscaped(s)))
-			try:
-				sleep(sleepingTime)
-			except KeyboardInterrupt:
-				print()
-			except BaseException:
-				pass
+			callSleep(sleepingTime)
 			return False
 	else:
 		print("** Warning: An unofficial statement detected or an unofficial generator used, please check whether official Python scripts are used. **")
-		try:
-			sleep(sleepingTime)
-		except KeyboardInterrupt:
-			print()
-		except BaseException:
-			pass
+		callSleep(sleepingTime)
 		return False
 
 def handleFolder(fd:str) -> bool:
@@ -162,7 +218,7 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 					with open(os.path.join(folderPath, fileName), "w", encoding = "utf-8") as f:
 						f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{amsmath,amssymb}\n\\usepackage{bm}\n\n\\begin{document}\n\n")
 						className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True
-						printFlag, bucketCount, buffer, warningCount = 0, 0, "", 0
+						printFlag, bucketCount, buffer, warningCount = 0, 0, "", checkFile(pythonFilePath, content.splitlines())
 						for idx, line in enumerate(content.splitlines()):
 							if line.startswith("class Scheme"): # class SchemeXXX
 								className = findall("^[0-9A-Za-z]+", line[6:])
@@ -202,7 +258,7 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 							elif not line.startswith("\t") and line.strip() and not line.lstrip().startswith("#"): # Reset
 								className, functionName, schemeFlag, doubleSeparatorFlag = None, None, False, True # reset
 							
-							# Official Check #
+							# Official Line Check #
 							if line.lstrip().startswith("print(") or printFlag:
 								printFlag, escapeFlag, stringFlag = idx + 1, False, 0
 								for ch in line if printFlag else line[line.index("print(") + 5:]: # include the '('
