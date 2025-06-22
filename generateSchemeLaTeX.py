@@ -10,7 +10,8 @@ except:
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EOF = (-1)
-STARTUP_COMMAND_FORMAT = "START \"\" \"{0}\" \"{1}\" \"{2}\"" if __import__("platform").system().upper() == "WINDOWS" else "\"{0}\" \"{1}\" \"{2}\" &"
+PLATFORM = __import__("platform").system().upper()
+STARTUP_COMMAND_FORMAT = "START \"\" \"{0}\" \"{1}\" \"{2}\"" if "WINDOWS" == PLATFORM else "\"{0}\" \"{1}\" \"{2}\" &"
 
 
 def getTxt(filePath:str) -> str|None: # get ``*.txt`` content
@@ -48,12 +49,12 @@ def convertEscaped(string:str) -> str:
 	else:
 		return str(string)
 
-if __import__("platform").system().upper() == "WINDOWS":
+if PLATFORM == "WINDOWS":
 	def checkFile(filePath:str, lines:tuple|list|set, sleepingTime:int = 3) -> bool:
-		patterns = (																						\
-			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 				\
-			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, ]+round:int\\|None = None\\)", 	\
-			" = Scheme\\(curveType[A-Za-z, ]+\\)", "for idx in range\\([0-9]+, [A-Za-z]+\\)"								\
+		patterns = (																								\
+			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 						\
+			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", 			\
+			"def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", " = Scheme\\(curveType[A-Za-z, ]+\\)", "for idx in range\\([0-9]+, [A-Za-z]+\\)"	\
 		)
 		if isinstance(filePath, str) and isinstance(lines, (tuple, list, set)):
 			cnt = 0
@@ -81,10 +82,10 @@ if __import__("platform").system().upper() == "WINDOWS":
 			return len(patterns)
 else:
 	def checkFile(filePath:str, lines:None = None, sleepingTime:int = 3) -> int:
-		patterns = (																								\
-			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 				\
-			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 	\
-			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)"									\
+		patterns = (																										\
+			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 						\
+			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 			\
+			"def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", " = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)"		\
 		)
 		if isinstance(filePath, str):
 			cnt = 0
@@ -250,7 +251,13 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 									doubleSeparatorFlag = False # disable the double separator switch
 								elif not prompt.startswith("$") and prompt.rstrip().endswith("$"):
 									doubleSeparatorFlag = True # enable the double separator switch
-								f.write(prompt + ("\n\n" if doubleSeparatorFlag else "\n"))
+								tabCount = 0
+								for tabIdx in range(0, len(prompt), 5):
+									if prompt[tabIdx:].startswith("\\quad"):
+										tabCount += 1
+									else:
+										break
+								f.write("\t" * tabCount + prompt + ("\n\n" if doubleSeparatorFlag else "\n"))
 								if line.startswith("\t\treturn "):
 									functionName, schemeFlag, doubleSeparatorFlag = None, False, True
 							elif className is not None and functionName is not None and schemeFlag and line.lstrip().startswith("# ") and line.rstrip().endswith("\\textbf{end if}"):
@@ -381,6 +388,19 @@ def main() -> int:
 			print("The exit code provided here is inaccurate. Please refer to the exit codes of the child processes. ")
 	elif len(argv) == 2:
 		if os.path.isdir(argv[1]):
+			if "WINDOWS" != PLATFORM:
+				for root, dirs, files in os.walk(argv[1]):
+					for folderName in dirs:
+						try:
+							os.chmod(os.path.join(root, folderName), 0o755)
+						except:
+							pass
+				for fileName in files:
+					for fileName in files:
+						try:
+							os.chmod(os.path.join(root, fileName), 0o644)
+						except:
+							pass
 			for root, dirs, files in os.walk(argv[1]):
 				for fileName in files:
 					if os.path.splitext(fileName)[1].lower() == ".py" and "." != root:
@@ -389,10 +409,16 @@ def main() -> int:
 							totalCount += 1
 							print(filePath)
 							successCount += int(generateSchemeTxt(os.path.join(root, fileName)))
-		elif os.path.isfile(argv[1]) and os.path.splitext(argv[1])[1].lower() == ".py" and not os.path.islink(argv[1]) and os.path.abspath(os.path.dirname(argv[1])) != os.path.abspath(os.path.dirname(__file__)):
-			totalCount += 1
-			if generateSchemeTxt(argv[1]):
-				successCount += 1
+		elif os.path.isfile(argv[1]) and os.path.splitext(argv[1])[1].lower() == ".py" and os.path.abspath(os.path.dirname(argv[1])) != os.path.abspath(os.path.dirname(__file__)):
+			if "WINDOWS" != PLATFORM:
+				try:
+					os.chmod(argv[1], 0o644)
+				except:
+					pass
+			if not os.path.islink(argv[1]):
+				totalCount += 1
+				if generateSchemeTxt(argv[1]):
+					successCount += 1
 		else:
 			print("Cannot recognize the following option as a folder or a Python file. \n\t{0}".format(argv[1]))
 	else:

@@ -99,25 +99,29 @@ $V_{\textit{id}_i} \gets H_3(e(H_0(\textit{id}_i), \textit{ek}_{\textit{id}^*} \
 
 Compute $\vec{b} \gets (b_0, b_1, b_2, \cdots b_n)$ that satisfy $\forall y \in \mathbb{Z}_r$, we have $g(y) = \prod\limits_{V_{\textit{id}_k} \in V_{\textit{id}}} (y - V_{\textit{id}_k}) + d_2 = b_0 + \sum\limits_{k = 1}^n b_k y^k$
 
-$\textit{ct} \gets (C_0, C_1, C_2, C_3, C_4, \textit{ctag}, \vec{y}, \vec{b})
+$\textit{ct} \gets (C_0, C_1, C_2, C_3, C_4, \textit{ctag}, \vec{y}, \vec{b})$
+
 \textbf{return} $\textit{ct}$
 
 \subsection{$\textbf{Dec}(S, \textit{dk}_{\textit{id}_i}, \textit{id}^*, \textit{ct}) \rightarrow m$}
 
 $V(\textit{id}_i) \gets H_3(e(\textit{dk}_{i, 3}, C_2)e(\textit{dk}_{i, 2}, H_1(\textit{id}^*))e(\textit{dk}_{i, 1}, C_4))$
 
-d_2 \gets g(V_{\textit{id}_i}) = b_0 + \sum\limits_{j = 1}^n b_j V_{\textit{id}_i}^j$
+$d_2 \gets g(V_{\textit{id}_i}) = b_0 + \sum\limits_{j = 1}^n b_j V_{\textit{id}_i}^j$
 
 $\textit{rtag} \gets \sum\limits_{i = 1}^l y_i \textit{rtags}_i$
 
 \textbf{if} $\textit{rtag} = \textit{ctag}$ \textbf{then}
 
-\quad$m \gets \perp$
+	\quad$m \gets \perp$
 
-\quad$A \gets e(C_1, \prod\limits_{j = 1}^l \textit{dk}_{7, j}^{y_j})e(C_2, \prod\limits_{j = 1}^l \textit{dk}_{8, j}^{y_j}) / e(C_3^{1 / d_2}, \textit{dk}_6)
-\quad$B \gets e(C_1, \textit{dk}_4) \cdot e(C_2, \textit{dk}_5)$
+\textbf{else}
 
-$m \gets C_0 \cdot A^{1 / (\textit{rtag} - \textit{ctag})} \cdot B^{-1}$
+	\quad$A \gets e\left(C_1, \prod\limits_{j = 1}^l \textit{dk}_{7, j}^{y_j}\right)e\left(C_2, \prod\limits_{j = 1}^l \textit{dk}_{8, j}^{y_j}\right) / e(C_3^{1 / d_2}, \textit{dk}_6)$
+
+	\quad$B \gets e(C_1, \textit{dk}_4) \cdot e(C_2, \textit{dk}_5)$
+
+	\quad$m \gets C_0 \cdot A^{1 / (\textit{rtag} - \textit{ctag})} \cdot B^{-1}$
 
 \textbf{end if}
 

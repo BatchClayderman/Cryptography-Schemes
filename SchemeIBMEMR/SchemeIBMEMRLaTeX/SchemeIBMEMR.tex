@@ -117,27 +117,27 @@ $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, 
 
 \textbf{if} $e(\textit{ct}_5, H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
 
-\quad$K'' \gets H_4(e(\textit{dk}_1, H_1(\textit{id}_S)) \cdot e(H_2(\textit{id}_R), \textit{ct}_1))$
+	\quad$K'' \gets H_4(e(\textit{dk}_1, H_1(\textit{id}_S)) \cdot e(H_2(\textit{id}_R), \textit{ct}_1))$
 
-\quad$R'' \gets H_4(e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3))$
+	\quad$R'' \gets H_4(e(\textit{dk}_2, \textit{ct}_2) \cdot e(\textit{dk}_3, \textit{ct}_3))$
 
-\quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
+	\quad$K' \gets \sum\limits_{i = 0}^d a_i K''^i$
 
-\quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
+	\quad$R' \gets \sum\limits_{i = 0}^d b_i R''^i$
 
-\quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
+	\quad$m || \sigma \gets \textit{ct}_4 \oplus \hat{H}(K') \oplus \hat(H)(R')$
 
-\quad$r \gets H_3(m || \sigma)$
+	\quad$r \gets H_3(m || \sigma)$
 
-\quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
+	\quad\textbf{if} $\textit{ct}_5 \neq g^r$ \textbf{then}
 
-\quad\quad$m \gets \perp$
+		\quad\quad$m \gets \perp$
 
 \quad\textbf{end if}
 
 \textbf{else}
 
-\quad$m \gets \perp$
+	\quad$m \gets \perp$
 
 \textbf{end if}
 
@@ -147,13 +147,13 @@ $\textit{ct} \gets (\textit{ct}_1, \textit{ct}_2, \textit{ct}_3, \textit{ct}_4, 
 
 \textbf{if} $e(\textit{ct}_5, H_5(\textit{ct}_1 || \textit{ct}_2 || \cdots || \textit{ct}_5 || a_0 || a_1 || \cdots || a_d || b_0 || b_1 || \cdots || b_d || c_0 || c_1 || \cdots c_d)) = e(\textit{ct}_6, g)$ \textbf{then}
 
-\quad$V' \gets H_4(e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3))$
+	\quad$V' \gets H_4(e(\textit{td}_1, \textit{ct}_2) \cdot e(\textit{td}_2, \textit{ct}_3))$
 
-\quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
+	\quad$y \gets \sum\limits_{i = 0}^d c_i V'^i = 0$
 
 \textbf{else}
 
-\quad$y \gets 0$
+	\quad$y \gets 0$
 
 \textbf{end if}
 

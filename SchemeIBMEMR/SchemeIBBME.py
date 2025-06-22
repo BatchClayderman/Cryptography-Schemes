@@ -205,7 +205,7 @@ class SchemeIBBME:
 		bVec = self.__computeCoefficients(	\
 			V_id, k = d2					\
 		) # Compute $\vec{b} \gets (b_0, b_1, b_2, \cdots b_n)$ that satisfy $\forall y \in \mathbb{Z}_r$, we have $g(y) = \prod\limits_{V_{\textit{id}_k} \in V_{\textit{id}}} (y - V_{\textit{id}_k}) + d_2 = b_0 + \sum\limits_{k = 1}^n b_k y^k$
-		ct = (C0, C1, C2, C3, C4, ctag, yVec, bVec) # $\textit{ct} \gets (C_0, C_1, C_2, C_3, C_4, \textit{ctag}, \vec{y}, \vec{b})
+		ct = (C0, C1, C2, C3, C4, ctag, yVec, bVec) # $\textit{ct} \gets (C_0, C_1, C_2, C_3, C_4, \textit{ctag}, \vec{y}, \vec{b})$
 		
 		# Return #
 		return ct # \textbf{return} $\textit{ct}$
@@ -243,16 +243,16 @@ class SchemeIBBME:
 		
 		# Scheme #
 		V_id_i = H3(pair(dki3, C2) * pair(dki2, H1(idStar)) * pair(dki1, C4)) # $V(\textit{id}_i) \gets H_3(e(\textit{dk}_{i, 3}, C_2)e(\textit{dk}_{i, 2}, H_1(\textit{id}^*))e(\textit{dk}_{i, 1}, C_4))$
-		d2 = self.__computePolynomial(V_id_i, bVec) # d_2 \gets g(V_{\textit{id}_i}) = b_0 + \sum\limits_{j = 1}^n b_j V_{\textit{id}_i}^j$
+		d2 = self.__computePolynomial(V_id_i, bVec) # $d_2 \gets g(V_{\textit{id}_i}) = b_0 + \sum\limits_{j = 1}^n b_j V_{\textit{id}_i}^j$
 		rtag = sum(yVec[i + 1] * rtags[i] for i in range(self.__l)) # $\textit{rtag} \gets \sum\limits_{i = 1}^l y_i \textit{rtags}_i$
 		if rtag == ctag: # \textbf{if} $\textit{rtag} = \textit{ctag}$ \textbf{then}
 			m = False # \quad$m \gets \perp$
-		else:
+		else: # \textbf{else}
 			A = (																																					\
 				pair(C1, self.__product(tuple(dki7[j] ** yVec[j + 1] for j in range(self.__l)))) * pair(C2, self.__product(tuple(dki8[j] ** yVec[j + 1] for j in range(self.__l)))) / pair(C3 ** (1 / d2), dki6)	\
-			) # \quad$A \gets e(C_1, \prod\limits_{j = 1}^l \textit{dk}_{7, j}^{y_j})e(C_2, \prod\limits_{j = 1}^l \textit{dk}_{8, j}^{y_j}) / e(C_3^{1 / d_2}, \textit{dk}_6)
+			) # \quad$A \gets e\left(C_1, \prod\limits_{j = 1}^l \textit{dk}_{7, j}^{y_j}\right)e\left(C_2, \prod\limits_{j = 1}^l \textit{dk}_{8, j}^{y_j}\right) / e(C_3^{1 / d_2}, \textit{dk}_6)$
 			B = pair(C1, dki4) * pair(C2, dki5) # \quad$B \gets e(C_1, \textit{dk}_4) \cdot e(C_2, \textit{dk}_5)$
-			m = C0 * A ** (1 / (rtag - ctag)) * B ** (-1) # $m \gets C_0 \cdot A^{1 / (\textit{rtag} - \textit{ctag})} \cdot B^{-1}$
+			m = C0 * A ** (1 / (rtag - ctag)) * B ** (-1) # \quad$m \gets C_0 \cdot A^{1 / (\textit{rtag} - \textit{ctag})} \cdot B^{-1}$
 		# \textbf{end if}
 		
 		# Return #

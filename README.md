@@ -310,6 +310,34 @@ The corresponding procedures of the final method are shown as follows. We can se
 | Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $w - abc$ if $2 \nmid d$ else $abc + w$ |
 | Reverse | $w - abc$ if $2 \nmid d$ else $abc + w$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
+```
+def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
+	flag = False
+	if isinstance(roots, (tuple, list, set)) and roots:
+		n = len(roots)
+		if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
+			flag, coefficients = True, [None] * (n - 1) + [roots[0], self.__group.init(roots[0].type, 1)]
+			offset = k if isinstance(k, Element) and k.type == roots[0].type else None
+		elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots):
+			flag, coefficients = True, [None] * (n - 1) + [roots[0], 1]
+			offset = k if isinstance(k, (int, float)) else None
+	if flag:
+		cnt = n - 2
+		for r in roots[1:]:
+			coefficients[cnt] = r * coefficients[cnt + 1]
+			for i in range(cnt + 1, n - 1):
+				coefficients[i] += r * coefficients[i + 1]
+			coefficients[n - 1] += r
+			cnt -= 1
+		for i in range(n - 1, -1, -2):
+			coefficients[i] = -coefficients[i]
+		if offset is not None:
+			coefficients[0] += offset
+		return tuple(coefficients)
+	else:
+		return (k, )
+```
+
 #### 1.2.6 Polynomial computation
 
 The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(n + 1))``. 
