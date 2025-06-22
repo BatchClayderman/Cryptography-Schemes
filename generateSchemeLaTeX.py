@@ -207,7 +207,7 @@ def handleFolder(fd:str) -> bool:
 
 def generateSchemeTxt(pythonFilePath:str) -> bool:
 	if isinstance(pythonFilePath, str):
-		if os.path.splitext(pythonFilePath)[1].lower() == ".py":
+		if os.path.isfile(pythonFilePath) and not os.path.islink(pythonFilePath) and os.path.splitext(pythonFilePath)[1].lower() == ".py":
 			content, folderPath, fileName = getTxt(pythonFilePath), pythonFilePath[:-3] + "LaTeX", os.path.split(pythonFilePath)[1][:-3] + ".tex"
 			if content is None:
 				print("Failed to read \"{0}\". ".format(pythonFilePath))
@@ -368,7 +368,7 @@ def generateSchemeTxt(pythonFilePath:str) -> bool:
 				print("The TEX generation for \"{0}\" failed since the parent folder was not created successfully. ".format(pythonFilePath))
 				return False
 		else:
-			print("The passed file \"{0}\" is not a Python file. ".format(pythonFilePath))
+			print("The passed file \"{0}\" is not a normal Python file. ".format(pythonFilePath))
 			return False
 	else:
 		print("The passed parameter should be a string. ")
