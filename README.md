@@ -189,48 +189,46 @@ This can cause large time consumption when the number of roots is large. That is
 
 To begin with, we need to look at a simple example with $k = 0$ first. For $n = 3$ and $X = \lbrace 2, 3, 5\rbrace$, we have the following calculation process to iterate to avoid combinatorial multiplication, where performing negation means taking the negation of every other coefficient from the second-highest-degree term to the constant term. 
 
-| Coefficients ($\uparrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ | ~ | Coefficients ($\downarrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ |
+| Coefficients ($\uparrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ | | Coefficients ($\downarrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ |
 | - | - | - | - | - | - | - | - | - | - | - |
 | Initial $\vec{c} \gets (1, 0, 0, 0)$ | $1$ | $0$ | $0$ | $0$ | | Initial $\vec{c} \gets (0, 0, 0, 1)$ | $0$ | $0$ | $0$ | $1$ |
-| $c_1 \gets c_1 + x_1 * c_0$ | $1$ | $2$ | $0$ | $0$ | | $c_2 \gets c_3 + x_1 * c_3$ | $0$ | $0$ | $2$ | $1$ |
-| $c_2 \gets c_2 + x_2 * c_1$ | $1$ | $2$ | $6$ | $0$ | | $c_1 \gets c_1 + x_2 * c_2$ | $0$ | $6$ | $2$ | $1$ |
-| $c_1 \gets c_1 + x_2 * c_0$ | $1$ | $5$ | $6$ | $0$ | | $c_2 \gets c_2 + x_2 * c_3$ | $0$ | $6$ | $5$ | $1$ |
-| $c_3 \gets c_3 + x_3 * c_2$ | $1$ | $5$ | $6$ | $30$ | | $c_0 \gets c_0 + x_3 * c_1$ | $30$ | $6$ | $5$ | $1$ |
-| $c_2 \gets c_2 + x_3 * c_1$ | $1$ | $5$ | $31$ | $30$ | | $c_1 \gets c_1 + x_3 * c_2$ | $30$ | $31$ | $5$ | $1$ |
-| $c_1 \gets c_1 + x_3 * c_0$ | $1$ | $10$ | $31$ | $30$ | | $c_2 \gets c_2 + x_3 * c_3$ | $30$ | $31$ | $10$ | $1$ |
+| $c_1 \gets c_1 + x_1 c_0$ | $1$ | $2$ | $0$ | $0$ | | $c_2 \gets c_3 + x_1 c_3$ | $0$ | $0$ | $2$ | $1$ |
+| $c_2 \gets c_2 + x_2 c_1$ | $1$ | $2$ | $6$ | $0$ | | $c_1 \gets c_1 + x_2 c_2$ | $0$ | $6$ | $2$ | $1$ |
+| $c_1 \gets c_1 + x_2 c_0$ | $1$ | $5$ | $6$ | $0$ | | $c_2 \gets c_2 + x_2 c_3$ | $0$ | $6$ | $5$ | $1$ |
+| $c_3 \gets c_3 + x_3 c_2$ | $1$ | $5$ | $6$ | $30$ | | $c_0 \gets c_0 + x_3 c_1$ | $30$ | $6$ | $5$ | $1$ |
+| $c_2 \gets c_2 + x_3 c_1$ | $1$ | $5$ | $31$ | $30$ | | $c_1 \gets c_1 + x_3 c_2$ | $30$ | $31$ | $5$ | $1$ |
+| $c_1 \gets c_1 + x_3 c_0$ | $1$ | $10$ | $31$ | $30$ | | $c_2 \gets c_2 + x_3 c_3$ | $30$ | $31$ | $10$ | $1$ |
 | Perform negation ($\rightarrow$) | $1$ | $-10$ | $31$ | $-30$ | | Perform negation ($\leftarrow$) | $-30$ | $31$ | $-10$ | $1$ |
 
 Now, we get $(x - 2)(x - 3)(x - 5) = x^3 -10x^2 + 31x - 30$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
 
-More generally, according to the feature of the cyclic polynomial, let $\lbrace x_1, x_2, x_3\rbrace = \lbrace 2, 3, 5\rbrace$ denote the roots. As the equation still holds after adding $k$ to both sides of the equation, adding $k$ directly after alternating $\pm$ signs should be correct. No need to consider whether the  The principle behind this can be shown as follows. 
+More generally, according to the feature of the cyclic polynomial, let $\lbrace x_1, x_2, x_3\rbrace = \lbrace 2, 3, 5\rbrace$ denote the roots. As the equation still holds after adding $k$ to both sides of the equation, adding $k$ directly after performing negation should be correct. No need to consider whether the $k$ should be negated or not. The principle behind this can be shown as follows. 
 
-| Operation | [0] | [1] | [2] | [3] |
-| - | - | - | - | - |
-| Initial [1] + [0] * $d$ | 1 | 0 | 0 | 0 |
-| [1] += $a$ * [0] | 1 | $a$ | 0 | 0 |
-| [2] += $b$ * [1] | 1 | $a$ | $ab$ | 0 |
-| [1] += $b$ * [0] | 1 | $a + b$ | $ab$ | 0 |
-| [3] += $c$ * [2] | 1 | $a + b$ | $ab$ | $abc$ |
-| [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
-| that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
-| [1] += $c$ * [0] | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
-| Proceed $w$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc - w$ if $2 \nmid d$ else $abc + w$ |
-| Perform negation | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $abc$ if $2 \mid d$ else $-abc$ |
-| Reverse | $w - abc$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
+| Coefficients ($\uparrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ | | Coefficients ($\downarrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ |
+| - | - | - | - | - | - | - | - | - | - | - |
+| Initial $\vec{c} \gets (1, 0, 0, 0)$ | $1$ | $0$ | $0$ | $0$ | | Initial $\vec{c} \gets (0, 0, 0, 1)$ | $0$ | $0$ | $0$ | $1$ |
+| $c_1 \gets c_1 + x_1 c_0$ | $1$ | $x_1$ | $0$ | $0$ | | $c_2 \gets c_3 + x_1 c_3$ | $0$ | $0$ | $x1$ | $1$ |
+| $c_2 \gets c_2 + x_2 c_1$ | $1$ | $x_1$ | $x_1 x_2$ | $0$ | | $c_1 \gets c_1 + x_2 c_2$ | $0$ | $x_1 x_2$ | $x_1$ | $1$ |
+| $c_1 \gets c_1 + x_2 c_0$ | $1$ | $x_1 + x_2$ | $x_1 x_2$ | $0$ | | $c_2 \gets c_2 + x_2 c_3$ | $0$ | $x_1 x_2$ | $x_1 + x_2$ | $1$ |
+| $c_3 \gets c_3 + x_3 c_2$ | $1$ | $x_1 + x_2$ | $x_1 x_2$ | $x_1 x_2 x_3$ | | $c_0 \gets c_0 + x_3 c_1$ | $x_1 x_2 x_3$ | $x_1 x_2$ | $x1 + x_2$ | $1$ |
+| $c_2 \gets c_2 + x_3 c_1$ | $1$ | $x_1 + x_2$ | $x_1 x_2 + x_3(x_1 + x_2)$ | $x_1 x_2 x_3$ | | $c_1 \gets c_1 + x_3 c_2$ | $x_1 x_2 x_3$ | $x_1 x_2 + x_3(x_1 + x_2)$ | $x_1 + x_2$ | $1$ |
+| | $1$ | $x_1 + x_2$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 x_2 x_3$ | | | $x_1 x_2 x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 + x_2$ | $1$ |
+| $c_1 \gets c_1 + x_3 c_0$ | $1$ | $x_1 + x_2 + x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 x_2 x_3$ | | $c_2 \gets c_2 + x_3 c_3$ | $x_1 x_2 x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 + x_2 + x_3$ | $1$ |
+| Perform negation ($\rightarrow$) | $1$ | $-(x_1 + x_2 + x_3)$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $-x_1 x_2 x_3$ | | Perform negation ($\leftarrow$) | $-x_1 x_2 x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $-(x_1 + x_2 + x_3)$ | $1$ |
 
-The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots and the constant other than the left-hand multiplication as input and outputs the coefficients. 
+The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots $X$ and the translation factor $k$ as input and outputs the coefficients $\vec{c}$. 
 
 ```
-def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
+def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = None) -> tuple:
 	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
-		d = len(roots)
-		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * d
+		n = len(roots)
+		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * n
 		for r in roots:
-			for k in range(d, 0, -1):
-				coefficients[k] += r * coefficients[k - 1]
-		coefficients = [(-1) ** i * coefficients[i] for i in range(d, -1, -1)]
-		if isinstance(w, Element) and w.type == ZR or isinstance(w, int):
-			coefficients[-1] += w * self.__group.init(G1, 1)
+			for i in range(n, 0, -1):
+				coefficients[i] += r * coefficients[i - 1]
+		coefficients = [(-1) ** i * coefficients[i] for i in range(n, -1, -1)]
+		if isinstance(k, Element) and k.type == ZR or isinstance(k, int):
+			coefficients[-1] += k
 		return tuple(coefficients)
 	else:
 		return (self.__group.init(ZR, 1), )
@@ -239,20 +237,20 @@ def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = No
 The time complexity of this algorithm is $O(n^2)$. As the inner loop starts from ``coefficients[cnt]`` where ``cnt`` is the current count of the roots that are proceeded and being proceeded, we can use the ``cnt`` to optimize the method to $O\left(\cfrac{n(n + 1)}{2}\right)$. An improved method is shown as follows, with bitwise operations used for optimization. 
 
 ```
-def __computeCoefficients(self:object, roots:tuple|list|set, w:None|Element = None) -> tuple:
+def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = None) -> tuple:
 	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
-		d, cnt = len(roots), 1
-		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * d
+		n, cnt = len(roots), 1
+		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * n
 		for r in roots:
-			for k in range(cnt, 0, -1):
-				coefficients[k] += r * coefficients[k - 1]
+			for i in range(cnt, 0, -1):
+				coefficients[i] += r * coefficients[i - 1]
 			cnt += 1
-		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1)]
-		if isinstance(w, Element) and w.type == ZR or isinstance(w, int):
-			coefficients[0] += w
+		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(n, -1, -1)]
+		if isinstance(k, Element) and k.type == ZR or isinstance(k, int):
+			coefficients[0] += k
 		return tuple(coefficients)
 	else:
-		return (w, )
+		return (k, )
 ```
 
 After multiple experiments, we found the following issues in some versions of the Python charm library, some of which led to computation errors in coefficient computation and polynomial computation. Especially, the polynomial computation result of one of the roots based on the corresponding coefficients figured out is always non-zero. 
@@ -273,46 +271,32 @@ After multiple experiments, we found the following issues in some versions of th
 Therefore, we have to avoid using the ``1`` or ``0`` in any coefficient computation in ``PairingGroup`` environments. The final method is shown as follows. 
 
 ```
-def __computeCoefficients(self:object, roots:tuple|list|set, w:Element|int|float|None = None) -> tuple:
+def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
 	flag = False
 	if isinstance(roots, (tuple, list, set)) and roots:
-		d = len(roots)
+		n = len(roots)
 		if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
-			flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (d - 1)
-			constant = w if isinstance(w, Element) and w.type == roots[0].type else None
-		elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots) and isinstance(w, (int, float)):
-			flag, coefficients = True, [1, roots[0]] + [None] * (d - 1)
-			constant = w if isinstance(w, (int, float)) else None
+			flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (n - 1)
+			offset = k if isinstance(k, Element) and k.type == roots[0].type else None
+		elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots):
+			flag, coefficients = True, [1, roots[0]] + [None] * (n - 1)
+			offset = k if isinstance(k, (int, float)) else None
 	if flag:
 		cnt = 2
 		for r in roots[1:]:
 			coefficients[cnt] = r * coefficients[cnt - 1]
-			for k in range(cnt - 1, 1, -1):
-				coefficients[k] += r * coefficients[k - 1]
+			for i in range(cnt - 1, 1, -1):
+				coefficients[i] += r * coefficients[i - 1]
 			coefficients[1] += r
 			cnt += 1
-		if constant is not None:
-			coefficients[-1] += -constant if d & 1 else constant
-		return tuple(-coefficients[i] if i & 1 else coefficients[i] for i in range(d, -1, -1))
+		for i in range(1, n + 1, 2):
+			coefficients[i] = -coefficients[i]
+		if offset is not None:
+			coefficients[-1] += offset
+		return tuple(coefficients)
 	else:
-		return (w, )
+		return (k, )
 ```
-
-The corresponding procedures of the final method are shown as follows. We can see that the variable $w$ is always being added finally no matter whether $2 \nmid d$. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
-
-| Operation | [0] | [1] | [2] | [3] |
-| - | - | - | - | - |
-| Initial [1] + [None] * $d$ | 1 | None | None | None |
-| [1] = $a$ | 1 | $a$ | 0 | 0 |
-| [2] = $b$ * [1] | 1 | $a$ | $ab$ | 0 |
-| [1] += $b$ | 1 | $a + b$ | $ab$ | 0 |
-| [3] = $c$ * [2] | 1 | $a + b$ | $ab$ | $abc$ |
-| [2] += $c$ * [1] | 1 | $a + b$ | $ab + (a + b)c$ | $abc$ |
-| that is | 1 | $a + b$ | $ab + ac + bc$ | $abc$ |
-| [1] += $c$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc$ |
-| Proceed $w$ | 1 | $a + b + c$ | $ab +ac + bc$ | $abc - w$ if $2 \nmid d$ else $abc + w$ |
-| Alternate $\pm$ signs | 1 | $-(a + b + c)$ | $ab +ac + bc$ | $w - abc$ if $2 \nmid d$ else $abc + w$ |
-| Reverse | $w - abc$ if $2 \nmid d$ else $abc + w$ | $ab + ac + bc$ | $-(a + b + c)$ | 1 |
 
 ```
 def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
@@ -341,6 +325,20 @@ def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float
 	else:
 		return (k, )
 ```
+
+The corresponding procedures of the final method are shown as follows. In this problem, the coefficient of the highest-order term is always $1$, which should be omitted to save space complexity. Nonetheless, in practice, it is retained to meet the academic program specifications and space measurement requirements. By the way, this ``1`` is assigned to the corresponding ``1`` according to the type of the roots, and it never involves any computation throughout the script. 
+
+| Coefficients ($\uparrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ | | Coefficients ($\downarrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ |
+| - | - | - | - | - | - | - | - | - | - | - |
+| Initial $\vec{c} \gets (\mathbb{1}, \perp, \perp, \perp)$ | $1$ | $\perp$ | $\perp$ | $\perp$ | | Initial $\vec{c} \gets (\perp, \perp, \perp, \mathbb{1})$ | $\perp$ | $\perp$ | $\perp$ | $\mathbb{1}$ |
+| $c_1 \gets x_1$ | $\mathbb{1}$ | $x_1$ | $\perp$ | $\perp$ | | $c_2 \gets x_1 c_3$ | $\perp$ | $\perp$ | $x1$ | $\mathbb{1}$ |
+| $c_2 \gets x_2 c_1$ | $\mathbb{1}$ | $x_1$ | $x_1 x_2$ | $\perp$ | | $c_1 \gets x_2 c_2$ | $\perp$ | $x_1 x_2$ | $x_1$ | $\mathbb{1}$ |
+| $c_1 \gets c_1 + x_2$ | $\mathbb{1}$ | $x_1 + x_2$ | $x_1 x_2$ | $\perp$ | | $c_2 \gets c_2 + x_2 c_3$ | $\perp$ | $x_1 x_2$ | $x_1 + x_2$ | $\mathbb{1}$ |
+| $c_3 \gets x_3 c_2$ | $\mathbb{1}$ | $x_1 + x_2$ | $x_1 x_2$ | $x_1 x_2 x_3$ | | $c_0 \gets x_3 c_1$ | $x_1 x_2 x_3$ | $x_1 x_2$ | $x1 + x_2$ | $\mathbb{1}$ |
+| $c_2 \gets c_2 + x_3 c_1$ | $\mathbb{1}$ | $x_1 + x_2$ | $x_1 x_2 + x_3(x_1 + x_2)$ | $x_1 x_2 x_3$ | | $c_1 \gets c_1 + x_3 c_2$ | $x_1 x_2 x_3$ | $x_1 x_2 + x_3(x_1 + x_2)$ | $x_1 + x_2$ | $\mathbb{1}$ |
+| | $\mathbb{1}$ | $x_1 + x_2$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 x_2 x_3$ | | | $x_1 x_2 x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 + x_2$ | $1$ |
+| $c_1 \gets c_1 + x_3$ | $\mathbb{1}$ | $x_1 + x_2 + x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 x_2 x_3$ | | $c_2 \gets c_2 + x_3 c_3$ | $x_1 x_2 x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $x_1 + x_2 + x_3$ | $\mathbb{1}$ |
+| Perform negation ($\rightarrow$) | $\mathbb{1}$ | $-(x_1 + x_2 + x_3)$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $-x_1 x_2 x_3$ | | Perform negation ($\leftarrow$) | $-x_1 x_2 x_3$ | $x_1 x_2 + x_1 x_3 + x_2 x_3$ | $-(x_1 + x_2 + x_3)$ | $\mathbb{1}$ |
 
 #### 1.2.6 Polynomial computation
 
