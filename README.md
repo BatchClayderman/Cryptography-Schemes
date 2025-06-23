@@ -268,7 +268,7 @@ After multiple experiments, we found the following issues in some versions of th
 - The last inner loop of each outer loop performs a multiplication by 1, which is unnecessary. 
 - $\cdots$
 
-Therefore, we have to avoid using the ``1`` or ``0`` in any coefficient computation in ``PairingGroup`` environments. The final method is shown as follows. 
+Meanwhile, it is found that While ``self.__group.init(ZR, 1)`` is not the real ``1`` in the ZR or G1 field, the addition, subtraction, multiplication and division operations can still work correctly in the group since the the group is closed, that is, the elements in the group will be modulo the order of the group after the operation is completed. However, problems exist in exponential operations. Therefore, we have to avoid using the ``1``, ``0``, or exponential operation in any coefficient computation in ``PairingGroup`` environments. The final method is shown as follows. 
 
 ```
 def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
@@ -342,9 +342,7 @@ The corresponding procedures of the final method are shown as follows. In this p
 
 #### 1.2.6 Polynomial computation
 
-The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(n + 1))``. 
-
-However, since neither ``x ** 2`` nor ``x ** self.__group.init(ZR, 2)`` is the same as ``x * x`` for any ``x`` belonging to the ``Element`` type, the following method is designed. 
+The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(n + 1))``. However, since either ``x ** 2`` or ``x ** self.__group.init(ZR, 2)`` can be inconsistent with ``x * x`` for any ``x`` belonging to the ``Element`` type in some versions of the Python charm library, the following method is designed. 
 
 ```
 def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Element:
