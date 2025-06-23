@@ -187,23 +187,22 @@ $$
 Here come the issues of the computing methodology above. If we directly compute the coefficients as the system of equations shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. 
 This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
 
-To begin with, we need to look at a simple example with $k = 0$ first. For $n = 3$ and $X = \lbrace 2, 3, 5\rbrace$, we have the following calculation process to iterate to avoid combinatorial multiplication, where performing negation means taking the negation of [1], then negating every other element at alternating indices. That is, take the negation of [1], [3], [5], $\cdots. 
+To begin with, we need to look at a simple example with $k = 0$ first. For $n = 3$ and $X = \lbrace 2, 3, 5\rbrace$, we have the following calculation process to iterate to avoid combinatorial multiplication, where performing negation means taking the negation of every other coefficient from the second-highest-degree term to the constant term. 
 
-| $\uparrow$ | [0] | [1] | [2] | [3] |
-| - | - | - | - | - |
-| Initial $\vec{c} \gets (1, 0, 0, 0)$ | $1$ | $0$ | $0$ | $0$ |
-| [1] += 2 * [0] | 1 | 2 | 0 | 0 |
-| [2] += 3 * [1] | 1 | 2 | 6 | 0 |
-| [1] += 3 * [0] | 1 | 5 | 6 | 0 |
-| [3] += 5 * [2] | 1 | 5 | 6 | 30 |
-| [2] += 5 * [1] | 1 | 5 | 31 | 30 |
-| [1] += 5 * [0] | 1 | 10 | 31 | 30 |
-| Perform negation | 1 | $-10$ | 31 | $-30$ |
-| Reverse | $-30$ | 31 | $-10$ | 1 |
+| Coefficients ($\uparrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ | ~ | Coefficients ($\downarrow$) | $c_0$ | $c_1$ | $c_2$ | $c_3$ |
+| - | - | - | - | - | - | - | - | - | - | - |
+| Initial $\vec{c} \gets (1, 0, 0, 0)$ | $1$ | $0$ | $0$ | $0$ | | Initial $\vec{c} \gets (0, 0, 0, 1)$ | $0$ | $0$ | $0$ | $1$ |
+| $c_1 \gets c_1 + x_1 * c_0$ | $1$ | $2$ | $0$ | $0$ | | $c_2 \gets c_3 + x_1 * c_3$ | $0$ | $0$ | $2$ | $1$ |
+| $c_2 \gets c_2 + x_2 * c_1$ | $1$ | $2$ | $6$ | $0$ | | $c_1 \gets c_1 + x_2 * c_2$ | $0$ | $6$ | $2$ | $1$ |
+| $c_1 \gets c_1 + x_2 * c_0$ | $1$ | $5$ | $6$ | $0$ | | $c_2 \gets c_2 + x_2 * c_3$ | $0$ | $6$ | $5$ | $1$ |
+| $c_3 \gets c_3 + x_3 * c_2$ | $1$ | $5$ | $6$ | $30$ | | $c_0 \gets c_0 + x_3 * c_1$ | $30$ | $6$ | $5$ | $1$ |
+| $c_2 \gets c_2 + x_3 * c_1$ | $1$ | $5$ | $31$ | $30$ | | $c_1 \gets c_1 + x_3 * c_2$ | $30$ | $31$ | $5$ | $1$ |
+| $c_1 \gets c_1 + x_3 * c_0$ | $1$ | $10$ | $31$ | $30$ | | $c_2 \gets c_2 + x_3 * c_3$ | $30$ | $31$ | $10$ | $1$ |
+| Perform negation ($\rightarrow$) | $1$ | $-10$ | $31$ | $-30$ | | Perform negation ($\leftarrow$) | $-30$ | $31$ | $-10$ | $1$ |
 
-That is, we get $(x - 2)(x - 3)(x - 5) = -30 + 31x - 10x^2 + x^3$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
+Now, we get $(x - 2)(x - 3)(x - 5) = x^3 -10x^2 + 31x - 30$, which is correct. We can also note that the order in which the roots are processed can be random, as long as each root (not the value of the root) is processed and processed only once. 
 
-More generally, according to the feature of the cyclic polynomial, let $\lbrace a, b, c\rbrace = \lbrace 2, 3, 5\rbrace$ denote the roots. As the equation still holds after adding $w$ to both sides of the equation, adding $w$ directly after alternating $\pm$ signs should be correct. No need to consider whether the  The principle behind this can be shown as follows. 
+More generally, according to the feature of the cyclic polynomial, let $\lbrace x_1, x_2, x_3\rbrace = \lbrace 2, 3, 5\rbrace$ denote the roots. As the equation still holds after adding $k$ to both sides of the equation, adding $k$ directly after alternating $\pm$ signs should be correct. No need to consider whether the  The principle behind this can be shown as follows. 
 
 | Operation | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
