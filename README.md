@@ -141,52 +141,57 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 
 #### 1.2.5 Coefficient computation
 
-The ``computeCoefficients`` function is used to compute the coefficients of the expand expression of the expressions like $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w$. That is, we need to compute $\lbrace y_0, y_1, \cdots, y_d\rbrace$ satisfying $F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i, \forall x \in \mathbb{R}$. 
+The ``computeCoefficients`` function is used to compute the coefficients of the expanded version of the expression $F(x) = (x - x_1)(x - x_2)\cdots(x - x_n) + k$ in the field of $\mathbb{R}$. In other words, given the multiset $X = \lbrace x_1, x_2, \cdots, x_n\rbrace$ whose size is $n = \|x\|$, we need to design an algorithm in the ``computeCoefficients`` function to compute $\vec{c} \gets \lbrace c_0, c_1, c_2, \cdots, c_n\rbrace$ satisfying $F(x) = (x - x_1)(x - x_2)\cdots(x - x_n) + k = c_0 + \sum\limits_{i = 1}^n c_i x^i, \forall x \in \mathbb{R}$. 
+When the translation factor $k = 0$, $x_1, x_2, \cdots, x_n$ are the $n$ roots of the equation $F(x) = 0$. These roots can be in different orders and can have the same value. In the expanded version of the expression, $c_0$ represents the constant term. Each of the remaining coefficients $c_1, c_2, \cdots, c_n$ has a subscript equal to the degree of the term it corresponds to. Additionally, we have $\|\vec{c}\| = n + 1 = \|X\|$ to help verify the coefficient computation. 
 
-In the numpy library, this can be handled by the ``poly`` (the earlier solution from ``from numpy import poly``) outputting from the highest order term coefficient to the constant term coefficient and the ``Polynomial`` (the later solution from ``from numpy.polynomial import Polynomial``) outputting from the constant term coefficient to the highest order term coefficient. 
+In the numpy library, this can be handled by two application programming interfaces (APIs). One is the ``Polynomial`` API (``from numpy.polynomial import Polynomial``), the newer solution that outputs from the constant term coefficient to the highest order term coefficient. The other is the ``poly`` API (``from numpy import poly``), the earlier solution that outputs from the highest order term coefficient to the constant term coefficient. The usage examples are shown as follows. 
+In real-world computation, people tend to write the terms or the coefficients from the highest-degree term to the constant term when writing polynomials. For example, people would like to write $F(x) = x^3 - 10x^2 + 31 -30$ instead of $F(x) = -30 + 31 - 10x^2 + x^3$. 
+However, in cryptography schemes and computer programming, to achieve higher computation and storage efficiency, scholars and engineers would like to arrange them from the constant term to the highest-degree term when computing coefficients or $F(x)$. For instance, ``sum(c[i] * x ** i for i in range(n + 1))`` with ``c = [-30, 31, -10, 1]`` would be better than ``sum(c[i] * x ** (n - i) for i in range(n + 1))`` with ``c = [1, -10, 31, -30]``. After all, the latter Python statement would require more human thinking and computational consumption. 
 
 ```
+>>> from numpy.polynomial import Polynomial
+>>> Polynomial.fromroots([2, 3, 5]).coef
+array([-30.,  31., -10.,   1.])
 >>> from numpy import poly
 >>> poly([2, 3, 5])
 array([  1., -10.,  31., -30.])
->>> from numpy.polynomial import Polynomial
->>> Polynomial.fromroots([2, 3, 5]).coef
+>>> poly([2, 3, 5])[::-1]
 array([-30.,  31., -10.,   1.])
 >>>
 ```
 
-Although the numpy library provides such functions, we need to implement them manually to achieve the following targets. 
+Anyway, although the numpy library provides such functions, we still have the following concerns. These force us to implement them manually. 
 
-- Avoid unfair time computations for comparison purposes; 
-- Avoid API issues caused by different Python and numpy versions; 
-- Arrange the coefficients from the constant term to the highest degree term; 
-- Maintain the type of all the coefficients the same as that of the roots passed; and
-- Avoid computation errors caused by that ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively, in some versions of the Python charm library. 
+- As we mentioned above, using third-party libraries can lead to unfair time computations for comparison purposes. 
+- The two APIs are adapted to different Python and numpy versions, which can cause compatibility issues, errors, or warnings. 
+- Rearranging the coefficients from the constant term to the highest degree term for ``poly`` requires an additional step for reversal after computation. 
+- We need to maintain the type of all the coefficients the same as that of the roots passed, while the two APIs output floats for integer roots by default. 
+- Computation errors can occur since the ``0`` and ``1`` in Pairing algebraic operations are not the real ``0`` and ``1``, respectively, in some versions of the Python charm library. 
 
-Therefore, we come to talk about the manual computing. By expanding the expression directly as follows, we seem to successfully resolve the coefficients by the method of undetermined coefficients.
+Here, we come to talk about manual computing. By expanding the expression directly as follows, we can resolve the coefficients by the method of undetermined coefficients in the simplest way. 
 
-$$F(x) = (x - x_1)(x - x_2)\cdots(x - x_d) + w = x^d - \left(\sum\limits{i = 1}^d x_i\right) x^{d - 1} + \left(\sum\limits_{1 \leqslant i < j \leqslant d} x_i x_j \right) x^{d - 2} - \cdots + \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w = y_0 + \sum\limits_{i = 1}^d y_i x^i$$
+$$F(x) = (x - x_1)(x - x_2)\cdots(x - x_n) + k = x^n - \left(\sum\limits_{i = 1}^n x_i\right) x^{n - 1} + \left(\sum\limits_{1 \leqslant i < j \leqslant n} x_i x_j \right) x^{n - 2} - \cdots + \left((-1)^n \prod\limits_{i = 1}^n x_i\right) + k = c_0 + \sum\limits_{i = 1}^n c_i x^i$$
 
-That is, we can get $\lbrace y_0, y_1, \cdots, y_d\rbrace$ according to the following system of equations. 
+That is, we can get $\vec{c} = (c_0, c_1, \cdots, c_n)$ according to the following system of equations. 
 
 $$
-\begin{align}
-y_d &= 1\\
-y_{d - 1} &= -\sum\limits{i = 1}^d x_i\\
-y_{d - 2} &= \sum_\limits{1 \leqslant i < j \leqslant d} x_i x_j\\
-\vdots\\
-y_0 &= \left((-1)^d \prod\limits_{i = 1}^d x_i\right) + w\\
-\end{align}
+\left\lbrace\begin{align}
+	c_n &= 1, \\
+	c_{n - 1} &= -\sum\limits_{i = 1}^n x_i, \\
+	c_{n - 2} &= \sum\limits_{1 \leqslant i < j \leqslant n} x_i x_j, \\
+	~&\vdots\\
+	c_0 &= \left((-1)^n \prod\limits_{i = 1}^n x_i\right) + k. \\
+\end{align}\right.
 $$
 
-Here come the issues of the computing methodology above. If we directly compute the coefficients as the system of equations shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take the computer will plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. 
+Here come the issues of the computing methodology above. If we directly compute the coefficients as the system of equations shown above, that is, to calculate the first-order sum, second-order sum, $\cdots$, and finally the highest-order sum based on the $\mathrm{C}_n^1, \mathrm{C}_n^2, \cdots, \mathrm{C}_n^n$ combinations of all the roots, it will take plenty of extra computing power to achieve the combinations in addition to the $n$ sum operations, whose overall time complexity is $O(\mathrm{C}_n^1 + \mathrm{C}_n^2 + \cdots + \mathrm{C}_n^n + n) = O(2^n - 1 + n) = O(2^n - 1 + n)$. 
 This can cause large time consumption when the number of roots is large. That is to say, the time complexity increases explosively with the number of roots. The more roots there are, the greater the increase in time complexity will be for each additional root. Anyway, we need to design an efficient algorithm to calculate the polynomial coefficients from the polynomial roots. 
 
-To begin with, we need to look at a simple example with $w = 0$ first. For $d = 3$ roots 2, 3, and 5, we have the following calculation process to iterate to avoid combinatorial multiplication, where performing negation means taking the negation of [1], then negating every other element at alternating indices. That is, take the negation of [1], [3], [5], $\cdots. 
+To begin with, we need to look at a simple example with $k = 0$ first. For $n = 3$ and $X = \lbrace 2, 3, 5\rbrace$, we have the following calculation process to iterate to avoid combinatorial multiplication, where performing negation means taking the negation of [1], then negating every other element at alternating indices. That is, take the negation of [1], [3], [5], $\cdots. 
 
-| Operation | [0] | [1] | [2] | [3] |
+| $\uparrow$ | [0] | [1] | [2] | [3] |
 | - | - | - | - | - |
-| Initial [1] + [0] * $d$ | 1 | 0 | 0 | 0 |
+| Initial $\vec{c} \gets (1, 0, 0, 0)$ | $1$ | $0$ | $0$ | $0$ |
 | [1] += 2 * [0] | 1 | 2 | 0 | 0 |
 | [2] += 3 * [1] | 1 | 2 | 6 | 0 |
 | [1] += 3 * [0] | 1 | 5 | 6 | 0 |
