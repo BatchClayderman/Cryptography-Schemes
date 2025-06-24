@@ -144,7 +144,7 @@ def __product(self:object, vec:tuple|list|set) -> Element:
 The ``computeCoefficients`` function is used to compute the coefficients of the expanded version of the expression $F(x) = (x - x_1)(x - x_2)\cdots(x - x_n) + k$ in the field of $\mathbb{R}$. In other words, given the multiset $X = \lbrace x_1, x_2, \cdots, x_n\rbrace$ whose size is $n = \|x\|$, we need to design an algorithm in the ``computeCoefficients`` function to compute $\vec{c} \gets \lbrace c_0, c_1, c_2, \cdots, c_n\rbrace$ satisfying $F(x) = (x - x_1)(x - x_2)\cdots(x - x_n) + k = c_0 + \sum\limits_{i = 1}^n c_i x^i, \forall x \in \mathbb{R}$. 
 When the translation factor $k = 0$, $x_1, x_2, \cdots, x_n$ are the $n$ roots of the equation $F(x) = 0$. These roots can be in different orders and can have the same value. In the expanded version of the expression, $c_0$ represents the constant term. Each of the remaining coefficients $c_1, c_2, \cdots, c_n$ has a subscript equal to the degree of the term it corresponds to. Additionally, we have $\|\vec{c}\| = n + 1 = \|X\|$ to help verify the coefficient computation. 
 
-In the numpy library, this can be handled by two application programming interfaces (APIs). One is the ``Polynomial`` API (``from numpy.polynomial import Polynomial``), the newer solution that outputs from the constant term coefficient to the highest order term coefficient. The other is the ``poly`` API (``from numpy import poly``), the earlier solution that outputs from the highest order term coefficient to the constant term coefficient. The usage examples are shown as follows. 
+In the numpy library, this can be handled by two application programming interfaces (APIs). One is the ``Polynomial`` API (``from numpy.polynomial import Polynomial``), the newer solution that outputs the coefficients from the constant term to the highest-order term. The other is the ``poly`` API (``from numpy import poly``), the earlier solution that outputs the coefficients from the highest-order term to the constant term. The usage examples are shown as follows. 
 In real-world computation, people tend to write the terms or the coefficients from the highest-degree term to the constant term when writing polynomials. For example, people would like to write $F(x) = x^3 - 10x^2 + 31 -30$ instead of $F(x) = -30 + 31 - 10x^2 + x^3$. 
 However, in cryptography schemes and computer programming, to achieve higher computation and storage efficiency, scholars and engineers would like to arrange them from the constant term to the highest-degree term when computing coefficients or $F(x)$. For instance, ``sum(c[i] * x ** i for i in range(n + 1))`` with ``c = [-30, 31, -10, 1]`` would be better than ``sum(c[i] * x ** (n - i) for i in range(n + 1))`` with ``c = [1, -10, 31, -30]``. After all, the latter Python statement would require more human thinking and computational consumption. 
 
@@ -219,6 +219,22 @@ More generally, according to the feature of the cyclic polynomial, let $\lbrace 
 The coefficients here satisfy the coefficients expressed using the cyclic polynomial at the beginning of this subsubsection. The key point is that the result of multiplying the new root by the low-order sum happens to make up for the lack of the cyclic polynomial of the new root in the high-order sum, without duplication or omission. Thus, we have the following method. The method takes the roots $X$ and the translation factor $k$ as input and outputs the coefficients $\vec{c}$. 
 
 ```
+# This function outputs the coefficients from the constant term to the highest-order term (from $c_0$ to $c_n$). 
+def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = None) -> tuple:
+	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
+		n = len(roots)
+		coefficients = [self.__group.init(ZR, 0)] * n + [self.__group.init(ZR, 1)]
+		for r in roots:
+			for i in range(n):
+				coefficients[i] += r * coefficients[i + 1]
+		coefficients = [(-1) ** (n - i) * coefficients[i] for i in range(n + 1)]
+		if isinstance(k, Element) and k.type == ZR or isinstance(k, int):
+			coefficients[0] += k
+		return tuple(coefficients)
+	else:
+		return (self.__group.init(ZR, 1), )
+
+# This function outputs the coefficients from the highest-order term to the constant term (from $c_n$ to $c_0$). 
 def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = None) -> tuple:
 	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
 		n = len(roots)
@@ -226,7 +242,7 @@ def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = No
 		for r in roots:
 			for i in range(n, 0, -1):
 				coefficients[i] += r * coefficients[i - 1]
-		coefficients = [(-1) ** i * coefficients[i] for i in range(n, -1, -1)]
+		coefficients = [(-1) ** i * coefficients[i] for i in range(n + 1)]
 		if isinstance(k, Element) and k.type == ZR or isinstance(k, int):
 			coefficients[-1] += k
 		return tuple(coefficients)
@@ -237,17 +253,36 @@ def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = No
 The time complexity of this algorithm is $O(n^2)$. As the inner loop starts from ``coefficients[cnt]`` where ``cnt`` is the current count of the roots that are proceeded and being proceeded, we can use the ``cnt`` to optimize the method to $O\left(\cfrac{n(n + 1)}{2}\right)$. An improved method is shown as follows, with bitwise operations used for optimization. 
 
 ```
+# This function outputs the coefficients from the constant term to the highest-order term (from $c_0$ to $c_n$). 
 def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = None) -> tuple:
 	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
-		n, cnt = len(roots), 1
+		n = len(roots)
+		cnt = n - 1
+		coefficients = [self.__group.init(ZR, 0)] * n + [self.__group.init(ZR, 1)]
+		for r in roots:
+			for i in range(cnt, n):
+				coefficients[i] += r * coefficients[i + 1]
+			cnt -= 1
+		coefficients = [-coefficients[i] if (n - i) & 1 else coefficients[i] for i in range(n + 1)]
+		if isinstance(k, Element) and k.type == ZR or isinstance(k, int):
+			coefficients[0] += k
+		return tuple(coefficients)
+	else:
+		return (k, )
+
+# This function outputs the coefficients from the highest-order term to the constant term (from $c_n$ to $c_0$). 
+def __computeCoefficients(self:object, roots:tuple|list|set, k:None|Element = None) -> tuple:
+	if isinstance(roots, (tuple, list, set)) and all(isinstance(root, Element) and root.type == ZR or isinstance(root, int) for root in roots):
+		n = len(roots)
+		cnt = 1
 		coefficients = [self.__group.init(ZR, 1)] + [self.__group.init(ZR, 0)] * n
 		for r in roots:
 			for i in range(cnt, 0, -1):
 				coefficients[i] += r * coefficients[i - 1]
 			cnt += 1
-		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(n, -1, -1)]
+		coefficients = [-coefficients[i] if i & 1 else coefficients[i] for i in range(n + 1)]
 		if isinstance(k, Element) and k.type == ZR or isinstance(k, int):
-			coefficients[0] += k
+			coefficients[-1] += k
 		return tuple(coefficients)
 	else:
 		return (k, )
@@ -271,34 +306,7 @@ After multiple experiments, we found the following issues in some versions of th
 Meanwhile, it is found that While ``self.__group.init(ZR, 1)`` is not the real ``1`` in the ZR or G1 field, the addition, subtraction, multiplication and division operations can still work correctly in the group since the the group is closed, that is, the elements in the group will be modulo the order of the group after the operation is completed. However, problems exist in exponential operations. Therefore, we have to avoid using the ``1``, ``0``, or exponential operation in any coefficient computation in ``PairingGroup`` environments. The final method is shown as follows. 
 
 ```
-def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
-	flag = False
-	if isinstance(roots, (tuple, list, set)) and roots:
-		n = len(roots)
-		if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
-			flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (n - 1)
-			offset = k if isinstance(k, Element) and k.type == roots[0].type else None
-		elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots):
-			flag, coefficients = True, [1, roots[0]] + [None] * (n - 1)
-			offset = k if isinstance(k, (int, float)) else None
-	if flag:
-		cnt = 2
-		for r in roots[1:]:
-			coefficients[cnt] = r * coefficients[cnt - 1]
-			for i in range(cnt - 1, 1, -1):
-				coefficients[i] += r * coefficients[i - 1]
-			coefficients[1] += r
-			cnt += 1
-		for i in range(1, n + 1, 2):
-			coefficients[i] = -coefficients[i]
-		if offset is not None:
-			coefficients[-1] += offset
-		return tuple(coefficients)
-	else:
-		return (k, )
-```
-
-```
+# This function outputs the coefficients from the constant term to the highest-order term (from $c_0$ to $c_n$), which is used in the official implementations. 
 def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
 	flag = False
 	if isinstance(roots, (tuple, list, set)) and roots:
@@ -321,6 +329,33 @@ def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float
 			coefficients[i] = -coefficients[i]
 		if offset is not None:
 			coefficients[0] += offset
+		return tuple(coefficients)
+	else:
+		return (k, )
+
+# This function outputs the coefficients from the highest-order term to the constant term (from $c_n$ to $c_0$). 
+def __computeCoefficients(self:object, roots:tuple|list|set, k:Element|int|float|None = None) -> tuple:
+	flag = False
+	if isinstance(roots, (tuple, list, set)) and roots:
+		n = len(roots)
+		if isinstance(roots[0], Element) and all(isinstance(root, Element) and root.type == roots[0].type for root in roots):
+			flag, coefficients = True, [self.__group.init(roots[0].type, 1), roots[0]] + [None] * (n - 1)
+			offset = k if isinstance(k, Element) and k.type == roots[0].type else None
+		elif isinstance(roots[0], (int, float)) and all(isinstance(root, (int, float)) for root in roots):
+			flag, coefficients = True, [1, roots[0]] + [None] * (n - 1)
+			offset = k if isinstance(k, (int, float)) else None
+	if flag:
+		cnt = 2
+		for r in roots[1:]:
+			coefficients[cnt] = r * coefficients[cnt - 1]
+			for i in range(cnt - 1, 1, -1):
+				coefficients[i] += r * coefficients[i - 1]
+			coefficients[1] += r
+			cnt += 1
+		for i in range(1, n + 1, 2):
+			coefficients[i] = -coefficients[i]
+		if offset is not None:
+			coefficients[-1] += offset
 		return tuple(coefficients)
 	else:
 		return (k, )
