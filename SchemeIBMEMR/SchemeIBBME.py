@@ -244,7 +244,7 @@ class SchemeIBBME:
 		# Scheme #
 		V_id_i = H3(pair(dki3, C2) * pair(dki2, H1(idStar)) * pair(dki1, C4)) # $V(\textit{id}_i) \gets H_3(e(\textit{dk}_{i, 3}, C_2)e(\textit{dk}_{i, 2}, H_1(\textit{id}^*))e(\textit{dk}_{i, 1}, C_4))$
 		d2 = self.__computePolynomial(V_id_i, bVec) # $d_2 \gets g(V_{\textit{id}_i}) = b_0 + \sum\limits_{j = 1}^n b_j V_{\textit{id}_i}^j$
-		rtag = sum(yVec[i + 1] * rtags[i] for i in range(self.__l)) # $\textit{rtag} \gets \sum\limits_{i = 1}^l y_i \textit{rtags}_i$
+		rtag = sum((yVec[i + 1] * rtags[i] for i in range(1, self.__l)), start = yVec[1] * rtags[0]) # $\textit{rtag} \gets \sum\limits_{i = 1}^l y_i \textit{rtags}_i$
 		if rtag == ctag: # \textbf{if} $\textit{rtag} = \textit{ctag}$ \textbf{then}
 			m = False # \quad$m \gets \perp$
 		else: # \textbf{else}

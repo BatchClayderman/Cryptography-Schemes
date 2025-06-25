@@ -37,7 +37,7 @@ The rules of command lines are as follows.
 The following command lines can be useful for executing one-stop testing. 
 
 - Execute ``find . -maxdepth 1 -type f -name "*.py" -exec python {} Y 0 \;`` in a non-Windows terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts. 
-- Execute ``find . -maxdepth 2 -type f -name "*.py" -exec python {} Y 0 \;`` in a non-Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts.
+- Execute ``find . -mindepth 2 -maxdepth 2 -type f -name "*.py" -exec python {} Y 0 \;`` in a non-Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts.
 - Add `` > /dev/null`` to the end of the command lines or use a screen if the printing affects the computation of the time consumption in a non-Windows terminal. 
 - Execute ``for %f in (*.py) do python "%f" Y 0`` in a Windows terminal to execute all the Python scripts in the corresponding scheme folder if you wish to execute a category of Python scripts.
 - Execute ``for /r %f in (*.py) do python "%f" Y 0`` in a Windows terminal to execute all the Python scripts in the root folder of the cryptography schemes if you wish to execute all categories of Python scripts. 
@@ -45,7 +45,7 @@ The following command lines can be useful for executing one-stop testing.
 
 To enhance the robustness, type checks will be performed in each scheme procedure whether or not they are explicitly required in the paper. Scheme procedures will be surrounded by the ``try--except`` structure. 
 
-For Linux users who wish to search a specified string throughout the whole repository or category in a local clone, the Linux command ``find . -type f -name "*.py" ! -name "generateSchemeLaTeX.py" -exec grep -H --color=always -E "${stringsToBeSearched}" {} \;`` after switching to the specified directory should be fine. Using the ``sed`` or other Linux commands equipped with ``find`` and its ``--exec`` is also wise. 
+For Linux users who wish to search a specified string throughout the whole repository or category in a local clone, the Linux command ``find . -mindepth 2 -type f -name "*.py" ! -name "generateSchemeLaTeX.py" -exec grep -H --color=always -E "${stringsToBeSearched}" {} \;`` after switching to the specified directory should be fine. Using the ``sed`` or other Linux commands equipped with ``find`` and its ``--exec`` is also helpful. 
 
 ### 1.2 Computation details
 
@@ -377,7 +377,8 @@ The corresponding procedures of the final method are shown as follows. In this p
 
 #### 1.2.6 Polynomial computation
 
-The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(n + 1))``. However, since either ``x ** 2`` or ``x ** self.__group.init(ZR, 2)`` can be inconsistent with ``x * x`` for any ``x`` belonging to the ``Element`` type in some versions of the Python charm library, the following method is designed. 
+The polynomial computation here refers to the computation of $F(x)$ mentioned in the previous subsubsection based on the corresponding coefficients figured out. At first, the computation is accomplished by ``sum(coefficients[i] * x ** i for i in range(n + 1))``. The built-in function ``sum`` will initialize the integer ``0`` instead of assigning the first value to the initialization symbol, which can cause potential computational errors. 
+As elements should be regarded as numeric types that should not be rejected by ``sum``, this can be solved by specifying the ``start`` value. However, as polynomial computation involves exponential operations, ``x ** 2`` and ``x ** self.__group.init(ZR, 2)`` can be inconsistent with ``x * x`` for any ``x`` belonging to the ``Element`` type in some versions of the Python charm library. Therefore, the following method is designed. 
 
 ```
 def __computePolynomial(self:object, x:Element, coefficients:tuple|list) -> Element:
@@ -501,7 +502,8 @@ endTime = perf_counter()
 timeDelta = endTime - startTime # second(s)
 ```
 
-To compute the memory consumption (space complexity) of a variable for academic purposes (actually, the byte length of the serialized element), please refer to the following lines. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. Specifically, some hash functions and concatenated ``bytes`` objects may return an integer whose actual byte length is longer than $\lambda$. This case is seldom, but actually exists. When designing the measurement function in the scripts containing such a situation, the space complexity of the special variables needs to be assigned manually. 
+To compute the memory consumption (space complexity) of a variable for academic purposes (actually, the byte length of the serialized element), please refer to the following lines. The code ``(group.secparam + 7) >> 3`` is a consideration of $\lambda$ values that do not meet $8 | \lambda$. After filling several bytes, any remaining one or more bits will occupy an additional byte, even if they do not form a complete byte. 
+Specifically, some hash functions and concatenated ``bytes`` objects may return an integer whose actual byte length is longer than $\lambda$. This case is seldom, but actually exists. When designing the measurement function in the scripts containing such a situation, the space complexity of the special variables needs to be assigned manually. 
 
 ```
 def getLengthOf(group:object, obj:Element|tuple|list|set|bytes|int) -> int: # Byte(s)

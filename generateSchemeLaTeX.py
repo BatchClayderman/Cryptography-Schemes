@@ -51,10 +51,11 @@ def convertEscaped(string:str) -> str:
 
 if PLATFORM == "WINDOWS":
 	def checkFile(filePath:str, lines:tuple|list|set, sleepingTime:int = 3) -> bool:
-		patterns = (																								\
-			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 						\
-			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", 			\
-			"def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", " = Scheme\\(curveType[A-Za-z, ]+\\)", "for idx in range\\([0-9]+, [A-Za-z]+\\)"	\
+		patterns = (																							\
+			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 					\
+			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", 		\
+			" = Scheme\\(curveType[A-Za-z, ]+\\)", "def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", 								\
+			"for idx in range\\([0-9]+, [A-Za-z]+\\)", " = sum\\(.*^(start = ).*\\)"											\
 		)
 		if isinstance(filePath, str) and isinstance(lines, (tuple, list, set)):
 			cnt = 0
@@ -82,10 +83,11 @@ if PLATFORM == "WINDOWS":
 			return len(patterns)
 else:
 	def checkFile(filePath:str, lines:None = None, sleepingTime:int = 3) -> int:
-		patterns = (																										\
-			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 						\
-			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 			\
-			"def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", " = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)"		\
+		patterns = (																								\
+			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 				\
+			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 	\
+			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", 								\
+			"for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)"											\
 		)
 		if isinstance(filePath, str):
 			cnt = 0
