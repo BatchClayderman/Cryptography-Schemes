@@ -98,7 +98,7 @@ class SchemeIBMEMR:
 	def Setup(self:object, d:int = 30, seed:int|None = None) -> tuple: # $\textbf{Setup}(d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
-		if isinstance(d, int) and d > 0: # boundary check
+		if isinstance(d, int) and d >= 1: # boundary check
 			self.__d = d
 		else:
 			self.__d = 30
@@ -379,7 +379,7 @@ class SchemeIBMEMR:
 
 def Scheme(curveType:tuple|list|str, d:int = 30, round:int|None = None) -> list:
 	# Begin #
-	if isinstance(d, int) and d > 0: # no need to check the parameters for curve types here
+	if isinstance(d, int) and d >= 1: # no need to check the parameters for curve types here
 		try:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				if curveType[1] >= 1:

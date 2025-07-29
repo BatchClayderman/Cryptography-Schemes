@@ -83,7 +83,7 @@ class SchemeIBBME:
 	def Setup(self:object, l:int = 30) -> tuple: # $\textbf{Setup}() \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
-		if isinstance(l, int) and l > 0: # boundary check
+		if isinstance(l, int) and l >= 1: # boundary check
 			self.__l = l
 		else:
 			self.__l = 30

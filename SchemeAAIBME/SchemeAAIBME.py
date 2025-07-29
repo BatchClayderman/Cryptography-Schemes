@@ -46,32 +46,34 @@ class SchemeAAIBME:
 			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
-		p = self.__group.order() # $p \gets \|\mathbb{G}\|$
-		g1, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_1, g_3 \in \mathbb{G}_1$ randomly
-		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
+		alpha, beta, t1, t2, t3, t4 = self.__group.random(ZR, 6) # generate $\alpha, \beta, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
+		g2, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_2, g_3 \in \mathbb{G}_1$ randomly
+		T = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T} \gets (\bm{T}_0, \bm{T}_1, \cdots, \bm{T}_n) \in \mathbb{G}_1^{n + 1}$ randomly
+		TPrime = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T}' \gets (\bm{T}'_0, \bm{T}'_1, \cdots, \bm{T}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
+		u = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n) \in \mathbb{G_1}^{n + 1}$ randomly
+		uPrime = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u}' \gets (\bm{u}'_0, \bm{u}'_1, \cdots, \bm{u}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
 		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
-		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
-		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
-		r, s, t, omega, t1, t2, t3, t4 = self.__group.random(ZR, 8) # generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
-		R = g1 ** r # $R \gets g_1^r$
-		S = g2 ** s # $S \gets g_2^s$
-		T = g1 ** t # $T \gets g_1^t$
-		Omega = pair(g1, g2) ** (t1 * t2 * omega) # $\Omega \gets e(g_1, g_2)^{t_1 t_2 \omega}$
-		v1 = g2 ** t1 # $v_1 \gets g_2^{t_1}$
-		v2 = g2 ** t2 # $v_2 \gets g_2^{t_2}$
-		v3 = g2 ** t3 # $v_3 \gets g_2^{t_3}$
-		v4 = g2 ** t4 # $v_4 \gets g_2^{t_4}$
-		self.__mpk = (g1, g2, p, g3, H1, H2, H3, H4, R, S, T, Omega, v1, v2, v3, v4) # $ \textit{mpk} \gets (g_1, g_2, p, g_3, H_1, H_2, H_3, H_4, R, S, T, \Omega, v_1, v_2, v_3, v_4)$
-		self.__msk = (r, s, t, omega, t1, t2, t3, t4) # $\textit{msk} \gets (r, s, t, \omega, t_1, t_2, t_3, t_4)$
+		g1 = g ** alpha # $g_1 \gets g^\alpha$
+		g1Prime = g ** beta # $g'_1 \gets g^\beta$
+		Y1 = pair(g1, g2) ** (t1 * t2) # $Y_1 \gets e(g_1, g_2)^{t_1 t_2}$
+		Y2 = pair(g3, g) ** beta # $Y_2 \gets e(g_3, g)^\beta$
+		v1 = g ** t1 # $v_1 \gets g^{t_1}$
+		v2 = g ** t2 # $v_2 \gets g^{t_2}$
+		v3 = g ** t3 # $v_3 \gets g^{t_3}$
+		v4 = g ** t4 # $v_4 \gets g^{t_4}$
+		H = lambda u, ID:u[0] * self.__product(		\
+			u[j + 1] ** ID[j] for j in range(n)		\
+		) # $H: \bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
+		self.__mpk = (g1, g1Prime, g2, g3, Y1, Y2, v1, v2, v3, v4, u, T, uPrime, TPrime, H1) # $ \textit{mpk} \gets (g_1, g'_1, g_2, g_3, Y_1, Y_2, v_1, v_2, v_3, v_4, \bm{u}, \bm{T}, \bm{u}', \bm{T}', H_1)$
+		self.__msk = (g2 ** alpha, beta, t1, t2, t3, t4) # $\textit{msk} \gets (g_2^\alpha, \beta, t_1, t_2, t_3, t_4)$
 		
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def KGen(self:object, IDi:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
+	def EKGen(self:object, IDA:tuple) -> tuple: # $\textbf{EKGen}(\textit{ID}_A) \rightarrow \textit{ek}_{\textit{ID}_A}$
 		# Check #
 		if not self.__flag:
-			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
+			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
@@ -79,7 +81,7 @@ class SchemeAAIBME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																					\
 				(																																					\
-					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					"EKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
 				).format(self.__l - 1, self.__l)																																\
 			)
@@ -88,11 +90,7 @@ class SchemeAAIBME:
 		g1 = self.__mpk[0]
 		
 		# Scheme #
-		k_i, x_i = self.__group.random(ZR), self.__group.random(ZR) # generate $k_i, x_i \in \mathbb{Z}_r$ randomly
-		z_i = (r - x_i) * (s * x_i) ** (-1) # $z_i \gets (r - x_i)(s x_i)^{-1} \in \mathbb{Z}_r$
-		Z_i = g1 ** z_i # $Z_i \gets g_1^{z_i} \in \mathbb{G}_1$
-		sk_ID_i = k_i # $\textit{sk}_{\textit{ID}_i} \gets k_i$
-		ek_ID_i = (x_i, Z_i) # $\textit{ek}_{\textit{ID}_i} \gets (x_i, Z_i)$
+		ri = self.__
 		
 		
 		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
@@ -111,20 +109,20 @@ class SchemeAAIBME:
 		
 		# Return #
 		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
-	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
+	def DerivedEKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedEKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
-			print("DerivedKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
+			print("DerivedEKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedEKGen`` subsequently. ")
 			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 			if isinstance(skIDkMinus1, tuple) and len(skIDkMinus1) == ((self.__l - len(ID_k) + 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDkMinus1]): # hybrid check
 				sk_ID_kMinus1 = skIDkMinus1
 			else:
-				sk_ID_kMinus1 = self.KGen(ID_k[:-1])
+				sk_ID_kMinus1 = self.EKGen(ID_k[:-1])
 				print(
 					(
-						"DerivedKGen: The variable $\\textit{{sk}}_{{\\textit{{ID}}_{{k - 1}}}}$ should be a tuple containing $(l - k + 1) \\times 4 + 5 = {0}$ elements but it is not, "
+						"DerivedEKGen: The variable $\\textit{{sk}}_{{\\textit{{ID}}_{{k - 1}}}}$ should be a tuple containing $(l - k + 1) \\times 4 + 5 = {0}$ elements but it is not, "
 						+ "which has been generated accordingly. "
 					).format(((self.__l - len(ID_k) + 1) << 2) + 5)
 				)
@@ -132,12 +130,12 @@ class SchemeAAIBME:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
 			print(																																								\
 				(																																								\
-					"DerivedKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					"DerivedEKGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
 					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																									\
 				).format(self.__l - 1, self.__l)																																			\
 			)
-			sk_ID_kMinus1 = self.KGen(ID_k[:-1])
-			print("DerivedKGen: The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
+			sk_ID_kMinus1 = self.EKGen(ID_k[:-1])
+			print("DerivedEKGen: The variable $\\textit{sk}_{\\textit{ID}_{k - 1}}$ has been generated accordingly. ")
 		
 		# Unpack #
 		g, g3Bar, g3Tilde, h = self.__mpk[0], self.__mpk[6], self.__mpk[7], self.__mpk[8:]
@@ -207,7 +205,7 @@ class SchemeAAIBME:
 		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= ((self.__l - 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDk]): # hybrid check
 			sk_ID_k = skIDk
 		else:
-			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
+			sk_ID_k = self.EKGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
 			print("Dec: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
 		if isinstance(cipherText, tuple) and len(cipherText) == 4 and all([isinstance(ele, Element) for ele in cipherText]):# hybrid check
 			CT = cipherText
@@ -291,17 +289,17 @@ def Scheme(curveType:tuple|list|str, l:int = 30, k:int = 10, round:int|None = No
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# KGen #
+	# EKGen #
 	startTime = perf_counter()
 	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeAAIBME.KGen(ID_k)
+	sk_ID_k = schemeAAIBME.EKGen(ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# DerivedKGen #
+	# DerivedEKGen #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeAAIBME.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeAAIBME.DerivedKGen(sk_ID_kMinus1, ID_k)
+	sk_ID_kMinus1 = schemeAAIBME.EKGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
+	sk_ID_kDerived = schemeAAIBME.DerivedEKGen(sk_ID_kMinus1, ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -375,7 +373,7 @@ def main() -> int:
 	queries = ["curveType", "secparam", "l", "k", "roundCount"]
 	validators = ["isSystemValid", "isDeriverPassed", "isSchemeCorrect"]
 	metrics = 	[																	\
-		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 					\
+		"Setup (s)", "EKGen (s)", "DerivedEKGen (s)", "Enc (s)", "Dec (s)", 					\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 		\
 		"mpk (B)", "msk (B)", "SK (B)", "SK' (B)", "CT (B)"								\
 	]
@@ -385,7 +383,7 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			for l in range(5, 31, 5):
+			for l in range(10, 31, 5):
 				for k in range(5, l , 5):
 					average = Scheme(curveType, l = l, k = k, round = 0)
 					for round in range(1, roundCount):

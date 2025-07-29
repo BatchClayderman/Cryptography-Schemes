@@ -55,7 +55,8 @@ if PLATFORM == "WINDOWS":
 			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 					\
 			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", 		\
 			" = Scheme\\(curveType[A-Za-z, ]+\\)", "def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", 								\
-			"for idx in range\\([0-9]+, [A-Za-z]+\\)", " = sum\\(.*^(start = ).*\\)"											\
+			"for idx in range\\([0-9]+, [A-Za-z]+\\)", " = sum\\(.*^(start = ).*\\)", 											\
+			"\\$\\\\textbf{return", "len.+# type check"																\
 		)
 		if isinstance(filePath, str) and isinstance(lines, (tuple, list, set)):
 			cnt = 0
@@ -87,7 +88,8 @@ else:
 			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 				\
 			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 	\
 			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", 								\
-			"for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)"											\
+			"for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)", 											\
+			"\\\\\\$\\\\textbf{return", "len.+# type check"																	\
 		)
 		if isinstance(filePath, str):
 			cnt = 0

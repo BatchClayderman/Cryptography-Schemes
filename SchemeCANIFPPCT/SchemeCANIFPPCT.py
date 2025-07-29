@@ -24,7 +24,7 @@ class SchemeCANIFPPCT:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
-		self.__l = 30
+		self.__n = 30
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -36,23 +36,24 @@ class SchemeCANIFPPCT:
 			return element
 		else:
 			return self.__group.init(ZR, 1)
-	def Setup(self:object, l:int = 30) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
+	def Setup(self:object, n:int = 30) -> tuple: # $\textbf{Setup}(n) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
-		if isinstance(l, int) and l >= 3: # $l$ must be not smaller than $3$ to complete all the tasks
-			self.__l = l
+		if isinstance(n, int) and n >= 1:
+			self.__n = n
 		else:
-			self.__l = 30
-			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
+			self.__n = 30
+			print("Setup: The variable $n$ should be a positive integer but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
 		p = self.__group.order() # $p \gets \|\mathbb{G}\|$
-		g1, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_1, g_3 \in \mathbb{G}_1$ randomly
-		g2 = self.__group.random(G2) # generate $g_2 \in \mathbb{G}_2$ randomly
-		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
-		H3 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
-		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
+		g1 = self.__group.init(G1, 1) # $g_1 \gets 1_{\mathbb{G}_1}$
+		g2 = self.__group.init(G2, 1) # $g_2 \gets 1_{\mathbb{G}_2}$
+		g3 = self.__group.random(G1) # generate $g_3 \in \mathbb{G}_1$ randomly
+		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
+		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
+		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
 		r, s, t, omega, t1, t2, t3, t4 = self.__group.random(ZR, 8) # generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
 		R = g1 ** r # $R \gets g_1^r$
 		S = g2 ** s # $S \gets g_2^s$
@@ -67,13 +68,13 @@ class SchemeCANIFPPCT:
 		
 		# Flag #
 		self.__flag = True
-		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def KGen(self:object, IDi:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
+		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
+	def KGen(self:object, IDi:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_i) \rightarrow (\textit{sk}_{\textit{ID}_i}, \textit{ek}_{\textit{ID}_i})$
 		# Check #
 		if not self.__flag:
 			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+		if isinstance(IDi, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
@@ -93,24 +94,55 @@ class SchemeCANIFPPCT:
 		Z_i = g1 ** z_i # $Z_i \gets g_1^{z_i} \in \mathbb{G}_1$
 		sk_ID_i = k_i # $\textit{sk}_{\textit{ID}_i} \gets k_i$
 		ek_ID_i = (x_i, Z_i) # $\textit{ek}_{\textit{ID}_i} \gets (x_i, Z_i)$
-		
-		
-		HI = self.__product(tuple(h[i] ** ID_k[i] for i in range(k))) # $\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
-		sk_ID_k = ( # $\textit{sk}_{\textit{ID}_k} \gets (
-			(
-				g2ToThePowerOfAlpha ** (b1 ** (-1)) * HI ** (r / b1) * g3Bar ** r, # g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r, 
-				g2ToThePowerOfAlpha ** (b2 ** (-1)) * HI ** (r / b2) * g3Tilde ** r, # g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r, 
-				g ** r # g^r, 
-			)
-			+ tuple(h[i] ** (r / b1) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
-			+ tuple(h[i] ** (r / b2) for i in range(k, self.__l)) # h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
-			+ tuple(h[i] ** (b1 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
-			+ tuple(h[i] ** (b2 ** (-1)) for i in range(k, self.__l)) # h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}}, 
-			+ (HI ** (b1 ** (-1)), HI ** (b2 ** (-1))) # \textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
-		) # )$
+		tag_i = H4(x_i * Z_i) # $\textit{tag}_i \gets H_4(x_i \cdot Z_i)$
 		
 		# Return #
-		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
+		return (sk_ID_i, ek_ID_i) # \textbf{return} $(\textit{sk}_{\textit{ID}_i}, \textit{ek}_{\textit{ID}_i}$
+	def Encryption(self:object, TPS:tuple, ekIDi:Element) -> object: # $\textbf{Encryption}(\textit{TP}_S, \textit{ek}_{\textit{ID}_i}) \rightarrow \textit{CT}_{\textit{TP}_S})$
+		# Check #
+		if not self.__flag:
+			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
+			self.Setup()
+		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
+			ID_k = IDk
+		else:
+			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
+			print(																																					\
+				(																																					\
+					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
+				).format(self.__l - 1, self.__l)																																\
+			)
+		if isinstance(message, Element) and message.type == GT: # type check
+			M = message
+		else:
+			M = self.__group.random(GT)
+			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+		
+		# Unpack #
+		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
+		k = len(ID_k)
+		
+		# Scheme #
+		sVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s} \gets (s_1, s_2, \cdots, s_n) \in \mathbb{Z}_r^n$ randomly
+		s1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_1 \gets (s_{1_1}, s_{1_2}, \cdots, s_{1, n}) \in mathbb{Z}_r^n$ randomly
+		s2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_2 \gets (s_{2_1}, s_{2_2}, \cdots, s_{2, n}) \in mathbb{Z}_r^n$ randomly
+		V = tuple(H2(Omega ** s[i]) for i in range(self.__n)) # $V_i \gets H_2(\Omega^{s_i}), \forall i \in \{1, 2, \cdots, n\}$
+		C0Vec = tuple((g3 * H1(TP_S[i])) ** s[i] for i in range(self.__n)) # $\vec{C}_{i, 0} \gets (g_3 H_1(\textit{TP}_S))^{s_i}, \forall i \in \{1, 2, \cdots, n\}$
+		C1Vec = tuple(v1 ** (s[i] - s1[i]) for i in range(self.__n)) # $\vec{C}_{i, 1} \gets v_1^{s_i - s_{i, 1}}$
+		C2Vec = tuple(v2 ** s1[i] for i in range(self.__n)) # $\vec{C}_{i, 2} \gets v_2^{s_{i, 1}}$
+		C3Vec = tuple(v3 ** (s[i] - s2[i]) for i in range(self.__n)) # $\vec{C}_{i, 3} \gets v_3^{s_i - s_{i, 2}}$
+		C4Vec = tuple(v4 ** s2[i] for i in range(self.__n)) # $\vec{C}_{i, 4} \gets v_4^{s_{i, 2}}$
+		f = lambda x:self.__product(x - V[i] for i in range(self.__n)) # $f(x) := \prod\limits_{i = 1}^n (x - V_i)$
+		alpha = self.__group.random(ZR) # generate $\alpha \in \mathbb{Z}_r$ randomly
+		C1 = g1 ** alpha # $C_1 \gets g_1^\alpha$
+		C2 = Zi ** xi + T ** alpha # $C_2 \gets Z_i^{x_i} + T^\alpha$
+		C3 = pair(T, S) ** alpha # $C_3 \gets e(T, S)^\alpha$
+		C4 = H3()
+		C5 = kc + x_i
+		
+		# Return #
+		return CT # $\textbf{return }\textit{CT}$
 	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
@@ -163,42 +195,6 @@ class SchemeCANIFPPCT:
 		
 		# Return #
 		return sk_ID_k # $\textbf{return }\textit{sk}_{\textit{ID}_k}$
-	def Enc(self:object, IDk:tuple, message:Element) -> object: # $\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$
-		# Check #
-		if not self.__flag:
-			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
-			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
-			ID_k = IDk
-		else:
-			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																					\
-				(																																					\
-					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
-				).format(self.__l - 1, self.__l)																																\
-			)
-		if isinstance(message, Element) and message.type == GT: # type check
-			M = message
-		else:
-			M = self.__group.random(GT)
-			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
-		
-		# Unpack #
-		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
-		k = len(ID_k)
-		
-		# Scheme #
-		s1, s2 = self.__group.random(ZR), self.__group.random(ZR) # generate $s_1, s_2 \in \mathbb{Z}_r$ randomly
-		CT = ( # $\textit{CT} \gets (
-			pair(g1, g2) ** (s1 + s2) * M, # e(g_1, g_2)^{s_1 + s_2} \cdot M, 
-			gBar ** s1, # \bar{g}^{s_1}, 
-			gTilde ** s2, # \tilde{g}^{s_2}, 
-			(g3 * self.__product(tuple(h[i] ** ID_k[i] for i in range(k)))) ** (s1 + s2) # (h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
-		) # )$
-		
-		# Return #
-		return CT # $\textbf{return }\textit{CT}$
 	def Dec(self:object, skIDk:tuple, cipherText:tuple) -> bytes: # $\textbf{Dec}(\textit{sk}_{\textit{ID}_k}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
@@ -238,9 +234,9 @@ class SchemeCANIFPPCT:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int = 30, k:int = 10, round:int|None = None) -> list:
+def Scheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|None = None) -> list:
 	# Begin #
-	if isinstance(l, int) and isinstance(k, int) and 2 <= k < l:
+	if isinstance(n, int) and isinstance(k, int) and 2 <= k < n:
 		try:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				if curveType[1] >= 1:
@@ -258,24 +254,24 @@ def Scheme(curveType:tuple|list|str, l:int = 30, k:int = 10, round:int|None = No
 				print("curveType =", curveType)
 			else:
 				print("curveType = Unknown")
-			print("l =", l)
+			print("n =", n)
 			print("k =", k)
 			if isinstance(round, int) and round >= 0:
 				print("round =", round)
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [l, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
+				+ [n, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
 			)
 	else:
-		print("Is the system valid? No. The parameters $l$ and $k$ should be two positive integers satisfying $2 \\leqslant k < l$. ")
+		print("Is the system valid? No. The parameters $n$ and $k$ should be two positive integers satisfying $2 \\leqslant k < n$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [l if isinstance(l, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
+			+ [n if isinstance(n, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
-	print("l =", l)
+	print("n =", n)
 	print("k =", k)
 	if isinstance(round, int) and round >= 0:
 		print("round =", round)
@@ -385,8 +381,8 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			for l in range(5, 31, 5):
-				for k in range(5, l , 5):
+			for l in range(10, 31, 5):
+				for k in range(5, l, 5):
 					average = Scheme(curveType, l = l, k = k, round = 0)
 					for round in range(1, roundCount):
 						result = Scheme(curveType, l = l, k = k, round = round)

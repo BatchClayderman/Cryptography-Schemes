@@ -374,8 +374,8 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			for l in range(5, 31, 5):
-				for k in range(5, l , 5):
+			for l in range(10, 31, 5):
+				for k in range(5, l, 5):
 					average = Scheme(curveType, l = l, k = k, round = 0)
 					for round in range(1, roundCount):
 						result = Scheme(curveType, l = l, k = k, round = round)
