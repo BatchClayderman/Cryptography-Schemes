@@ -124,9 +124,9 @@ class SchemeCANIFPPCT:
 		k = len(ID_k)
 		
 		# Scheme #
-		sVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s} \gets (s_1, s_2, \cdots, s_n) \in \mathbb{Z}_r^n$ randomly
-		s1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_1 \gets (s_{1_1}, s_{1_2}, \cdots, s_{1, n}) \in mathbb{Z}_r^n$ randomly
-		s2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_2 \gets (s_{2_1}, s_{2_2}, \cdots, s_{2, n}) \in mathbb{Z}_r^n$ randomly
+		sVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s} = (s_1, s_2, \cdots, s_n) \in \mathbb{Z}_r^n$ randomly
+		s1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_1 = (s_{1_1}, s_{1_2}, \cdots, s_{1, n}) \in mathbb{Z}_r^n$ randomly
+		s2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_2 = (s_{2_1}, s_{2_2}, \cdots, s_{2, n}) \in mathbb{Z}_r^n$ randomly
 		V = tuple(H2(Omega ** s[i]) for i in range(self.__n)) # $V_i \gets H_2(\Omega^{s_i}), \forall i \in \{1, 2, \cdots, n\}$
 		C0Vec = tuple((g3 * H1(TP_S[i])) ** s[i] for i in range(self.__n)) # $\vec{C}_{i, 0} \gets (g_3 H_1(\textit{TP}_S))^{s_i}, \forall i \in \{1, 2, \cdots, n\}$
 		C1Vec = tuple(v1 ** (s[i] - s1[i]) for i in range(self.__n)) # $\vec{C}_{i, 1} \gets v_1^{s_i - s_{i, 1}}$

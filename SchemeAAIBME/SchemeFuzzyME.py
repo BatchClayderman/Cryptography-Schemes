@@ -79,8 +79,8 @@ class SchemeFuzzyME:
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
 		g2, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_2, g_3 \in \mathbb{G}_1$ randomly
-		tVec = tuple(self.__group.random(G1) for _ in range(n + 1)) # generate $\vec{t} \gets \{t_1, t_2, \cdots, t_{n + 1}\} \in \mathbb{G}_1^{n + 1}$ randomly
-		lVec = tuple(self.__group.random(G1) for _ in range(n + 1)) # generate $\vec{l} \gets \{l_1, l_2, \cdots, l_{n + 1}\} \in \mathbb{G}_1^{n + 1}$ randomly
+		tVec = tuple(self.__group.random(G1) for _ in range(n + 1)) # generate $\vec{t} = (t_1, t_2, \cdots, t_{n + 1}) \in \mathbb{G}_1^{n + 1}$ randomly
+		lVec = tuple(self.__group.random(G1) for _ in range(n + 1)) # generate $\vec{l} = (l_1, l_2, \cdots, l_{n + 1}) \in \mathbb{G}_1^{n + 1}$ randomly
 		alpha, beta, theta1, theta2, theta3, theta4 = self.__group.random(ZR, 6) # generate $\alpha, \beta, \theta_1, \theta_2, \theta_3, \theta_4 \in \mathbb{Z}_r$ randomly
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		eta1 = g ** theta1 # $\eta_1 \gets g^{\theta_1}$
@@ -118,7 +118,7 @@ class SchemeFuzzyME:
 		H = lambda x:g3 ** (x ** self.__n) * self.__product(tuple(lVec[i] ** Delta(i, N, x) for i in range(self.__n + 1))) # $H: x \rightarrow g_3^{x^n} \prod\limits_{i = 1}^{n + 1} l_i^{\Delta(i, N, x)}$
 		coefficients = (beta, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - 2)) + (self.__group.init(ZR, 1), )
 		q = lambda x:self.__computePolynomial(x, coefficients) # generate a $(d - 1)$ degree polynominal $q(x)$ s.t. $q(0) = \beta$ randomly
-		rVec = tuple(self.__group.random(ZR) for _ in S_A) # generate $\vec{r} \gets \{r_1, r_2, \cdots, r_n\} \in \mathbb{Z}_r^n$ randomly
+		rVec = tuple(self.__group.random(ZR) for _ in S_A) # generate $\vec{r} = (r_1, r_2, \cdots, r_n) \in \mathbb{Z}_r^n$ randomly
 		EVec = tuple(g3 ** (q(S_A[i]) * theta1 * theta2) * H(S_A[i]) ** rVec[i] for i in range(len(S_A))) # $E_i \gets g_3^{q(a_i) \theta_1 \theta_2} H(a_i)^{r_i}, \forall i \in \{1, 2, \cdots, n\}$
 		eVec = tuple(g ** rVec[i] for i in range(len(S_A))) # $e_i \gets g^{r_i}, \forall i \in \{1, 2, \cdots, n\}$
 		ek_S_A = (EVec, eVec) # $\textit{ek}_{S_A} \gets \{E_i, e_i\}_{a_i \in S_A}$
@@ -159,10 +159,10 @@ class SchemeFuzzyME:
 		h = lambda x:self.__computePolynomial(x, coefficientsForH) # generate a $(d - 1)$ degree polynominal $h(x)$ s.t. $h(0) = \gamma$ randomly
 		coefficientsForQPrime = (beta, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - 2)) + (self.__group.init(ZR, 1), )
 		qPrime = lambda x:self.__computePolynomial(x, coefficientsForQPrime) # generate a $(d - 1)$ degree polynominal $q'(x)$ s.t. $q'(0) = \beta$ randomly
-		k1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{k}_1 \gets \{k_{1, 1}, k_{1, 2}, \cdots, k_{1, n}\} \in \mathbb{Z}_r^n$ randomly
-		k2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{k}_2 \gets \{k_{2, 1}, k_{2, 2}, \cdots, k_{2, n}\} \in \mathbb{Z}_r^n$ randomly
-		rPrime1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r}'_1 \gets \{r'_{1, 1}, r'_{1, 2}, \cdots, r'_{1, n}\} \in \mathbb{Z}_r^n$ randomly
-		rPrime2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r}'_2 \gets \{r'_{2, 1}, r'_{2, 2}, \cdots, r'_{2, n}\} \in \mathbb{Z}_r^n$ randomly
+		k1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{k}_1 = (k_{1, 1}, k_{1, 2}, \cdots, k_{1, n}) \in \mathbb{Z}_r^n$ randomly
+		k2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{k}_2 = (k_{2, 1}, k_{2, 2}, \cdots, k_{2, n}) \in \mathbb{Z}_r^n$ randomly
+		rPrime1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r}'_1 = (r'_{1, 1}, r'_{1, 2}, \cdots, r'_{1, n}) \in \mathbb{Z}_r^n$ randomly
+		rPrime2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r}'_2 = (r'_{2, 1}, r'_{2, 2}, \cdots, r'_{2, n}) \in \mathbb{Z}_r^n$ randomly
 		dk_S_B_0 = tuple(g ** (k1Vec[i] * theta1 * theta2 + k2Vec[i] * theta3 * theta4) for i in range(self.__n)) # $\textit{dk}_{S_{B_{0, i}}} \gets g^{k_{1, i} \theta_1 \theta_2 + k_{2, i} \theta_3 \theta_4}, \forall i \in \{1, 2, \cdots, n\}$
 		dk_S_B_1 = tuple(																						\
 			g2 ** (-f(S_B[i]) * theta2) * G_ID ** (-h(S_B[i]) * theta2) * T(S_B[i]) ** (-k1Vec[i] * theta2) for i in range(self.__n)	\
@@ -237,8 +237,8 @@ class SchemeFuzzyME:
 		C2Vec = tuple(H(S_A[i]) ** s for i in range(len(S_A))) # $C_{2, i} \gets H(a_i)^s, \forall a_i \in S_A$
 		coefficients = (tau, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - 2)) + (self.__group.init(ZR, 1), )
 		l = lambda x:self.__computePolynomial(x, coefficients) # generate a $(d - 1)$ degree polynominal $l(x)$ s.t. $l(0) = \tau$ randomly
-		xiVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{\xi} \gets \{\xi_1, \xi_2, \cdots, \xi_n\} \in \mathbb{Z}_r^n$ randomly
-		chiVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{\chi} \gets \{\chi_1, \chi_2, \cdots, \chi_n\} \in \mathbb{Z}_r^n$ randomly
+		xiVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{\xi} = (\xi_1, \xi_2, \cdots, \xi_n) \in \mathbb{Z}_r^n$ randomly
+		chiVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{\chi} = (\chi_1, \chi_2, \cdots, \chi_n) \in \mathbb{Z}_r^n$ randomly
 		C3Vec = tuple(eVec[i] * g ** xiVec[i] for i in range(self.__n)) # $C_{3, i} \gets e_i \cdot g^{\xi_i}, \forall i \in \{1, 2, \cdots, n\}$
 		C4Vec = tuple(g ** chiVec[i] for i in range(self.__n)) # $C_{4, i} \gets g^{\chi_i}, \forall i \in \{1, 2, \cdots, n\}$
 		C5Vec = tuple(EVec[i] ** s * g3 ** l(S_A[i]) * H(S_A[i]) ** (s * xiVec[i]) * H1(														\
