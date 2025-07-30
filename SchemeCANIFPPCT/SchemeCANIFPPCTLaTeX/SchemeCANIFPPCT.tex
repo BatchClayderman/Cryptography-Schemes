@@ -7,13 +7,23 @@
 
 \section{SchemeCANIFPPCT}
 
-\subsection{$\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$}
+\subsection{$\textbf{Setup}(n) \rightarrow (\textit{mpk}, \textit{msk})$}
 
 $p \gets \|\mathbb{G}\|$
 
-generate $g_1, g_3 \in \mathbb{G}_1$ randomly
+$g_1 \gets 1_{\mathbb{G}_1}$
 
-generate $g_2 \in \mathbb{G}_2$ randomly
+$g_2 \gets 1_{\mathbb{G}_2}$
+
+generate $g_3 \in \mathbb{G}_1$ randomly
+
+$H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+
+$H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
+
+$H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
+
+$H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
 
 generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
 
@@ -37,9 +47,9 @@ $ \textit{mpk} \gets (g_1, g_2, p, g_3, H_1, H_2, H_3, H_4, R, S, T, \Omega, v_1
 
 $\textit{msk} \gets (r, s, t, \omega, t_1, t_2, t_3, t_4)$
 
-$\textbf{return }(\textit{mpk}, \textit{msk})$
+\textbf{return} $(\textit{mpk}, \textit{msk})$
 
-\subsection{$\textbf{KGen}(\textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
+\subsection{$\textbf{KGen}(\textit{ID}_i) \rightarrow (\textit{sk}_{\textit{ID}_i}, \textit{ek}_{\textit{ID}_i})$}
 
 generate $k_i, x_i \in \mathbb{Z}_r$ randomly
 
@@ -51,20 +61,41 @@ $\textit{sk}_{\textit{ID}_i} \gets k_i$
 
 $\textit{ek}_{\textit{ID}_i} \gets (x_i, Z_i)$
 
-$\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
+$\textit{tag}_i \gets H_4(x_i \cdot Z_i)$
 
-$\textit{sk}_{\textit{ID}_k} \gets (
-g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r, 
-g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r, 
-g^r, 
-h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
-h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
-h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
-h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}}, 
-\textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
-)$
+\textbf{return} $(\textit{sk}_{\textit{ID}_i}, \textit{ek}_{\textit{ID}_i}$
 
-$\textbf{return }\textit{sk}_{\textit{ID}_k}$
+\subsection{$\textbf{Encryption}(\textit{TP}_S, \textit{ek}_{\textit{ID}_i}) \rightarrow \textit{CT}_{\textit{TP}_S})$}
+
+generate $\vec{s} \gets (s_1, s_2, \cdots, s_n) \in \mathbb{Z}_r^n$ randomly
+
+generate $\vec{s}_1 \gets (s_{1_1}, s_{1_2}, \cdots, s_{1, n}) \in mathbb{Z}_r^n$ randomly
+
+generate $\vec{s}_2 \gets (s_{2_1}, s_{2_2}, \cdots, s_{2, n}) \in mathbb{Z}_r^n$ randomly
+
+$V_i \gets H_2(\Omega^{s_i}), \forall i \in \{1, 2, \cdots, n\}$
+
+$\vec{C}_{i, 0} \gets (g_3 H_1(\textit{TP}_S))^{s_i}, \forall i \in \{1, 2, \cdots, n\}$
+
+$\vec{C}_{i, 1} \gets v_1^{s_i - s_{i, 1}}$
+
+$\vec{C}_{i, 2} \gets v_2^{s_{i, 1}}$
+
+$\vec{C}_{i, 3} \gets v_3^{s_i - s_{i, 2}}$
+
+$\vec{C}_{i, 4} \gets v_4^{s_{i, 2}}$
+
+$f(x) := \prod\limits_{i = 1}^n (x - V_i)$
+
+generate $\alpha \in \mathbb{Z}_r$ randomly
+
+$C_1 \gets g_1^\alpha$
+
+$C_2 \gets Z_i^{x_i} + T^\alpha$
+
+$C_3 \gets e(T, S)^\alpha$
+
+$\textbf{return }\textit{CT}$
 
 \subsection{$\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
 
@@ -82,19 +113,6 @@ f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
 )$
 
 $\textbf{return }\textit{sk}_{\textit{ID}_k}$
-
-\subsection{$\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$}
-
-generate $s_1, s_2 \in \mathbb{Z}_r$ randomly
-
-$\textit{CT} \gets (
-e(g_1, g_2)^{s_1 + s_2} \cdot M, 
-\bar{g}^{s_1}, 
-\tilde{g}^{s_2}, 
-(h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
-)$
-
-$\textbf{return }\textit{CT}$
 
 \subsection{$\textbf{Dec}(\textit{sk}_{\textit{ID}_k}, \textit{CT}) \rightarrow M$}
 

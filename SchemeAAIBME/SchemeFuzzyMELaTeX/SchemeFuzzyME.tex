@@ -9,7 +9,7 @@
 
 This scheme is only applicable to symmetric groups of prime orders. 
 
-\subsection{$\textbf{Setup}(n) \rightarrow (\textit{mpk}, \textit{msk})$}
+\subsection{$\textbf{Setup}(n, d) \rightarrow (\textit{mpk}, \textit{msk})$}
 
 $g \gets 1_{\mathbb{G}_1}$
 
@@ -192,7 +192,7 @@ $W'_B \gets S_B \cap P_B$
 	\quad$\textit{CT}_i \gets C_0 || C_1 || C_2 || C_3 || C_4 || C_{1, i} || C_{2, i} || C_{3, i} || C_{4, i}, \forall i \in \{1, 2, \cdots, n\}$
 
 	\quad$K'_l \gets \prod\limits_{a_i \in W_A} \left(\frac{\hat{e}(C_{1, i}, \textit{dk}_{P_{A_{0, i}}}) \hat{e}(C_1, \textit{dk}_{P_{A_{1, i}}}) \hat{e}(C_2, \textit{dk}_{P_{A_{i, 2}}})}{\hat{e}(H_1(\textit{CT}_i), C_{4, i}) \cdot \hat{e}(C_{3, i}, C_{2, i})} \cdot \hat{e}(C_3, \textit{dk}_{P_{A_{i, 3}}}) \hat{e}(C_4, \textit{dk}_{P_{A_{i, 4}}}) \hat{e}(C_{5, i}, g)\right)^{\Delta(a_i, W_A, 0)}$
-	
+
 	\quad$M \gets C_0 \cdot K'_s \cdot K'_l$
 
 \textbf{else}

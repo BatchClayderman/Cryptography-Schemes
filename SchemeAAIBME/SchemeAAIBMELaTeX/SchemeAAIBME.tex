@@ -1,0 +1,101 @@
+\documentclass[a4paper]{article}
+\setlength{\parindent}{0pt}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+
+\begin{document}
+
+\section{SchemeAAIBME}
+
+\subsection{$\textbf{Setup}(n, d) \rightarrow (\textit{mpk}, \textit{msk})$}
+
+generate $\alpha, \beta, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
+
+generate $g_2, g_3 \in \mathbb{G}_1$ randomly
+
+generate $\bm{T} \gets (\bm{T}_0, \bm{T}_1, \cdots, \bm{T}_n) \in \mathbb{G}_1^{n + 1}$ randomly
+
+generate $\bm{T}' \gets (\bm{T}'_0, \bm{T}'_1, \cdots, \bm{T}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
+
+generate $\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n) \in \mathbb{G_1}^{n + 1}$ randomly
+
+generate $\bm{u}' \gets (\bm{u}'_0, \bm{u}'_1, \cdots, \bm{u}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
+
+$g_1 \gets g^\alpha$
+
+$g'_1 \gets g^\beta$
+
+$Y_1 \gets e(g_1, g_2)^{t_1 t_2}$
+
+$Y_2 \gets e(g_3, g)^\beta$
+
+$v_1 \gets g^{t_1}$
+
+$v_2 \gets g^{t_2}$
+
+$v_3 \gets g^{t_3}$
+
+$v_4 \gets g^{t_4}$
+
+$H: \bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
+
+$ \textit{mpk} \gets (g_1, g'_1, g_2, g_3, Y_1, Y_2, v_1, v_2, v_3, v_4, \bm{u}, \bm{T}, \bm{u}', \bm{T}', H_1)$
+
+$\textit{msk} \gets (g_2^\alpha, \beta, t_1, t_2, t_3, t_4)$
+
+$\textbf{return }(\textit{mpk}, \textit{msk})$
+
+\subsection{$\textbf{EKGen}(\textit{ID}_A) \rightarrow \textit{ek}_{\textit{ID}_A}$}
+
+$\textit{HI} \gets h_1^{I_1}h_2^{I_2}\cdots h_k^{I_k}$
+
+$\textit{sk}_{\textit{ID}_k} \gets (
+g_2^{\frac{\alpha}{b_1}} \cdot \textit{HI}^{\frac{r}{b_1}} \cdot \bar{g}_3^r, 
+g_2^{\frac{\alpha}{b_2}} \cdot \textit{HI}^{\frac{r}{b_2}} \cdot \tilde{g}_3^r, 
+g^r, 
+h_{k + 1}^{\frac{r}{b_1}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
+h_{k + 1}^{\frac{r}{b_2}}, h_{k + 2}^{\frac{r}{b_1}}, \cdots, h_l^{\frac{r}{b_1}}, 
+h_{k + 1}^{b_1^{-1}}, h_{k + 2}^{b_1^{-1}}, \cdots, h_l^{b_1^{-1}}, 
+h_{k + 1}^{b_2^{-1}}, h_{k + 2}^{b_2^{-1}}, \cdots, h_l^{b_2^{-1}}, 
+\textit{HI}^{b_1^{-1}}, \textit{HI}^{b_2^{-1}}
+)$
+
+$\textbf{return }\textit{sk}_{\textit{ID}_k}$
+
+\subsection{$\textbf{DerivedEKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$}
+
+generate $t \in \mathbb{Z}_r$ randomly
+
+$\textit{sk}_{\textit{ID}_k} \gets (
+a_0 \cdot c_{0, k}^{I_k} \cdot (f_0 \cdot d_{0, k}^{I_k} \cdot \bar{g}_3)^t, 
+a_1 \cdot c_{1, k}^{I_k} \cdot (f_1 \cdot d_{1, k}^{I_k} \cdot \tilde{g}_3)^t, 
+b \cdot g^t, 
+c_{0, k + 1} \cdot d_{0, k + 1}^t, c_{0, k + 2} \cdot d_{0, k + 2}^t, \cdots, c_{0, l} \cdot d_{0, l}^t, 
+c_{1, k + 1} \cdot d_{1, k + 1}^t, c_{1, k + 2} \cdot d_{1, k + 2}^t, \cdots, c_{1, l} \cdot d_{1, l}^t, 
+d_{0, k + 1}, d_{0, k + 2}, \cdots, d_{0, l}, 
+d_{1, k + 1}, d_{1, k + 2}, \cdots, d_{1, l}, 
+f_0 \cdot c_{0, k}^{I_k}, f_1 \cdot c_{1, k}^{I_k}
+)$
+
+$\textbf{return }\textit{sk}_{\textit{ID}_k}$
+
+\subsection{$\textbf{Enc}(\textit{ID}_k, M) \rightarrow \textit{CT}$}
+
+generate $s_1, s_2 \in \mathbb{Z}_r$ randomly
+
+$\textit{CT} \gets (
+e(g_1, g_2)^{s_1 + s_2} \cdot M, 
+\bar{g}^{s_1}, 
+\tilde{g}^{s_2}, 
+(h_1^{I_1}h_2^{I_2} \cdots h_k^{I_k} \cdot g_3)^{s_1 + s_2}
+)$
+
+$\textbf{return }\textit{CT}$
+
+\subsection{$\textbf{Dec}(\textit{CT}, \textit{sk}_{\textit{ID}_k}) \rightarrow M$}
+
+$M \gets \cfrac{e(b, D) \cdot A}{e(B, a_0) \cdot e(C, a_1)}$
+
+$\textbf{return }M$
+
+\end{document}

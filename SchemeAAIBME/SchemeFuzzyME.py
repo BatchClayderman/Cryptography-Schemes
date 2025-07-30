@@ -62,7 +62,7 @@ class SchemeFuzzyME:
 			return eleResult
 		else:
 			return None
-	def Setup(self:object, n:int = 30, d:int = 10) -> tuple: # $\textbf{Setup}(n) \rightarrow (\textit{mpk}, \textit{msk})$
+	def Setup(self:object, n:int = 30, d:int = 10) -> tuple: # $\textbf{Setup}(n, d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
 		if isinstance(n, int) and n >= 1: # boundary check
@@ -74,7 +74,7 @@ class SchemeFuzzyME:
 			self.__d = d
 		else:
 			self.__d = 10
-			print("Setup: The variable $d$ should be a positive integer not smaller than 2 but it is not, which has been defaulted to $10$. ")
+			print("Setup: The variable $d$ should be a positive integer not smaller than $2$ but it is not, which has been defaulted to $10$. ")
 		
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
@@ -271,7 +271,7 @@ class SchemeFuzzyME:
 		else:
 			S_A, P_A = tuple(self.__group.random(ZR) for _ in range(self.__n)), tuple(self.__group.random(ZR) for _ in range(self.__n))
 			S_B, P_B = tuple(self.__group.random(ZR) for _ in range(self.__n)), tuple(self.__group.random(ZR) for _ in range(self.__n))
-			print("Decryption: Each of the variables $S_A$, $P_A$, $S_B$, and $P_B$ should be a tuple containing 4 elements of $\\mathbb{Z}_r$ but at least one of them is not, which has been generated randomly. ")
+			print("Decryption: Each of the variables $S_A$, $P_A$, $S_B$, and $P_B$ should be a tuple containing 4 elements of $\\mathbb{Z}_r$ but at least one of them is not, all of which have been generated randomly. ")
 			dk_SBPA = self.DKGen(S_B, P_A)
 			print("Decryption: The variable $\\textit{dk}_{S_B, P_A}$ has been generated accordingly. ")
 		if isinstance(cipherText, tuple) and len(cipherText) == 10 and all(isinstance(ele, Element) for ele in cipherText[:5]) and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in cipherText[5:]): # hybrid check
@@ -363,7 +363,7 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 				+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13																			\
 			)
 	else:
-		print("Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than 2. ")
+		print("Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than $2$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
 			+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 13																	\

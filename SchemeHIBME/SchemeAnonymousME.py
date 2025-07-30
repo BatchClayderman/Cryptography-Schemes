@@ -43,7 +43,7 @@ class SchemeAnonymousME:
 			self.__l = l
 		else:
 			self.__l = 30
-			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
+			print("Setup: The variable $l$ should be a positive integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$

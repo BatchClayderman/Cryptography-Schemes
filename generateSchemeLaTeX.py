@@ -122,16 +122,16 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				functionName + ": The passed message (bytes) is too long, which has been cast. ", functionName + ": The passed message (int) is too long, which has been cast. ", 			\
 				functionName + ": The variable $M$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
 				functionName + ": The variable $\\textit{ek}_{\\textit{id}^*}$ should be an element of $\\\\mathbb{G}_1$ but it is not, which has been generated randomly. ", 				\
-				functionName + ": The variable $d$ should be a positive integer but it is not, which has been defaulted to $30$. ", 													\
-				functionName + ": The variable $l$ should be a positive integer but it is not, which has been defaulted to $30$. ", 													\
-				functionName + ": The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ", 										\
 				functionName + ": The variable $m$ should be an element of $\\\\mathbb{G}_T$ but it is not, which has been generated randomly. ", 									\
 				"{0}: The variable $M$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\\\"{1}\\\". ".format(functionName, className), 					\
 				"{0}: The variable $m$ should be an integer or a ``bytes`` object but it is not, which has been defaulted to b\\\"{1}\\\". ".format(functionName, className)					\
 			):
 				return True
 			elif (																																																\
-				findall("^{0}: The variable \\$.+\\$ has been generated accordingly\\. $".format(functionName), s)																												\
+				findall("^{0}: Each of the variables (?:\\$.+\\$\\, )+and \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but at least one of them is not\\, all of which have been generated randomly\\. $".format(functionName), s)					\
+				or findall("^{0}: The variable \\$.+\\$ has been generated accordingly\\. $".format(functionName), s)																												\
+				or findall("^{0}: The variable \\$[a-z]\\$ should be a positive integer but it is not\\, which has been defaulted to \\$\\d+\\$\\. $".format(functionName), s)																		\
+				or findall("^{0}: The variable \\$[a-z]\\$ should be a positive integer not smaller than \\$\\d+\\$ but it is not\\, which has been defaulted to \\$\\d+\\$\\. $".format(functionName), s)													\
 				or findall("^{0}: The variable \\$.+\\$ should be a ``bytes`` object but it is not\\, which has been generated randomly\\. $".format(functionName), s)																			\
 				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)												\
 				or findall("^{0}: The variable \\$.+\\$ should be a tuple containing .+ .+(?: and .+ .+)? but it is not\\, which has been generated with \\$(?:M|m)\\$ set to b\\\\\\\"{1}\\\\\\\"\\. $".format(functionName, className), s)						\
@@ -165,25 +165,26 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				callSleep(sleepingTime)
 				return False
 		elif className is None and functionName is None and (
-			s in (																														\
-				"", "Dec1:", "Dec2:", "Decrypted:", "Derived:", "Is ``ReEnc`` passed? {0}. YesNo", "Is ``Dec1`` passed (m == message)? {0}. YesNo", 		\
-				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyDec`` passed? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 			\
-				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 								\
-				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 								\
-				"Is the system valid? No. \\n\\t{0}", "Is the system valid? No. The parameter $d$ should be a positive integer. ", 							\
-				"Is the system valid? No. The parameter $l$ should be a positive integer. ", "Is the system valid? Yes. ", 									\
-				"Is the tracing verified? {0}. YesNo", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 			\
-				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 				\
-				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 					\
-				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 							\
-				"Results: \\n{0}\\n\\nThe overwriting is canceled by users. ", 																		\
-				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Space:", 								\
-				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", "Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 	\
-				"The environment of the Python ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 							\
-				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", 					\
-				"\\nThe experiments were interrupted by users. The program will try to save the results collected. ", 										\
-				"curveType =", "curveType = Unknown", "d =", "k =", "l =", "m =", "n =", "round =", "secparam ="										\
-			) or findall("^Is the system valid\\? No\\. The parameters? \\$.+\\$ should be .+ positive integers? satisfying \\$.+\\$\\. $", s)						\
+			s in (																															\
+				"", "Dec1:", "Dec2:", "Decrypted:", "Derived:", "Is ``ReEnc`` passed? {0}. YesNo", "Is ``Dec1`` passed (m == message)? {0}. YesNo", 			\
+				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyDec`` passed? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 				\
+				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 									\
+				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", "Is the system valid? No. \\n\\t{0}", 		\
+				"Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than $2$. ", 	\
+				"Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", "Original:", 															\
+				"Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 														\
+				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 					\
+				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
+				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 								\
+				"Results: \\n{0}\\n\\nThe overwriting is canceled by users. ", 																			\
+				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Space:", 									\
+				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", "Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 		\
+				"The environment of the Python ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 								\
+				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", 						\
+				"\\nThe experiments were interrupted by users. The program will try to save the results collected. ", 											\
+				"curveType =", "curveType = Unknown", "d =", "k =", "l =", "m =", "n =", "round =", "secparam ="											\
+			) or findall("^Is the system valid\\? No\\. The parameter \\$[a-z]\\$ should be a positive integer\\. $", s)											\
+			or findall("^Is the system valid\\? No\\. The parameters? \\$.+\\$ should be .+ positive integers? satisfying \\$.+\\$\\. $", s)								\
 		):
 			return True
 		else:

@@ -101,23 +101,23 @@ class SchemeCANIFPPCT:
 	def Encryption(self:object, TPS:tuple, ekIDi:Element) -> object: # $\textbf{Encryption}(\textit{TP}_S, \textit{ek}_{\textit{ID}_i}) \rightarrow \textit{CT}_{\textit{TP}_S})$
 		# Check #
 		if not self.__flag:
-			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
+			print("Encryption: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Encryption`` subsequently. ")
 			self.Setup()
 		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
 			ID_k = IDk
 		else:
 			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																					\
-				(																																					\
-					"Enc: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
-				).format(self.__l - 1, self.__l)																																\
+			print(																																						\
+				(																																						\
+					"Encryption: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
+					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																							\
+				).format(self.__l - 1, self.__l)																																	\
 			)
 		if isinstance(message, Element) and message.type == GT: # type check
 			M = message
 		else:
 			M = self.__group.random(GT)
-			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			print("Encryption: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
@@ -208,7 +208,7 @@ class SchemeCANIFPPCT:
 		if isinstance(cipherText, tuple) and len(cipherText) == 4 and all([isinstance(ele, Element) for ele in cipherText]):# hybrid check
 			CT = cipherText
 		else:
-			CT = self.Enc(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
+			CT = self.Encryption(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
 			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated with $M \\in \\mathbb{G}_T$ generated randomly. ")
 		
 		# Unpack #

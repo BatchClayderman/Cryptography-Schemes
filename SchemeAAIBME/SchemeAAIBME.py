@@ -24,7 +24,8 @@ class SchemeAAIBME:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
-		self.__l = 30
+		self.__n = 30
+		self.__d = 10
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -36,22 +37,45 @@ class SchemeAAIBME:
 			return element
 		else:
 			return self.__group.init(ZR, 1)
-	def Setup(self:object, l:int = 30) -> tuple: # $\textbf{Setup}(l) \rightarrow (\textit{mpk}, \textit{msk})$
+	def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
+		if isinstance(coefficients, (tuple, list)) and coefficients and (															\
+			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
+			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
+		):
+			n, eleResult = len(coefficients) - 1, coefficients[0]
+			for i in range(1, n):
+				eResult = x
+				for _ in range(i - 1):
+					eResult *= x
+				eleResult += coefficients[i] * eResult
+			eResult = x
+			for _ in range(n - 1):
+				eResult *= x
+			eleResult += eResult
+			return eleResult
+		else:
+			return None
+	def Setup(self:object, n:int = 30, d:int = 10) -> tuple: # $\textbf{Setup}(n, d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
-		if isinstance(l, int) and l >= 3: # $l$ must be not smaller than $3$ to complete all the tasks
-			self.__l = l
+		if isinstance(n, int) and n >= 1: # boundary check
+			self.__n = n
 		else:
-			self.__l = 30
-			print("Setup: The variable $l$ should be an integer not smaller than $3$ but it is not, which has been defaulted to $30$. ")
+			self.__n = 30
+			print("Setup: The variable $n$ should be a positive integer but it is not, which has been defaulted to $30$. ")
+		if isinstance(d, int) and d >= 2: # boundary check
+			self.__d = d
+		else:
+			self.__d = 10
+			print("Setup: The variable $d$ should be a positive integer not smaller than $2$ but it is not, which has been defaulted to $10$. ")
 		
 		# Scheme #
 		alpha, beta, t1, t2, t3, t4 = self.__group.random(ZR, 6) # generate $\alpha, \beta, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
 		g2, g3 = self.__group.random(G1), self.__group.random(G1) # generate $g_2, g_3 \in \mathbb{G}_1$ randomly
-		T = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T} \gets (\bm{T}_0, \bm{T}_1, \cdots, \bm{T}_n) \in \mathbb{G}_1^{n + 1}$ randomly
-		TPrime = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T}' \gets (\bm{T}'_0, \bm{T}'_1, \cdots, \bm{T}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
-		u = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n) \in \mathbb{G_1}^{n + 1}$ randomly
-		uPrime = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u}' \gets (\bm{u}'_0, \bm{u}'_1, \cdots, \bm{u}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
+		TVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T} \gets (\bm{T}_0, \bm{T}_1, \cdots, \bm{T}_n) \in \mathbb{G}_1^{n + 1}$ randomly
+		TPrimeVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T}' \gets (\bm{T}'_0, \bm{T}'_1, \cdots, \bm{T}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
+		uVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n) \in \mathbb{G_1}^{n + 1}$ randomly
+		uPrimeVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u}' \gets (\bm{u}'_0, \bm{u}'_1, \cdots, \bm{u}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
 		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		g1Prime = g ** beta # $g'_1 \gets g^\beta$
@@ -61,10 +85,10 @@ class SchemeAAIBME:
 		v2 = g ** t2 # $v_2 \gets g^{t_2}$
 		v3 = g ** t3 # $v_3 \gets g^{t_3}$
 		v4 = g ** t4 # $v_4 \gets g^{t_4}$
-		H = lambda u, ID:u[0] * self.__product(		\
-			u[j + 1] ** ID[j] for j in range(n)		\
-		) # $H: \bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
-		self.__mpk = (g1, g1Prime, g2, g3, Y1, Y2, v1, v2, v3, v4, u, T, uPrime, TPrime, H1) # $ \textit{mpk} \gets (g_1, g'_1, g_2, g_3, Y_1, Y_2, v_1, v_2, v_3, v_4, \bm{u}, \bm{T}, \bm{u}', \bm{T}', H_1)$
+		H = lambda vec, ID:vec[0] * self.__product(		\
+			vec[j + 1] ** ID[j] for j in range(n)			\
+		) # $H: \bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
+		self.__mpk = (g1, g1Prime, g2, g3, Y1, Y2, v1, v2, v3, v4, uVec, TVec, uPrimeVec, TPrimeVec, H1) # $ \textit{mpk} \gets (g_1, g'_1, g_2, g_3, Y_1, Y_2, v_1, v_2, v_3, v_4, \bm{u}, \bm{T}, \bm{u}', \bm{T}', H_1)$
 		self.__msk = (g2 ** alpha, beta, t1, t2, t3, t4) # $\textit{msk} \gets (g_2^\alpha, \beta, t_1, t_2, t_3, t_4)$
 		
 		# Flag #
