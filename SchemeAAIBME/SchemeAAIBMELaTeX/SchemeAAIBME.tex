@@ -63,65 +63,30 @@ generate $\textit{ek}_{\textit{ID}_A}(S) \subset \textit{ek}_{\textit{ID}_A}$ s.
 
 \textbf{return} $\textit{ek}_{\textit{ID}_A}(S)$
 
-\subsection{$\textbf{DKGen}(\textit{id}_R) \rightarrow \textit{dk}_{\textit{id}_R}$}
+\subsection{$\textbf{DKGen}(\textit{id}_B) \rightarrow \textit{dk}_{\textit{ID}_B}$}
 
 $g \gets 1_{\mathbb{G}_1}$
 
-$\Delta: i, S, x \rightarrow \prod\limits_{j \in S, j \neq i} \frac{x - j}{i - j}$
-
-$N \gets (1, 2, \cdots, n + 1)$
-
-$T: x \rightarrow g_2^{x^n} \prod\limits_{i = 1}^{n + 1} t_i^{\Delta(i, N, x)}$
-
-$H: x \rightarrow g_3^{x^n} \prod\limits_{i = 1}^{n + 1} l_i^{\Delta(i, N, x)}$
-
-generate $\gamma \in \mathbb{Z}_r$ randomly
-
-generate $G_{\textit{ID}} \in \mathbb{G}_1$ randomly
-
-generate a $(d - 1)$ degree polynominal $f(x)$ s.t. $f(0) = \alpha$ randomly
-
-generate a $(d - 1)$ degree polynominal $h(x)$ s.t. $h(0) = \gamma$ randomly
-
-generate a $(d - 1)$ degree polynominal $q'(x)$ s.t. $q'(0) = \beta$ randomly
+$H: \bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
 
 generate $\vec{k}_1 = (k_{1, 1}, k_{1, 2}, \cdots, k_{1, n}) \in \mathbb{Z}_r^n$ randomly
 
 generate $\vec{k}_2 = (k_{2, 1}, k_{2, 2}, \cdots, k_{2, n}) \in \mathbb{Z}_r^n$ randomly
 
-generate $\vec{r}'_1 = (r'_{1, 1}, r'_{1, 2}, \cdots, r'_{1, n}) \in \mathbb{Z}_r^n$ randomly
+$\textit{dk}_{\textit{ID}_{B_i}} \gets (
+g^{k_{1, i} t_1 t_2 + k_{2, i} t_3 t_4}
+g_2^{-\alpha t_2} [H(\bm{u}, \textit{ID}_B) T_i]^{k_{1, i} t_2}
+g_2^{-\alpha t_1} [H(\bm{u}, \textit{ID}_B) T_i]^{k_{1, i} t_1}
+[H(\bm{u}, \textit{ID}_B) T_i]^{k_{2, i} t_4}
+[H(\bm{u}, \textit{ID}_B) T_i]^{k_{2, i} t_3}
+), \forall i \in \{1, 2, \cdots, n\}
+$
 
-generate $\vec{r}'_2 = (r'_{2, 1}, r'_{2, 2}, \cdots, r'_{2, n}) \in \mathbb{Z}_r^n$ randomly
+generate $\textit{dk}_{\textit{ID}_B}(S') \subset \textit{dk}_{\textit{ID}_B}$ s.t. $\|\textit{dk}_{\textit{ID}_B}(S')\| = d$ randomly
 
-$\textit{dk}_{S_{B_{0, i}}} \gets g^{k_{1, i} \theta_1 \theta_2 + k_{2, i} \theta_3 \theta_4}, \forall i \in \{1, 2, \cdots, n\}$
+\textbf{return} $\textit{dk}_{\textit{ID}_B}(S')$
 
-$\textit{dk}_{S_{B_{1, i}}} \gets g_2^{-f(b_i) \theta_2} (G_{\textit{ID}})^{-h(b_i) \theta_2} [T(b_i)]^{-k_{1, i} \theta_2}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{S_{B_{2, i}}} \gets g_2^{-f(b_i) \theta_1} (G_{\textit{ID}})^{-h(b_i) \theta_1} [T(b_i)]^{-k_{1, i} \theta_1}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{S_{B_{3, i}}} \gets [T(b_i)]^{-k_{2, i} \theta_4}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{S_{B_{4, i}}} \gets [T(b_i)]^{-k_{2, i} \theta_3}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{S_B} \gets (\textit{dk}_{S_{B_0}}, \textit{dk}_{S_{B_1}}, \textit{dk}_{S_{B_2}}, \textit{dk}_{S_{B_3}}, \textit{dk}_{S_{B_4}})$
-
-$\textit{dk}_{P_{A_{0, i}}} \gets g^{r'_{i, 1} \theta_1 \theta_2 + r'_{i, 2} \theta_3 \theta_4}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{P_{A_{1, i}}} \gets g_2^{-2q'(a_i) \theta_2} (G_{\textit{ID}})^{h(a_i \theta_2)} H(a_i)^{-r'_{1, i} \theta_2}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{P_{A_{2, i}}} \gets g_2^{-2q'(a_i) \theta_1} (G_{\textit{ID}})^{h(a_i \theta_1)} H(a_i)^{-r'_{1, i} \theta_1}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{P_{A_{3, i}}} \gets [H(a_i)]^{-r'_{2, i} \theta_4}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{P_{A_{3, i}}} \gets [H(a_i)]^{-r'_{2, i} \theta_3}, \forall i \in \{1, 2, \cdots, n\}$
-
-$\textit{dk}_{P_A} \gets (\textit{dk}_{P_{A_0}}, \textit{dk}_{P_{A_1}}, \textit{dk}_{P_{A_2}}, \textit{dk}_{P_{A_3}}, \textit{dk}_{P_{A_4}})$
-
-$\textit{dk}_{S_B, P_A} \gets (\textit{dk}_{S_B}, \textit{dk}_{P_A})$
-
-\textbf{return} $\textit{dk}_{S_B, P_A}$
-
-\subsection{$\textbf{Encryption}(\textit{ek}_{\textit{ID}_A}, M) \rightarrow \textit{CT}$}
+\subsection{$\textbf{Enc}(\textit{ek}_{\textit{ID}_A}, M) \rightarrow \textit{CT}$}
 
 $g \gets 1_{\mathbb{G}_1}$
 
@@ -169,7 +134,7 @@ $\textit{CT} \gets (C_0, C_1, C_2, C_3, C_4, \vec{C}_1, \vec{C}_2, \vec{C}_3, \v
 
 \textbf{return} $\textit{CT}$
 
-\subsection{$\textbf{Decryption}(\textit{dk}_{S_B, P_A}, S_B, P_A, \textit{CT}) \rightarrow M$}
+\subsection{$\textbf{Dec}(\textit{dk}_{S_B, P_A}, S_B, P_A, \textit{CT}) \rightarrow M$}
 
 $W'_A \gets ID_A \cap P_A$
 

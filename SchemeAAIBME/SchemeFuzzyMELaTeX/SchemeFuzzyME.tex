@@ -123,7 +123,7 @@ $\textit{dk}_{S_B, P_A} \gets (\textit{dk}_{S_B}, \textit{dk}_{P_A})$
 
 \textbf{return} $\textit{dk}_{S_B, P_A}$
 
-\subsection{$\textbf{Encryption}(\textit{ek}_{S_A}, M) \rightarrow \textit{CT}$}
+\subsection{$\textbf{Encryption}(\textit{ek}_{S_A}, S_A, P_B, M) \rightarrow \textit{CT}$}
 
 $g \gets 1_{\mathbb{G}_1}$
 
@@ -171,7 +171,7 @@ $\textit{CT} \gets (C_0, C_1, C_2, C_3, C_4, \vec{C}_1, \vec{C}_2, \vec{C}_3, \v
 
 \textbf{return} $\textit{CT}$
 
-\subsection{$\textbf{Decryption}(\textit{dk}_{S_B, P_A}, S_B, P_A, \textit{CT}) \rightarrow M$}
+\subsection{$\textbf{Decryption}(\textit{dk}_{S_B, P_A}, S_A, P_A, S_B, P_B, \textit{CT}) \rightarrow M$}
 
 $W'_A \gets S_A \cap P_A$
 
@@ -187,11 +187,20 @@ $W'_B \gets S_B \cap P_B$
 
 	\quad$\Delta: i, S, x \rightarrow \prod\limits_{j \in S, j \neq i} \frac{x - j}{i - j}$
 
-	\quad$K'_s \gets \prod\limits_{b_i \in W_B} (\hat{e}(C_{1, i}, \textit{dk}_{S_{B_{0, i}}}) \hat{e}(C_1, \textit{dk}_{S_{B_{1, i}}}) \hat{e}(C_2, \textit{dk}_{S_{B_{2, i}}}) \hat{e}(C_3, \textit{dk}_{S_{B_{3, i}}}) \hat{e}(C_4, \textit{dk}_{S_{B_{4, i}}}))^{\Delta(b_i, W_B, 0)}$
+	\quad$K'_s \gets \prod\limits_{b_i \in W_B} (
+\hat{e}(C_{1, i}, \textit{dk}_{S_{B_{0, i}}}) \hat{e}(C_1, \textit{dk}_{S_{B_{1, i}}}) \hat{e}(C_2, \textit{dk}_{S_{B_{2, i}}})
+\hat{e}(C_3, \textit{dk}_{S_{B_{3, i}}}) \hat{e}(C_4, \textit{dk}_{S_{B_{4, i}}})
+)^{\Delta(b_i, W_B, 0)}$
 
 	\quad$\textit{CT}_i \gets C_0 || C_1 || C_2 || C_3 || C_4 || C_{1, i} || C_{2, i} || C_{3, i} || C_{4, i}, \forall i \in \{1, 2, \cdots, n\}$
 
-	\quad$K'_l \gets \prod\limits_{a_i \in W_A} \left(\frac{\hat{e}(C_{1, i}, \textit{dk}_{P_{A_{0, i}}}) \hat{e}(C_1, \textit{dk}_{P_{A_{1, i}}}) \hat{e}(C_2, \textit{dk}_{P_{A_{i, 2}}})}{\hat{e}(H_1(\textit{CT}_i), C_{4, i}) \cdot \hat{e}(C_{3, i}, C_{2, i})} \cdot \hat{e}(C_3, \textit{dk}_{P_{A_{i, 3}}}) \hat{e}(C_4, \textit{dk}_{P_{A_{i, 4}}}) \hat{e}(C_{5, i}, g)\right)^{\Delta(a_i, W_A, 0)}$
+	\quad$K'_l \gets \prod\limits_{a_i \in W_A} 
+\left(
+\frac{\hat{e}(C_{1, i}, \textit{dk}_{P_{A_{0, i}}}) \hat{e}(C_1, \textit{dk}_{P_{A_{1, i}}}) \hat{e}(C_2, \textit{dk}_{P_{A_{i, 2}}})}
+{\hat{e}(H_1(\textit{CT}_i), C_{4, i}) \cdot \hat{e}(C_{3, i}, C_{2, i})}
+\cdot \hat{e}(C_3, \textit{dk}_{P_{A_{i, 3}}}) \hat{e}(C_4, \textit{dk}_{P_{A_{i, 4}}}) \hat{e}(C_{5, i}, g)
+\right)^{\Delta(a_i, W_A, 0)}
+$
 
 	\quad$M \gets C_0 \cdot K'_s \cdot K'_l$
 
