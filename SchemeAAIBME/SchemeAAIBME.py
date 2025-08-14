@@ -78,7 +78,7 @@ class SchemeAAIBME:
 		TPrimeVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{T}' \gets (\bm{T}'_0, \bm{T}'_1, \cdots, \bm{T}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
 		uVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n) \in \mathbb{G_1}^{n + 1}$ randomly
 		uPrimeVec = tuple(self.__group.random(G1) for i in range(n + 1)) # generate $\bm{u}' \gets (\bm{u}'_0, \bm{u}'_1, \cdots, \bm{u}'_n) \in \mathbb{G}_1^{n + 1}$ randomly
-		H1 = lambda x:self.__group.hash(self.__group.serialize(x), G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
 		g1 = g ** alpha # $g_1 \gets g^\alpha$
 		g1Prime = g ** beta # $g'_1 \gets g^\beta$
 		Y1 = pair(g1, g2) ** (t1 * t2) # $Y_1 \gets e(g_1, g_2)^{t_1 t_2}$
@@ -93,7 +93,7 @@ class SchemeAAIBME:
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # $\textbf{return }(\textit{mpk}, \textit{msk})$
-	def EKGen(self:object, IDA:tuple) -> tuple: # $\textbf{EKGen}(\textit{ID}_A) \rightarrow \textit{ek}_{\textit{ID}_A}$
+	def EKGen(self:object, IDA:tuple, _S:tuple) -> tuple: # $\textbf{EKGen}(\textit{ID}_A, S) \rightarrow \textit{ek}_{\textit{ID}_A}(S)$
 		# Check #
 		if not self.__flag:
 			print("EKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``EKGen`` subsequently. ")
@@ -103,6 +103,13 @@ class SchemeAAIBME:
 		else:
 			ID_A = tuple(self.__group.random(ZR) for _ in range(self.__n))
 			print("EKGen: The variable $\\textit{ID}_A$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+		if isinstance(_S, tuple) and len(_S) == self.__d and all(isinstance(ele, int) and ele < self.__n for ele in _S):
+			S = _S
+		else:
+			S = list(range(n))
+			shuffle(S)
+			S = tuple(sorted(S[:self.__d]))
+			print("EKGen: The variable $S$ should be a tuple containing $d$ integers smaller than $n$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
 		g3, uVec, TVec = self.__mpk[3], self.__mpk[10], self.__mpk[11]
@@ -116,12 +123,13 @@ class SchemeAAIBME:
 		rVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r} = (r_1, r_2, \cdots, r_n) \in \mathbb{Z}_r^n$ randomly
 		coefficients = (beta, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - 2)) + (self.__group.init(ZR, 1), )
 		q = lambda x:self.__computePolynomial(x, coefficients) # generate a $(d - 1)$ degree polynominal $q(x)$ s.t. $q(0) = \beta$ randomly
-		ek_ID_A = list((g3 ** q(self.__group.init(ZR, i)) * (H(uVec, ID_A) * TVec[i]) ** rVec[i], g ** rVec[i]) for i in range(self.__n)) # $\textit{ek}_{\textit{ID}_{A_i}} \gets (g_3^{q(i)} [H(\bm{u}', \textit{ID}_A)T'_i]^{r_i}, g^{r_i}), \forall i \in \{1, 2, \cdots, n\}$
-		shuffle(ek_ID_A)
-		ek_ID_A = tuple(ek_ID_A[self.__d:]) # generate $\textit{ek}_{\textit{ID}_A}(S) \subset \textit{ek}_{\textit{ID}_A}$ s.t. $\|\textit{ek}_{\textit{ID}_A}(S)\| = d$ randomly
+		ek_ID_A = tuple(																					\
+			(g3 ** q(self.__group.init(ZR, i)) * (H(uVec, ID_A) * TVec[i]) ** rVec[i], g ** rVec[i]) for i in range(self.__n)	\
+		) # $\textit{ek}_{\textit{ID}_{A_i}} \gets (g_3^{q(i)} [H(\bm{u}', \textit{ID}_A)T'_i]^{r_i}, g^{r_i}), \forall i \in \{1, 2, \cdots, n\}$
+		ek_ID_A_S = tuple(ek_ID_A[i] for i in S) # generate $\textit{ek}_{\textit{ID}_A}(S) \subset \textit{ek}_{\textit{ID}_A}$ s.t. $\|\textit{ek}_{\textit{ID}_A}(S)\| = d$ randomly
 		
 		# Return #
-		return ek_ID_A # \textbf{return} $\textit{ek}_{\textit{ID}_A}(S)$
+		return ek_ID_A_S # \textbf{return} $\textit{ek}_{\textit{ID}_A}(S)$
 	def DKGen(self:object, IDB:tuple) -> tuple: # $\textbf{DKGen}(\textit{id}_B) \rightarrow \textit{dk}_{\textit{ID}_B}$
 		# Check #
 		if not self.__flag:
@@ -154,26 +162,33 @@ class SchemeAAIBME:
 			) for i in range(self.__n) # ), \forall i \in \{1, 2, \cdots, n\}
 		) # $
 		shuffle(dk_ID_B)
-		dk_ID_B = tuple(dk_ID_B[self.__d:]) # generate $\textit{dk}_{\textit{ID}_B}(S') \subset \textit{dk}_{\textit{ID}_B}$ s.t. $\|\textit{dk}_{\textit{ID}_B}(S')\| = d$ randomly
+		dk_ID_B_SPrime = tuple(dk_ID_B[self.__d:]) # generate $\textit{dk}_{\textit{ID}_B}(S') \subset \textit{dk}_{\textit{ID}_B}$ s.t. $\|\textit{dk}_{\textit{ID}_B}(S')\| = d$ randomly
 		
 		# Return #
-		return dk_ID_B # \textbf{return} $\textit{dk}_{\textit{ID}_B}(S')$
-	def Enc(self:object, ekIDA:tuple, IDA:tuple, IDB:tuple, message:Element) -> tuple: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_A}, \textit{ID}_A, \textit{ID}_B, M) \rightarrow \textit{CT}$
+		return dk_ID_B_SPrime # \textbf{return} $\textit{dk}_{\textit{ID}_B}(S')$
+	def Enc(self:object, ekIDAS:tuple, IDA:tuple, IDB:tuple, _S:tuple, message:Element) -> tuple: # $\textbf{Enc}(\textit{ek}_{\textit{ID}_A}(S), \textit{ID}_A, \textit{ID}_B, S, M) \rightarrow \textit{CT}$
 		# Check #
 		if not self.__flag:
 			print("Enc: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Enc`` subsequently. ")
 			self.Setup()
+		if isinstance(_S, tuple) and len(_S) == self.__d and all(isinstance(ele, int) and ele < self.__n for ele in _S):
+			S = _S
+		else:
+			S = list(range(n))
+			shuffle(S)
+			S = tuple(sorted(S[:self.__d]))
+			print("Enc: The variable $S$ should be a tuple containing $d$ integers smaller than $n$ but it is not, which has been generated randomly. ")
 		if isinstance(IDA, tuple) and len(IDA) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in IDA): # hybrid check
 			ID_A = IDA
-			if isinstance(ekIDA, tuple) and len(ekIDA) == self.__n and all(isinstance(ele[0], tuple) and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in ekIDA): # hybrid check
-				ek_ID_A = ekIDA
+			if isinstance(ekIDAS, tuple) and len(ekIDAS) == self.__d and all(isinstance(ele[0], tuple) and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in ekIDAS): # hybrid check
+				ek_ID_A_S = ekIDAS
 			else:
-				ek_ID_A = self.EKGen(ID_A)
-				print("Enc: The variable $\\textit{ek}_{\textit{ID}_A}$ should be a tuple containing $n$ tuples but it is not, which has been generated accordingly. ")
+				ek_ID_A_S = self.EKGen(ID_A, S)
+				print("Enc: The variable $\\textit{ek}_{\\textit{ID}_A}(S)$ should be a tuple containing $d$ tuples but it is not, which has been generated accordingly. ")
 		else:
 			ID_A = tuple(self.__group.random(ZR) for _ in range(self.__n))
 			print("Enc: The variable $\\textit{ID}_A$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-			ek_ID_A = self.EKGen(ID_A)
+			ek_ID_A_S = self.EKGen(ID_A, S)
 			print("Enc: The variable $\\textit{ek}_{\\textit{ID}_A}$ has been generated accordingly. ")
 		if isinstance(IDB, tuple) and len(IDB) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in IDB): # hybrid check
 			ID_B = IDB
@@ -187,7 +202,7 @@ class SchemeAAIBME:
 			print("Enc: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		Y1, Y2, v1, v2, v3, v4, uVec, TVec = self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7], self.__mpk[8], self.__mpk[9], self.__mpk[10], self.__mpk[11]
+		Y1, Y2, v1, v2, v3, v4, uVec, TVec, uPrimeVec, TPrimeVec, H1 = self.__mpk[4], self.__mpk[5], self.__mpk[6], self.__mpk[7], self.__mpk[8], self.__mpk[9], self.__mpk[10], self.__mpk[11], self.__mpk[12], self.__mpk[13], self.__mpk[14]
 		
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
@@ -196,7 +211,7 @@ class SchemeAAIBME:
 		) # $H: \bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
 		SPrimePrime = list(range(self.__n))
 		shuffle(SPrimePrime)
-		SPrimePrime = tuple(SPrimePrime[:self.__d]) # generate $S'' \subset [1, n]$ s.t. $\|S''\| = d$ randomly
+		SPrimePrime = tuple(sorted(SPrimePrime[:self.__d])) # generate $S'' \subset [1, n]$ s.t. $\|S''\| = d$ randomly
 		s = self.__group.random(ZR) # generate $s \in \mathbb{Z}_r$ randomly
 		s1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_1 = (s_{1, 1}, s_{1, 2}, \cdots, s_{1, n})$ randomly
 		s2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_2 = (s_{2, 1}, s_{2, 2}, \cdots, s_{2, n})$ randomly
@@ -210,19 +225,32 @@ class SchemeAAIBME:
 		C3Vec = tuple(v2 ** s1Vec[i] for i in SPrimePrime) # $C_{3, i} \gets v_2^{s_{1, i}}, \forall i \in S''$
 		C4Vec = tuple(v3 ** (q(self.__group.init(ZR, i)) - s2Vec[i]) for i in SPrimePrime) # $C_{4, i} \gets v_3^{q(i) - s_{2, i}}, \forall i \in S''$
 		C5Vec = tuple(v4 ** s2Vec[i] for i in SPrimePrime) # $C_{5, i} \gets v_4^{s_{2, i}}, \forall i \in S''$
-		zVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{z} = (z_1, z_2, \cdots, z_n)$ randomly
-		zPrimeVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{z}' = (z'_1, z'_2, \cdots, z'_n)$ randomly
-		C6Vec = tuple(g ** zPrimeVec[i] for i in S) # $C_{6, i} \gets g^{z'_i}, \forall i \in S$
-		C7Vec = tuple((ek_ID_A[i][1] * g ** zVec[i]) ** s for i in S) # $C_{7, i} \gets (\textit{ek}_{\textit{ID}_{A_{i, 2}}}(S) \cdot g^{z_i})^s, \forall i \in S$
-		C8Vec = tuple(ek_ID_A[i][0] ** s * (H(uPrimeVec, ID_A) * TPrimeVec[i]) ** (s * zVec[i]) * H1( # $C_{8, i} \gets \textit{ek}_{\textit{ID}_{A_{i, 1}}}(S) \cdot [H(\bm{u}', \textit{ID}_A) T'_i]^{s \cdot z_i} \cdot H_1(
+		zVec = tuple(self.__group.random(ZR) for _ in range(self.__d)) # generate $\vec{z} = (z_1, z_2, \cdots, z_n) \in \mathbb{Z}_r^d$ randomly
+		zPrimeVec = tuple(self.__group.random(ZR) for _ in range(self.__d)) # generate $\vec{z}' = (z'_1, z'_2, \cdots, z'_n) \in \mathbb{Z}_r^d$ randomly
+		C6Vec = tuple(g ** zPrimeVec[i] for i, j in enumerate(S)) # $C_{6, i} \gets g^{z'_i}, \forall i \in S$
+		C7Vec = tuple((ek_ID_A_S[i][1] * g ** zVec[i]) ** s for i, j in enumerate(S)) # $C_{7, i} \gets (\textit{ek}_{\textit{ID}_{A_{i, 2}}}(S) \cdot g^{z_i})^s, \forall i \in S$
+		C8Vec = tuple(ek_ID_A_S[i][0] ** s * (H(uPrimeVec, ID_A) * TPrimeVec[j]) ** (s * zVec[i]) * H1( # $C_{8, i} \gets \textit{ek}_{\textit{ID}_{A_{i, 1}}}(S) \cdot [H(\bm{u}', \textit{ID}_A) T'_i]^{s \cdot z_i} \cdot H_1(
 			self.__group.serialize(C) + self.__group.serialize(C1Vec[i]) + self.__group.serialize(C2Vec[i]) + self.__group.serialize(C3Vec[i]) # C || C_{1, i} || C_{2, i} || C_{3, i}
 			+ self.__group.serialize(C4Vec[i]) + self.__group.serialize(C5Vec[i]) + self.__group.serialize(C6Vec[i]) + self.__group.serialize(C7Vec[i]) # C_{4, i} || C_{5, i} || C_{6, i} || C_{7, i}
-		) for i in S) # ), \forall i \in S$
+		) for i, j in enumerate(S)) # ), \forall i \in S$
+		I = set(S).intersection(SPrimePrime) # $I \gets S \cap S''$
+		if len(I) >= self.__d: # \textbf{if} $\|I\| \leqslant d$ \textbf{then}
+			IStar = list(I)
+			shuffle(IStar)
+			IStar = tuple(sorted(IStar[:self.__d])) # \quad generate $I^* \subset I$ randomly
+		else:
+			IStar = list(I)
+			I = list(set(range(self.__n)) - I)
+			shuffle(I)
+			while len(IStar) < self.__d:
+				IStar.append(I.pop())
+			IStar.sort()
+			IStar = tuple(IStar)
 		CT = (SPrimePrime, IStar, C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec, C8Vec) # $\textit{CT} \gets (S'', I^*, C, \vec{C}_1, \vec{C}_2, \vec{C}_3, \vec{C}_4, \vec{C}_5, \vec{C}_6, \vec{C}_7, \vec{C}_8)$
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
-	def Dec(self:object, dkSBPA:tuple, SA:tuple, PA:tuple, SB:tuple, PB:tuple, cipherText:tuple) -> Element|bool: # $\textbf{Dec}(\textit{dk}_{S_B, P_A}, S_B, P_A, \textit{CT}) \rightarrow M$
+	def Dec(self:object, dkIDBSPrime:tuple, IDB:tuple, IDA:tuple, cipherText:tuple) -> Element|bool: # $\textbf{Dec}(\textit{dk}_{\textit{ID}_B}(S'), \textit{ID}_B, \textit{ID}_A, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
@@ -254,37 +282,21 @@ class SchemeAAIBME:
 			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 5 elements and 5 tuples but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		H1 = self.__mpk[11]
-		dk_S_B, dk_P_A = dk_SBPA
-		dk_S_B_0, dk_S_B_1, dk_S_B_2, dk_S_B_3, dk_S_B_4 = dk_S_B
-		dk_P_A_0, dk_P_A_1, dk_P_A_2, dk_P_A_3, dk_P_A_4 = dk_P_A
-		C0, C1, C2, C3, C4, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec = CT
 		
 		# Scheme #
-		WAPrime = set(ID_A).intersection(P_A) # $W'_A \gets ID_A \cap P_A$
-		WBPrime = set(S_B).intersection(P_B) # $W'_B \gets S_B \cap P_B$
-		if len(WAPrime) >= self.__d and len(WBPrime) >= self.__d: # \textbf{if} $|W'_A| \leqslant d \land |W'_B| \leqslant d$ \textbf{then}
-			WA = tuple(WAPrime)[:self.__d] # \quad generate $W_A \subset W'_A$ s.t. $|W_A| = d$ randomly
-			WB = tuple(WBPrime)[:self.__d] # \quad generate $W_B \subset W'_B$ s.t. $|W_B| = d$ randomly
-			g = self.__group.init(G1, 1) # \quad$g \gets 1_{\mathbb{G}_1}$
-			Delta = lambda i, S, x:self.__product(tuple((x - j) / (i - j) for j in S if j != i)) # \quad$\Delta: i, S, x \rightarrow \prod\limits_{j \in S, j \neq i} \frac{x - j}{i - j}$
-			KsPrime = self.__product(
-				tuple((pair(C1Vec[i], dk_S_B_0[i]) * pair(C1, dk_S_B_1[i]) * pair(C2, dk_S_B_2[i]) * pair(C3, dk_S_B_3[i]) * pair(C4, dk_S_B_4[i])) ** Delta(S_B[i], WB, 0) for i in range(self.__n))
-			) # \quad$K'_s \gets \prod\limits_{b_i \in W_B} (\hat{e}(C_{1, i}, \textit{dk}_{S_{B_{0, i}}}) \hat{e}(C_1, \textit{dk}_{S_{B_{1, i}}}) \hat{e}(C_2, \textit{dk}_{S_{B_{2, i}}}) \hat{e}(C_3, \textit{dk}_{S_{B_{3, i}}}) \hat{e}(C_4, \textit{dk}_{S_{B_{4, i}}}))^{\Delta(b_i, W_B, 0)}$
-			CTVec = tuple(																												\
-				(																														\
-					self.__group.serialize(C0) + self.__group.serialize(C1) + self.__group.serialize(C2) + self.__group.serialize(C3) + self.__group.serialize(C4)		\
-					+ self.__group.serialize(C1Vec[i]) + self.__group.serialize(C2Vec[i]) + self.__group.serialize(C3Vec[i]) + self.__group.serialize(C4Vec[i])		\
-				) for i in range(self.__n)																										\
-			) # \quad$\textit{CT}_i \gets C_0 || C_1 || C_2 || C_3 || C_4 || C_{1, i} || C_{2, i} || C_{3, i} || C_{4, i}, \forall i \in \{1, 2, \cdots, n\}$
-			KlPrime = self.__product(																																									\
-				tuple(																																												\
-					(																																												\
-						(pair(C1Vec[i], dk_P_A_0[i]) * pair(C1, dk_P_A_1[i]) * pair(C2, dk_P_A_2[i])) / (pair(H1(CTVec[i]), C4Vec[i]) * pair(C3Vec[i], C2Vec[i])) * pair(C3, dk_P_A_3[i]) * pair(C4, dk_P_A_4[i]) * pair(C5Vec[i], g)	\
-					) ** Delta(ID_A[i], WA, 0) for i in range(self.__n)																																			\
-				)																																													\
-			) # \quad$K'_l \gets \prod\limits_{a_i \in W_A} \left(\frac{\hat{e}(C_{1, i}, \textit{dk}_{P_{A_{0, i}}}) \hat{e}(C_1, \textit{dk}_{P_{A_{1, i}}}) \hat{e}(C_2, \textit{dk}_{P_{A_{i, 2}}})}{\hat{e}(H_1(\textit{CT}_i), C_{4, i}) \cdot \hat{e}(C_{3, i}, C_{2, i})} \cdot \hat{e}(C_3, \textit{dk}_{P_{A_{i, 3}}}) \hat{e}(C_4, \textit{dk}_{P_{A_{i, 4}}}) \hat{e}(C_{5, i}, g)\right)^{\Delta(a_i, W_A, 0)}$
-			M = C0 * KsPrime * KlPrime # \quad$M \gets C_0 \cdot K'_s \cdot K'_l$
+		CTVec = tuple(																																\
+			self.__group.serialize(C) + self.__group.serialize(C1Vec[i]) + self.__group.serialize(C2Vec[i]) + self.__group.serialize(C3Vec[i]) + self.__group.serialize(C4Vec[i])		\
+			+ self.__group.serialize(C5Vec[i]) + self.__group.serialize(C6Vec[i]) + self.__group.serialize(C7Vec[i]) for i in range(self.__n)									\
+		) # $\textit{CT}_i \gets C || C_{1, i} || C_{2, i} || C_{3, i} || C_{4, i} || C_{5, i} || C_{6, i} || C{7, i}, \forall i \in \{1, 2, \cdots, n\}$
+		KlPrime = self.__product(
+			tuple((pair(C8Vec[i], g) / (pair(H(uPrimeVec, ID_A) * TPrime[i], C7Vec[i]) *pair(H1(CTVec[i]), C6Vec[i]))) ** Delta(i, I, 0) for i in IStar)
+		) # $K'_l \gets \prod\limits_{i \in I^*} \left(\frac{e(C_{8, i}, g)}{e([H(\bm{u}', \textit{ID}_A) T'_i] e(H_1(\textit{CT}_i), C_{6, i})}\right)^{\Delta(i, I, 0)}$
+		KsPrime = self.__product(
+			tuple(((pair(C1Vec[i], dk_ID_B_SPrime[i][0]) * pair(C2Vec[i], dk_ID_B_SPrime[i][1]) * pair(C3Vec[i], dk_ID_B_SPrime[i][2])) / (pair(C4Vec[i], dk_ID_B_SPrime[i][3]) * pair(C5Vec[i], dk_ID_B_SPrime[i][4]))) ** Delta(i, I, 0) for i in I)
+		) # $K'_s \gets \prod\limits_{i \in I} \left(\right)^{\Delta(i, j, 0)}
+		SPrimePrimeSet = set(SPrimePrime)
+		if SPrimePrimeSet.intersection(S) >= self.__d and SPrimePrimeSet.intersection(SPrime) >= self.__d: # \textbf{if} $|S \cap S'| \leqslant d \land |S' \cap S''| \leqslant d$ \textbf{then}
+			M = C * KsPrime * KlPrime # quad$M \gets C \cdot K'_s \cdot K'_l$
 		else: # \textbf{else}
 			M = False # \quad$M \gets \perp$
 		# \textbf{end if}
@@ -362,27 +374,30 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 	# EKGen #
 	startTime = perf_counter()
 	ID_A = tuple(group.random(ZR) for _ in range(n))
-	ek_ID_A = schemeAAIBME.EKGen(ID_A)
+	S = list(range(n))
+	shuffle(S)
+	S = tuple(sorted(S[:d]))
+	ek_ID_A_S = schemeAAIBME.EKGen(ID_A, S)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# DKGen #
 	startTime = perf_counter()
 	ID_B = tuple(group.random(ZR) for _ in range(n))
-	dk_ID_B = schemeAAIBME.DKGen(ID_B)
+	dk_ID_B_SPrime = schemeAAIBME.DKGen(ID_B)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeAAIBME.Enc(ek_ID_A, ID_A, ID_B, message)
+	CT = schemeAAIBME.Enc(ek_ID_A_S, ID_A, ID_B, S, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec #
 	startTime = perf_counter()
-	M = schemeAAIBME.Dec(dk_SBPA, ID_A, P_A, S_B, P_B, CT)
+	M = schemeAAIBME.Dec(dk_ID_B_SPrime, ID_B, ID_A, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -390,8 +405,8 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 	booleans = [True, not isinstance(M, bool) and message == M]
 	spaceRecords = [																														\
 		schemeAAIBME.getLengthOf(group.random(ZR)), schemeAAIBME.getLengthOf(group.random(G1)), schemeAAIBME.getLengthOf(group.random(GT)), 	\
-		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(ek_ID_A),  									\
-		schemeAAIBME.getLengthOf(dk_ID_B), schemeAAIBME.getLengthOf(CT)																	\
+		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(ek_ID_A_S), 								\
+		schemeAAIBME.getLengthOf(dk_ID_B_SPrime), schemeAAIBME.getLengthOf(CT)															\
 	]
 	del schemeAAIBME
 	print("Original:", message)
@@ -441,9 +456,9 @@ def main() -> int:
 	queries = ["curveType", "secparam", "n", "d", "roundCount"]
 	validators = ["isSystemValid", "isSchemeCorrect"]
 	metrics = 	[															\
-		"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 	\
+		"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 				\
 		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 			\
-		"mpk (B)", "msk (B)", "ek_ID_A (B)", "dk_ID_B (B)", "CT (B)"			\
+		"mpk (B)", "msk (B)", "ek_ID_A_S (B)", "dk_ID_B_SPrime (B)", "CT (B)"	\
 	]
 	
 	# Scheme #
