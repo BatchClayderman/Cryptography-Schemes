@@ -5,47 +5,23 @@
 
 \begin{document}
 
-\section{SchemeCANIFPPCT}
+\section{SchemeVLPSICA}
 
 \subsection{$\textbf{Setup}(n) \rightarrow (\textit{mpk}, \textit{msk})$}
-
-$p \gets \|\mathbb{G}\|$
 
 $g_1 \gets 1_{\mathbb{G}_1}$
 
 $g_2 \gets 1_{\mathbb{G}_2}$
 
-generate $g_3 \in \mathbb{G}_1$ randomly
+generate $s \in \mathbb{Z}_p^*$ randomly
 
-$H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
+$\vec{S} \gets (S_0, S_1, \cdots, S_{m + d}) = (g_2^{s_0}, g_2^{s_1}, \cdots, g_2^{s^{m + d}})$
 
-$H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
+$S' \gets g_1^s \in \mathbb{G}_1$
 
-$H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
+$\textit{mpk} \gets (g_1, S')$
 
-$H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
-
-generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
-
-$R \gets g_1^r$
-
-$S \gets g_2^s$
-
-$T \gets g_1^t$
-
-$\Omega \gets e(g_1, g_2)^{t_1 t_2 \omega}$
-
-$v_1 \gets g_2^{t_1}$
-
-$v_2 \gets g_2^{t_2}$
-
-$v_3 \gets g_2^{t_3}$
-
-$v_4 \gets g_2^{t_4}$
-
-$ \textit{mpk} \gets (g_1, g_2, p, g_3, H_1, H_2, H_3, H_4, R, S, T, \Omega, v_1, v_2, v_3, v_4)$
-
-$\textit{msk} \gets (r, s, t, \omega, t_1, t_2, t_3, t_4)$
+$\textit{msk} \gets (g_2, \vec{S})$
 
 \textbf{return} $(\textit{mpk}, \textit{msk})$
 

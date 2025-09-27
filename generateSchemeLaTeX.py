@@ -51,12 +51,10 @@ def convertEscaped(string:str) -> str:
 
 if PLATFORM == "WINDOWS":
 	def checkFile(filePath:str, lines:tuple|list|set, sleepingTime:int = 3) -> bool:
-		patterns = (																							\
-			"^ +\\S.*$", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", "cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", 					\
-			"^def Scheme\\(.+round\\)", "^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", 		\
-			" = Scheme\\(curveType[A-Za-z, ]+\\)", "def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", 								\
-			"for idx in range\\([0-9]+, [A-Za-z]+\\)", " = sum\\(.*^(start = ).*\\)", 											\
-			"\\$\\\\textbf{return", "len.+# type check"																\
+		patterns = (																															\
+			" = Scheme\\(curveType[A-Za-z, ]+\\)", " = sum\\(.*^(start = ).*\\)", "\\$\\\\textbf{return", "\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\S.*$", "^def Scheme\\(.+round\\)", 	\
+			"^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", 								\
+			"cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", "def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", "for idx in range\\([0-9]+, [A-Za-z]+\\)", "len.+# type check"		\
 		)
 		if isinstance(filePath, str) and isinstance(lines, (tuple, list, set)):
 			cnt = 0
@@ -84,12 +82,12 @@ if PLATFORM == "WINDOWS":
 			return len(patterns)
 else:
 	def checkFile(filePath:str, lines:None = None, sleepingTime:int = 3) -> int:
-		patterns = (																								\
-			"^ +\\\\S.*\\$", "cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 				\
-			"^def Scheme\\\\(.+round\\\\)", "^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 	\
-			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", "def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", 								\
-			"for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)", 											\
-			"\\\\\\$\\\\textbf{return", "len.+# type check"																	\
+		patterns = (																						\
+			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)", "\\\\\\$\\\\\\\\textbf{return", 				\
+			"\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\\\S.*\\$", "^def Scheme\\\\(.+round\\\\)", 									\
+			"^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 					\
+			"cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 					\
+			"def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", "len.+# type check"		\
 		)
 		if isinstance(filePath, str):
 			cnt = 0

@@ -95,7 +95,7 @@ class SchemeIBBME:
 		rVec1 = tuple(self.__group.random(ZR) for _ in range(self.__l + 1)) # generate $\vec{r}_1 = (r_{1, 0}, r_{1, 1}, \cdots, r{1, l}) \in \mathbb{Z}_r^{l + 1}$ randomly
 		rVec2 = tuple(self.__group.random(ZR) for _ in range(self.__l + 1)) # generate $\vec{r}_2 = (r_{2, 0}, r_{2, 1}, \cdots, r{2, l}) \in \mathbb{Z}_r^{l + 1}$ randomly
 		t1, t2, beta1, beta2, alpha, rho, b, tau = self.__group.random(ZR, 8) # generate $t_1, t_2, \beta_1, \beta_2, \alpha, \rho, b, \tau \in \mathbb{Z}_r$ randomly
-		rVec = tuple(rVec1[i] + b * rVec2[i] for i in range(self.__l + 1)) # $\vec{r} = (r_0, r_1, \cdots, r_l) \gets \vec{r}_1 + b\vec{r}_2 = (r_{1, 0} + br_{2, 0}, r_{1, 1} + br_{2, 1}, \cdots, r_{1, l} + br_{2, l})$
+		rVec = tuple(rVec1[i] + b * rVec2[i] for i in range(self.__l + 1)) # $\vec{r} \gets (r_0, r_1, \cdots, r_l) = \vec{r}_1 + b\vec{r}_2 = (r_{1, 0} + br_{2, 0}, r_{1, 1} + br_{2, 1}, \cdots, r_{1, l} + br_{2, l})$
 		t = t1 + b * t2 # $t \gets t_1 + bt_2$
 		beta = beta1 + b * beta2 # $\beta \gets \beta_1 + b\beta_2$
 		RVec = tuple(g ** rVec[i] for i in range(self.__l + 1)) # $\vec{R} \gets g^{\vec{r}} = (g^{r_0}, g^{r_1}, \cdots, g^{r_l})$

@@ -18,7 +18,7 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
-class SchemeCANIFPPCT:
+class SchemeVLPSICA:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
 		if self.__group.secparam < 1:
@@ -46,25 +46,13 @@ class SchemeCANIFPPCT:
 			print("Setup: The variable $n$ should be a positive integer but it is not, which has been defaulted to $30$. ")
 		
 		# Scheme #
-		p = self.__group.order() # $p \gets \|\mathbb{G}\|$
 		g1 = self.__group.init(G1, 1) # $g_1 \gets 1_{\mathbb{G}_1}$
 		g2 = self.__group.init(G2, 1) # $g_2 \gets 1_{\mathbb{G}_2}$
-		g3 = self.__group.random(G1) # generate $g_3 \in \mathbb{G}_1$ randomly
-		H1 = lambda x:self.__group.hash(x, G1) # $H_1: \{0, 1\}^* \rightarrow \mathbb{G}_1$
-		H2 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_2: \mathbb{G}_T \rightarrow \mathbb{Z}_r$
-		H3 = lambda x:self.__group.hash(x, ZR) # $H_3: \{0, 1\}^* \rightarrow \mathbb{Z}_r$
-		H4 = lambda x:self.__group.hash(self.__group.serialize(x), ZR) # $H_4: \mathbb{G}_1 \rightarrow \mathbb{Z}_r$
-		r, s, t, omega, t1, t2, t3, t4 = self.__group.random(ZR, 8) # generate $r, s, t, \omega, t_1, t_2, t_3, t_4 \in \mathbb{Z}_r$ randomly
-		R = g1 ** r # $R \gets g_1^r$
-		S = g2 ** s # $S \gets g_2^s$
-		T = g1 ** t # $T \gets g_1^t$
-		Omega = pair(g1, g2) ** (t1 * t2 * omega) # $\Omega \gets e(g_1, g_2)^{t_1 t_2 \omega}$
-		v1 = g2 ** t1 # $v_1 \gets g_2^{t_1}$
-		v2 = g2 ** t2 # $v_2 \gets g_2^{t_2}$
-		v3 = g2 ** t3 # $v_3 \gets g_2^{t_3}$
-		v4 = g2 ** t4 # $v_4 \gets g_2^{t_4}$
-		self.__mpk = (g1, g2, p, g3, H1, H2, H3, H4, R, S, T, Omega, v1, v2, v3, v4) # $ \textit{mpk} \gets (g_1, g_2, p, g_3, H_1, H_2, H_3, H_4, R, S, T, \Omega, v_1, v_2, v_3, v_4)$
-		self.__msk = (r, s, t, omega, t1, t2, t3, t4) # $\textit{msk} \gets (r, s, t, \omega, t_1, t_2, t_3, t_4)$
+		s = self.__group.random(ZR) # generate $s \in \mathbb{Z}_p^*$ randomly
+		SVec = tuple(g2 ** (s ** i) for i in range(m + d + 1)) # $\vec{S} \gets (S_0, S_1, \cdots, S_{m + d}) = (g_2^{s_0}, g_2^{s_1}, \cdots, g_2^{s^{m + d}})$
+		SPrime = g1 ** s # $S' \gets g_1^s \in \mathbb{G}_1$
+		self.__mpk = (g1, SPrime) # $\textit{mpk} \gets (g_1, S')$
+		self.__msk = (g2, SVec) # $\textit{msk} \gets (g_2, \vec{S})$
 		
 		# Flag #
 		self.__flag = True
@@ -278,50 +266,50 @@ def Scheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|None = No
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
-	schemeCANIFPPCT = SchemeCANIFPPCT(group)
+	schemeVLPSICA = SchemeVLPSICA(group)
 	timeRecords = []
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeCANIFPPCT.Setup(l)
+	mpk, msk = schemeVLPSICA.Setup(l)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# KGen #
 	startTime = perf_counter()
 	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeCANIFPPCT.KGen(ID_k)
+	sk_ID_k = schemeVLPSICA.KGen(ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# DerivedKGen #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeCANIFPPCT.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeCANIFPPCT.DerivedKGen(sk_ID_kMinus1, ID_k)
+	sk_ID_kMinus1 = schemeVLPSICA.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
+	sk_ID_kDerived = schemeVLPSICA.DerivedKGen(sk_ID_kMinus1, ID_k)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Enc #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeCANIFPPCT.Enc(ID_k, message)
+	CT = schemeVLPSICA.Enc(ID_k, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# Dec #
 	startTime = perf_counter()
-	M = schemeCANIFPPCT.Dec(sk_ID_k,  CT)
-	MDerived = schemeCANIFPPCT.Dec(sk_ID_kDerived, CT)
+	M = schemeVLPSICA.Dec(sk_ID_k,  CT)
+	MDerived = schemeVLPSICA.Dec(sk_ID_kDerived, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
 	# End #
 	booleans = [True, message == MDerived, message == M]
 	spaceRecords = [																																													\
-		schemeCANIFPPCT.getLengthOf(group.random(ZR)), schemeCANIFPPCT.getLengthOf(group.random(G1)), schemeCANIFPPCT.getLengthOf(group.random(G2)), schemeCANIFPPCT.getLengthOf(group.random(GT)), 	\
-		schemeCANIFPPCT.getLengthOf(mpk), schemeCANIFPPCT.getLengthOf(msk), schemeCANIFPPCT.getLengthOf(sk_ID_k), schemeCANIFPPCT.getLengthOf(sk_ID_kDerived), schemeCANIFPPCT.getLengthOf(CT)	\
+		schemeVLPSICA.getLengthOf(group.random(ZR)), schemeVLPSICA.getLengthOf(group.random(G1)), schemeVLPSICA.getLengthOf(group.random(G2)), schemeVLPSICA.getLengthOf(group.random(GT)), 	\
+		schemeVLPSICA.getLengthOf(mpk), schemeVLPSICA.getLengthOf(msk), schemeVLPSICA.getLengthOf(sk_ID_k), schemeVLPSICA.getLengthOf(sk_ID_kDerived), schemeVLPSICA.getLengthOf(CT)	\
 	]
-	del schemeCANIFPPCT
+	del schemeVLPSICA
 	print("Original:", message)
 	print("Derived:", MDerived)
 	print("Decrypted:", M)
@@ -367,7 +355,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 100, "SchemeCANIFPPCT.xlsx"
+	roundCount, filePath = 100, "SchemeVLPSICA.xlsx"
 	queries = ["curveType", "secparam", "l", "k", "roundCount"]
 	validators = ["isSystemValid", "isDeriverPassed", "isSchemeCorrect"]
 	metrics = 	[																	\
