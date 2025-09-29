@@ -417,7 +417,26 @@ def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|lis
 		return None
 ```
 
-#### 1.2.7 Concatenation for multiple objects
+#### 1.2.7 Lagrange coefficient computation
+
+On some occasions, we are required to compute the Lagrange coefficients. 
+
+```
+def __computeLagrangeCoefficients(self:object, xPoints:tuple|list, yPoints:tuple|list, x:Element) -> Element:
+	if isinstance(xPoints, (tuple, list)) and isinstance(yPoints, (tuple, list)) and len(xPoints) == len(yPoints) and all(isinstance(ele, Element) and ele.type == ZR for ele in xPoints) and all(isinstance(ele, Element) and ele.type == ZR for ele in yPoints) and isinstance(x, Element) and x.type == ZR:
+		n, result = len(xPoints), self.__group.init(ZR, 1)
+		for i in range(n):
+			L_i = self.__group.init(ZR, 1)
+			for j in range(n):
+				if i != j:
+					L_i *= (x - xPoints[j]) / (xPoints[i] - xPoints[j])
+			result += yPoints[i] * L_i
+		return result
+	else:
+		return self.__init(ZR, 0)
+```
+
+#### 1.2.8 Concatenation for multiple objects
 
 On some occasions, we need to concatenate multiple objects, acting as byte concatenation. Please kindly refer to the following lines. 
 
@@ -440,7 +459,7 @@ def __concat(self:object, *vector:tuple|list) -> bytes:
 	return abcBytes
 ```
 
-#### 1.2.8 Time consumption comparison for different implementations of the same solution
+#### 1.2.9 Time consumption comparison for different implementations of the same solution
 
 Generally speaking, in a unified computing environment, bitwise operations with the same number of operations will be faster than general addition, subtraction, multiplication, and division. In some cases, equivalent bit operations may require additional processing to achieve a certain function. This may result in the overall operation being inferior to the solution without bit operations. Therefore, the time comparison is required. 
 

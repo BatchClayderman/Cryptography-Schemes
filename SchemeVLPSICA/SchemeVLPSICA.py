@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from secrets import randbelow
 from time import perf_counter, sleep
 try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT, ZR, pair, pc_element as Element
@@ -24,7 +25,6 @@ class SchemeVLPSICA:
 		if self.__group.secparam < 1:
 			self.__group = PairingGroup(self.__group.groupType())
 			print("Init: The securtiy parameter should be a positive integer but it is not, which has been defaulted to {0}. ".format(self.__group.secparam))
-		self.__n = 30
 		self.__mpk = None
 		self.__msk = None
 		self.__flag = False # to indicate whether it has already set up
@@ -36,20 +36,42 @@ class SchemeVLPSICA:
 			return element
 		else:
 			return self.__group.init(ZR, 1)
-	def Setup(self:object, n:int = 30) -> tuple: # $\textbf{Setup}(n) \rightarrow (\textit{mpk}, \textit{msk})$
+	def __computeLagrangeCoefficients(self:object, xPoints:tuple|list, yPoints:tuple|list, x:Element) -> Element:
+		if isinstance(xPoints, (tuple, list)) and isinstance(yPoints, (tuple, list)) and len(xPoints) == len(yPoints) and all(isinstance(ele, Element) and ele.type == ZR for ele in xPoints) and all(isinstance(ele, Element) and ele.type == ZR for ele in yPoints) and isinstance(x, Element) and x.type == ZR:
+			n, result = len(xPoints), self.__group.init(ZR, 1)
+			for i in range(n):
+				L_i = self.__group.init(ZR, 1)
+				for j in range(n):
+					if i != j:
+						L_i *= (x - xPoints[j]) / (xPoints[i] - xPoints[j])
+				result += yPoints[i] * L_i
+			return result
+		else:
+			return self.__init(ZR, 0)
+	def Setup(self:object, m:int = 10, n:int = 10, d:int = 10) -> tuple: # $\textbf{Setup}(m, n, d) \rightarrow (\textit{mpk}, \textit{msk})$
 		# Check #
 		self.__flag = False
+		if isinstance(m, int) and m >= 1:
+			self.__m = m
+		else:
+			self.__m = 10
+			print("Setup: The variable $m$ should be a positive integer but it is not, which has been defaulted to $10$. ")
 		if isinstance(n, int) and n >= 1:
 			self.__n = n
 		else:
-			self.__n = 30
-			print("Setup: The variable $n$ should be a positive integer but it is not, which has been defaulted to $30$. ")
+			self.__n = 10
+			print("Setup: The variable $n$ should be a positive integer but it is not, which has been defaulted to $10$. ")
+		if isinstance(d, int) and d >= 1:
+			self.__d = d
+		else:
+			self.__d = 10
+			print("Setup: The variable $d$ should be a positive integer but it is not, which has been defaulted to $10$. ")
 		
 		# Scheme #
 		g1 = self.__group.init(G1, 1) # $g_1 \gets 1_{\mathbb{G}_1}$
 		g2 = self.__group.init(G2, 1) # $g_2 \gets 1_{\mathbb{G}_2}$
 		s = self.__group.random(ZR) # generate $s \in \mathbb{Z}_p^*$ randomly
-		SVec = tuple(g2 ** (s ** i) for i in range(m + d + 1)) # $\vec{S} \gets (S_0, S_1, \cdots, S_{m + d}) = (g_2^{s_0}, g_2^{s_1}, \cdots, g_2^{s^{m + d}})$
+		SVec = tuple(g2 ** (s ** i) for i in range(self.__m + self.__d + 1)) # $\vec{S} \gets (S_0, S_1, \cdots, S_{m + d}) = (g_2^{s_0}, g_2^{s_1}, \cdots, g_2^{s^{m + d}})$
 		SPrime = g1 ** s # $S' \gets g_1^s \in \mathbb{G}_1$
 		self.__mpk = (g1, SPrime) # $\textit{mpk} \gets (g_1, S')$
 		self.__msk = (g2, SVec) # $\textit{msk} \gets (g_2, \vec{S})$
@@ -57,81 +79,67 @@ class SchemeVLPSICA:
 		# Flag #
 		self.__flag = True
 		return (self.__mpk, self.__msk) # \textbf{return} $(\textit{mpk}, \textit{msk})$
-	def KGen(self:object, IDi:tuple) -> tuple: # $\textbf{KGen}(\textit{ID}_i) \rightarrow (\textit{sk}_{\textit{ID}_i}, \textit{ek}_{\textit{ID}_i})$
+	def Sender(self:object, _vVec:tuple, _YVec:tuple) -> tuple: # $\textbf{Sender}(\vec{v}, \vec{Y}) \rightarrow ((T, T'), (U, U'))$
 		# Check #
 		if not self.__flag:
-			print("KGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``KGen`` subsequently. ")
+			print("Sender: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Sender`` subsequently. ")
 			self.Setup()
-		if isinstance(IDi, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
-			ID_k = IDk
+		if isinstance(_vVec, tuple) and len(_vVec) == self.__d and all(isinstance(ele, Element) and ele.type == ZR for ele in _vVec): # hybrid check
+			vVec = _vVec
 		else:
-			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																					\
-				(																																					\
-					"KGen: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "	\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																						\
-				).format(self.__l - 1, self.__l)																																\
-			)
+			vVec = tuple(self.__group.random(ZR) for _ in range(self.__d))
+			print("Sender: The variable $\vec{v}$ should be a tuple containing $d$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+		if isinstance(_YVec, tuple) and len(_YVec) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in _YVec): # hybrid check
+			YVec = _YVec
+		else:
+			YVec = tuple(self.__group.random(ZR) for _ in range(self.__n))
+			print("Sender: The variable $\vec{Y}$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		g1 = self.__mpk[0]
+		g1, SPrime = self.__mpk
 		
 		# Scheme #
-		k_i, x_i = self.__group.random(ZR), self.__group.random(ZR) # generate $k_i, x_i \in \mathbb{Z}_r$ randomly
-		z_i = (r - x_i) * (s * x_i) ** (-1) # $z_i \gets (r - x_i)(s x_i)^{-1} \in \mathbb{Z}_r$
-		Z_i = g1 ** z_i # $Z_i \gets g_1^{z_i} \in \mathbb{G}_1$
-		sk_ID_i = k_i # $\textit{sk}_{\textit{ID}_i} \gets k_i$
-		ek_ID_i = (x_i, Z_i) # $\textit{ek}_{\textit{ID}_i} \gets (x_i, Z_i)$
-		tag_i = H4(x_i * Z_i) # $\textit{tag}_i \gets H_4(x_i \cdot Z_i)$
+		k = randbelow(self.__n) # generate $k \in \mathbb{N}* \cap [0, n)$ randomly
+		pi = lambda x:(x + k) % self.__n # $\pi: x \rightarrow (x + k) % n$
+		tVec = tuple(self.__group.random(ZR) for j in range(self.__n)) # generate $\vec{t} \gets (t_1, t_2, \cdots, t_n) \in \mathbb{Z}_r^n$ randomly
+		TVec = tuple(g1 ** tVec[j] for j in range(self.__n)) # $\vec{T} \gets (T_1, T_2, \cdots, T_n) = (g_1^{t_1}, g_1^{t_2}, \cdots, g_1^{t_n})$
+		UVec = tuple(SPrime * g1 ** (-YVec[pi(j)]) for j in range(self.__n)) # $\vec{U} \gets (U_1, U_2, \codts, U_n) = (S' \cdot (g_1^{-y_{\pi(1)}}), S' \cdot (g_1^{-y_{\pi(2)}}), \cdots, S' \cdot (g_1^{-y_{\pi(n)}}))$
+		tPrimeVec = tuple(self.__group.random(ZR) for _ in range(self.__d)) # generate $\vec{t}' = (t'_1, t'_2, \cdots, t'_d) \in \mathbb{Z}_r^d$ randomly
+		TPrimeVec = tuple(g1 ** tPrimeVec[j] for j in range(self.__d)) # $\vec{T}' \gets (T'_1, T'_2, \cdots, T'_d) = (g_1^{t'_1}, g_1^{t'_2}, \cdots, g_1^{t'_d})$
+		UPrimeVec = tuple(SPrime * g1 ** (-vVec[j]) ** tPrimeVec[j] for j in range(self.__d)) # $\vec{U}' \gets (U'_1, U'_2, \cdots, U'_d) = (S' \cdot (g_1^{-v_1})^{t'_1}, S' \cdot (g_1^{-v_2})^{t'_2}, \cdots, S' \cdot (g_1^{-v_d})^{t'_d})$
 		
 		# Return #
-		return (sk_ID_i, ek_ID_i) # \textbf{return} $(\textit{sk}_{\textit{ID}_i}, \textit{ek}_{\textit{ID}_i}$
-	def Encryption(self:object, TPS:tuple, ekIDi:Element) -> object: # $\textbf{Encryption}(\textit{TP}_S, \textit{ek}_{\textit{ID}_i}) \rightarrow \textit{CT}_{\textit{TP}_S})$
+		return ((UVec, UPrimeVec), (TVec, TPrimeVec)) # \textbf{return} $((\vec{U}, \vec{U}'), (\vec{T}, \vec{T}'))$
+	def Receiver(self:object, _vVec:tuple, _XVec:tuple) -> tuple: # $\textbf{Sender}(\vec{v}, \vec{X}) \rightarrow (R, R')$
 		# Check #
 		if not self.__flag:
-			print("Encryption: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Encryption`` subsequently. ")
+			print("Receiver: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Sender`` subsequently. ")
 			self.Setup()
-		if isinstance(IDk, tuple) and 2 <= len(IDk) < self.__l and all([isinstance(ele, Element) and ele.type == ZR for ele in IDk]): # hybrid check
-			ID_k = IDk
+		if isinstance(_vVec, tuple) and len(_vVec) == self.__d and all(isinstance(ele, Element) and ele.type == ZR for ele in _vVec): # hybrid check
+			vVec = _vVec
 		else:
-			ID_k = tuple(self.__group.random(ZR) for i in range(self.__l - 1))
-			print(																																						\
-				(																																						\
-					"Encryption: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements of $\\mathbb{{Z}}_r$ where the integer $k \\in [2, {0}]$ but it is not, "		\
-					+ "which has been generated randomly with a length of ${1} - 1 = {0}$. "																							\
-				).format(self.__l - 1, self.__l)																																	\
-			)
-		if isinstance(message, Element) and message.type == GT: # type check
-			M = message
+			vVec = tuple(self.__group.random(ZR) for _ in range(self.__d))
+			print("Receiver: The variable $\vec{v}$ should be a tuple containing $d$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+		if isinstance(_XVec, tuple) and len(_XVec) == self.__m and all(isinstance(ele, Element) and ele.type == ZR for ele in _XVec): # hybrid check
+			XVec = _XVec
 		else:
-			M = self.__group.random(GT)
-			print("Encryption: The variable $M$ should be an element of $\\mathbb{G}_T$ but it is not, which has been generated randomly. ")
+			XVec = tuple(self.__group.random(ZR) for _ in range(self.__m))
+			print("Receiver: The variable $\vec{X}$ should be a tuple containing $m$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		
 		# Unpack #
-		g1, g2, g3, gBar, gTilde, h = self.__mpk[1], self.__mpk[2], self.__mpk[3], self.__mpk[4], self.__mpk[5], self.__mpk[8:]
-		k = len(ID_k)
+		SVec = self.__msk[1]
 		
 		# Scheme #
-		sVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s} = (s_1, s_2, \cdots, s_n) \in \mathbb{Z}_r^n$ randomly
-		s1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_1 = (s_{1_1}, s_{1_2}, \cdots, s_{1, n}) \in mathbb{Z}_r^n$ randomly
-		s2Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{s}_2 = (s_{2_1}, s_{2_2}, \cdots, s_{2, n}) \in mathbb{Z}_r^n$ randomly
-		V = tuple(H2(Omega ** s[i]) for i in range(self.__n)) # $V_i \gets H_2(\Omega^{s_i}), \forall i \in \{1, 2, \cdots, n\}$
-		C0Vec = tuple((g3 * H1(TP_S[i])) ** s[i] for i in range(self.__n)) # $\vec{C}_{i, 0} \gets (g_3 H_1(\textit{TP}_S))^{s_i}, \forall i \in \{1, 2, \cdots, n\}$
-		C1Vec = tuple(v1 ** (s[i] - s1[i]) for i in range(self.__n)) # $\vec{C}_{i, 1} \gets v_1^{s_i - s_{i, 1}}$
-		C2Vec = tuple(v2 ** s1[i] for i in range(self.__n)) # $\vec{C}_{i, 2} \gets v_2^{s_{i, 1}}$
-		C3Vec = tuple(v3 ** (s[i] - s2[i]) for i in range(self.__n)) # $\vec{C}_{i, 3} \gets v_3^{s_i - s_{i, 2}}$
-		C4Vec = tuple(v4 ** s2[i] for i in range(self.__n)) # $\vec{C}_{i, 4} \gets v_4^{s_{i, 2}}$
-		f = lambda x:self.__product(x - V[i] for i in range(self.__n)) # $f(x) := \prod\limits_{i = 1}^n (x - V_i)$
-		alpha = self.__group.random(ZR) # generate $\alpha \in \mathbb{Z}_r$ randomly
-		C1 = g1 ** alpha # $C_1 \gets g_1^\alpha$
-		C2 = Zi ** xi + T ** alpha # $C_2 \gets Z_i^{x_i} + T^\alpha$
-		C3 = pair(T, S) ** alpha # $C_3 \gets e(T, S)^\alpha$
-		C4 = H3()
-		C5 = kc + x_i
+		XPrimeVec = XVec + vVec # $\vec{X}' \gets (\vec{X} || \vec{v}) \in \mathbb{Z}_r^{m + d}$
+		r = self.__group.random(ZR) # generate $r \in \mathbb{Z}_r$ randomly
+		xPoints, yPoints = tuple(self.__group.init(ZR, i) for i in range(1, self.__m + self.__d + 1)), XPrimeVec
+		R = self.__product(tuple(SVec[j] ** self.__computeLagrangeCoefficients(xPoints, yPoints, self.__group.init(ZR, j)) for j in range(self.__m + self.__d + 1))) ** r # $R \gets \left(\prod\limits_{j = 0}^{m + d} S_j^{p(X', j)}\right)^r$
+		R_Minus_iVec = tuple(self.__product(tuple(SVec[j] ** self.__computeLagrangeCoefficients(xPoints, yPoints, self.__group.init(ZR, j)) for j in range(self.__m + self.__d))) ** r for i in range(self.__m + self.__d)) # $R_{-i} \gets \left(\prod\limits_{j = 0}^{m + d - 1} S_j^{p(X'_{-i}, j)}\right)^r, \forall i \in {0, 1, \cdots, m + d}$
+		del xPoints, yPoints
 		
 		# Return #
-		return CT # \textbf{return} $\textit{CT}$
-	def DerivedKGen(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
+		return (R, R_Minus_iVec) # \textbf{return} $(R, \vec{R}_{-i})$
+	def Cloud1(self:object, skIDkMinus1:tuple, IDk:tuple) -> tuple: # $\textbf{DerivedKGen}(\textit{sk}_{\textit{ID}_\textit{k - 1}}, \textit{ID}_k) \rightarrow \textit{sk}_{\textit{ID}_k}$
 		# Check #
 		if not self.__flag:
 			print("DerivedKGen: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``DerivedKGen`` subsequently. ")
@@ -183,21 +191,21 @@ class SchemeVLPSICA:
 		
 		# Return #
 		return sk_ID_k # \textbf{return} $\textit{sk}_{\textit{ID}_k}$
-	def Dec(self:object, skIDk:tuple, cipherText:tuple) -> bytes: # $\textbf{Dec}(\textit{sk}_{\textit{ID}_k}, \textit{CT}) \rightarrow M$
+	def Verfiy(self:object, skIDk:tuple, cipherText:tuple) -> bytes: # $\textbf{Verfiy}(\textit{sk}_{\textit{ID}_k}, \textit{CT}) \rightarrow M$
 		# Check #
 		if not self.__flag:
-			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
+			print("Verfiy: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Verfiy`` subsequently. ")
 			self.Setup()
 		if isinstance(skIDk, tuple) and 9 <= len(skIDk) <= ((self.__l - 1) << 2) + 5 and all([isinstance(ele, Element) for ele in skIDk]): # hybrid check
 			sk_ID_k = skIDk
 		else:
 			sk_ID_k = self.KGen(tuple(self.__group.random(ZR) for i in range(self.__l - 1)))
-			print("Dec: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
+			print("Verfiy: The variable $\\textit{{ID}}_k$ should be a tuple containing $k = \\|\\textit{{ID}}_k\\|$ elements where the integer $k \\in [9, {0}]$ but it is not, which has been generated randomly with a length of $9$. ".format(5 + ((self.__l - 1) << 2)))
 		if isinstance(cipherText, tuple) and len(cipherText) == 4 and all([isinstance(ele, Element) for ele in cipherText]):# hybrid check
 			CT = cipherText
 		else:
 			CT = self.Encryption(tuple(self.__group.random(ZR) for i in range(self.__l - 1)), self.__group.random(GT))
-			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated with $M \\in \\mathbb{G}_T$ generated randomly. ")
+			print("Verfiy: The variable $\\textit{CT}$ should be a tuple containing 4 elements but it is not, which has been generated with $M \\in \\mathbb{G}_T$ generated randomly. ")
 		
 		# Unpack #
 		A, B, C, D = CT
@@ -222,9 +230,9 @@ class SchemeVLPSICA:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|None = None) -> list:
+def Scheme(curveType:tuple|list|str, m:int = 10, n:int = 10, d:int = 10, round:int|None = None) -> list:
 	# Begin #
-	if isinstance(n, int) and isinstance(k, int) and 2 <= k < n:
+	if isinstance(m, int) and isinstance(n, int) and isinstance(d, int) and m >= 1 and n >= 1 and d >= 1:
 		try:
 			if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
 				if curveType[1] >= 1:
@@ -242,25 +250,27 @@ def Scheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|None = No
 				print("curveType =", curveType)
 			else:
 				print("curveType = Unknown")
+			print("m =", m)
 			print("n =", n)
-			print("k =", k)
+			print("d =", d)
 			if isinstance(round, int) and round >= 0:
 				print("round =", round)
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-				+ [n, k, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
+				+ [m, n, d, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																													\
 			)
 	else:
-		print("Is the system valid? No. The parameters $n$ and $k$ should be two positive integers satisfying $2 \\leqslant k < n$. ")
+		print("Is the system valid? No. The parameters $m$, $n$, and $d$ should be three positive integers not smaller than $1$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [(curveType if isinstance(curveType, str) else None), None])		\
-			+ [n if isinstance(n, int) else None, k if isinstance(k, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19																	\
+			+ [m if isinstance(m, int) else None, n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 19							\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
+	print("m =", m)
 	print("n =", n)
-	print("k =", k)
+	print("d =", d)
 	if isinstance(round, int) and round >= 0:
 		print("round =", round)
 	print("Is the system valid? Yes. ")
@@ -271,35 +281,43 @@ def Scheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|None = No
 	
 	# Setup #
 	startTime = perf_counter()
-	mpk, msk = schemeVLPSICA.Setup(l)
+	mpk, msk = schemeVLPSICA.Setup(m, n, d)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# KGen #
+	# Sender #
 	startTime = perf_counter()
-	ID_k = tuple(group.random(ZR) for i in range(k))
-	sk_ID_k = schemeVLPSICA.KGen(ID_k)
+	vVec = tuple(group.random(ZR) for _ in range(d))
+	YVec = tuple(group.random(ZR) for _ in range(n))
+	UUPrime, TTPrime = schemeVLPSICA.Sender(vVec, YVec)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# DerivedKGen #
+	# Receiver #
 	startTime = perf_counter()
-	sk_ID_kMinus1 = schemeVLPSICA.KGen(ID_k[:-1]) # remove the last one to generate the sk_ID_kMinus1
-	sk_ID_kDerived = schemeVLPSICA.DerivedKGen(sk_ID_kMinus1, ID_k)
+	XVec = tuple(group.random(ZR) for _ in range(m))
+	R, RPrime = schemeVLPSICA.Receiver(vVec, XVec)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# Enc #
+	# Cloud1 #
 	startTime = perf_counter()
 	message = group.random(GT)
-	CT = schemeVLPSICA.Enc(ID_k, message)
+	CT = schemeVLPSICA.Cloud1(ID_k, message)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
-	# Dec #
+	# Cloud2 #
 	startTime = perf_counter()
-	M = schemeVLPSICA.Dec(sk_ID_k,  CT)
-	MDerived = schemeVLPSICA.Dec(sk_ID_kDerived, CT)
+	message = group.random(GT)
+	CT = schemeVLPSICA.Cloud2(ID_k, message)
+	endTime = perf_counter()
+	timeRecords.append(endTime - startTime)
+	
+	# Verify #
+	startTime = perf_counter()
+	M = schemeVLPSICA.Verfiy(sk_ID_k,  CT)
+	MDerived = schemeVLPSICA.Verfiy(sk_ID_kDerived, CT)
 	endTime = perf_counter()
 	timeRecords.append(endTime - startTime)
 	
@@ -312,7 +330,7 @@ def Scheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|None = No
 	del schemeVLPSICA
 	print("Original:", message)
 	print("Derived:", MDerived)
-	print("Decrypted:", M)
+	print("Verfiy:", M)
 	print("Is the deriver passed (message == M')? {0}. ".format("Yes" if booleans[1] else "No"))
 	print("Is the scheme correct (message == M)? {0}. ".format("Yes" if booleans[2] else "No"))
 	print("Time:", timeRecords)
@@ -359,7 +377,7 @@ def main() -> int:
 	queries = ["curveType", "secparam", "l", "k", "roundCount"]
 	validators = ["isSystemValid", "isDeriverPassed", "isSchemeCorrect"]
 	metrics = 	[																	\
-		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Dec (s)", 					\
+		"Setup (s)", "KGen (s)", "DerivedKGen (s)", "Enc (s)", "Verfiy (s)", 					\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 		\
 		"mpk (B)", "msk (B)", "SK (B)", "SK' (B)", "CT (B)"								\
 	]
@@ -369,22 +387,23 @@ def main() -> int:
 	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
 	try:
 		for curveType in curveTypes:
-			for l in range(10, 31, 5):
-				for k in range(5, l, 5):
-					average = Scheme(curveType, l = l, k = k, round = 0)
-					for round in range(1, roundCount):
-						result = Scheme(curveType, l = l, k = k, round = round)
-						for idx in range(qLength, qvLength):
-							average[idx] += result[idx]
+			for m in range(5, 31, 5):
+				for n in range(5, 31, 5):
+					for d in range(5, 31, 5):
+						average = Scheme(curveType, m = m, n = n, d = d, round = 0)
+						for round in range(1, roundCount):
+							result = Scheme(curveType, m = m, n = n, d = d, round = round)
+							for idx in range(qLength, qvLength):
+								average[idx] += result[idx]
+							for idx in range(qvLength, length):
+								average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
+						average[avgIndex] = roundCount
 						for idx in range(qvLength, length):
-							average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-					average[avgIndex] = roundCount
-					for idx in range(qvLength, length):
-						average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
-					results.append(average)
+							average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
+						results.append(average)
 	except KeyboardInterrupt:
 		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	except BaseException as e:
+	#except BaseException as e:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
