@@ -143,7 +143,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 						+ "which has been generated (?:randomly with a length of \\$.+\\$|accordingly)\\. $"																													\
 					).format(functionName), s																																									\
 				)																																															\
-				or findall("^{0}: The variable \\$.+\\$ should be an element(?: of \\$\\\\\\\\mathbb\\{{Z\\}}_r\\$)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)										\
+				or findall("^{0}: The variable \\$.+\\$ should be an element(?: of \\$\\\\\\\\mathbb(?:\\{{Z\\}}_r|\\{{G\\}}_2)\\$)? but it is not\\, which has been generated (?:randomly|accordingly)\\. $".format(functionName), s)							\
 			):
 				return True
 			else:
@@ -167,10 +167,11 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"", "Dec1:", "Dec2:", "Decrypted:", "Derived:", "Is ``ReEnc`` passed? {0}. YesNo", "Is ``Dec1`` passed (m == message)? {0}. YesNo", 			\
 				"Is ``Dec2`` passed (m\' == message)? {0}. YesNo", "Is ``ProxyDec`` passed? {0}. YesNo", "Is ``ProxyEnc`` passed? {0}. YesNo", 				\
 				"Is the deriver passed (message == M\')? {0}. YesNo", "Is the deriver passed (message == m\')? {0}. YesNo", 									\
-				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", "Is the system valid? No. \\n\\t{0}", 		\
+				"Is the scheme correct (message == M)? {0}. YesNo", "Is the scheme correct (message == m)? {0}. YesNo", 									\
+				"Is the scheme passed (result != False)? {0}. YesNo", "Is the system valid? No. \\n\\t{0}", 													\
 				"Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than $2$. ", 	\
-				"Is the system valid? Yes. ", "Is the tracing verified? {0}. YesNo", "Original:", 															\
-				"Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 														\
+				"Is the system valid? No. The parameters $m$, $n$, and $d$ should be three positive integers. ", "Is the system valid? Yes. ", 						\
+				"Is the tracing verified? {0}. YesNo", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 				\
 				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 					\
 				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
 				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 								\
@@ -178,7 +179,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Space:", 									\
 				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", "Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 		\
 				"The environment of the Python ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 								\
-				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", 						\
+				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", "Verify:", 				\
 				"\\nThe experiments were interrupted by users. The program will try to save the results collected. ", 											\
 				"curveType =", "curveType = Unknown", "d =", "k =", "l =", "m =", "n =", "round =", "secparam ="											\
 			) or findall("^Is the system valid\\? No\\. The parameter \\$[a-z]\\$ should be a positive integer\\. $", s)											\
