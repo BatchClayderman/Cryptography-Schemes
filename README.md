@@ -658,13 +658,17 @@ Click [here](./SchemeIBMETR/README.md) to view details.
 
 Click [here](./SchemeIBPRME/README.md) to view details. 
 
-## 8. Others
+## 8. SchemeVLPSICA
+
+Click [here](./SchemeVLPSICA/README.md) to view details. 
+
+## 9. Others
 
 Here are some links to my other implemented cryptography schemes, which do not involve the Python charm library. 
 
 By the way, this is not one of the major academic authors of the schemes mentioned in this section. Please only query here about the practical implementations. Thanks. 
 
-### 8.1 C/C++
+### 9.1 C/C++
 
 Here are some links to my other implemented cryptography schemes, which are in the C/C++ programming languages. 
 
@@ -673,13 +677,13 @@ Here are some links to my other implemented cryptography schemes, which are in t
 3) SPSI-CA-ull: [https://github.com/BatchClayderman/SPSI-CA-ull](https://github.com/BatchClayderman/SPSI-CA-ull)
 4) VPSI-CA-ull: [https://github.com/BatchClayderman/VPSI-CA-ull](https://github.com/BatchClayderman/VPSI-CA-ull)
 
-### 8.2 Java
+### 9.2 Java
 
 Here is a link to my other implemented cryptography scheme, which is in the Java programming language based on the JPBC library. 
 
 - GRS: [https://github.com/BatchClayderman/GRS](https://github.com/BatchClayderman/GRS)
 
-### 8.3 Python
+### 9.3 Python
 
 Here are some links to my other implemented cryptography schemes, which are in the Python programming language but not based on the Python charm library. 
 
@@ -687,19 +691,19 @@ Here are some links to my other implemented cryptography schemes, which are in t
 2) LLRS: [https://github.com/BatchClayderman/LLRS](https://github.com/BatchClayderman/LLRS)
 3) FS-MUAEKS: [https://github.com/BatchClayderman/FS-MUAEKS](https://github.com/BatchClayderman/FS-MUAEKS)
 
-### 8.4 MATLAB
+### 9.4 MATLAB
 
 Here is a link to my other implemented cryptography scheme, which is in the MATLAB programming language. 
 
 - LWE-PEKS: [https://github.com/BatchClayderman/LWE-PEKS](https://github.com/BatchClayderman/LWE-PEKS)
 
-### 8.5 Mixtures
+### 9.5 Mixtures
 
 Here is a link to my other implemented cryptography scheme, which is in mixed programming languages. 
 
 - [https://github.com/BatchClayderman/libsigma](https://github.com/BatchClayderman/libsigma)
 
-## 9. Acknowledgment
+## 10. Acknowledgment
 
 The experimental environment details are as follows. Thanks to the developers for their hard work. 
 
