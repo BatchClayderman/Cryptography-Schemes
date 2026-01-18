@@ -1,6 +1,14 @@
 # Cryptography Schemes
 
-Some proposed cryptography schemes with their baselines have been implemented here based on the Python (3.x) programming language and the Python charm library under the Ubuntu (24.04.1 LTS) operating system (WSL). 
+This repository stores multiple pairing-based cryptography schemes with their baselines, which are implemented based on the PBC library and its branches. 
+
+All the programming and experiments are conducted under the Ubuntu (24.04.1 LTS) operating system (WSL). 
+
+| Programming language | Library |
+| - | - |
+| C/C++ | PBC |
+| Python (3.x) | [charm](https://github.com/JHUISI/charm) |
+| Java | JPBC |
 
 ## 1. Introduction
 
@@ -8,7 +16,7 @@ This section will first introduce the implementation and computation details. Su
 
 ### 1.1 Implementation details
 
-Please deploy the Python (3.x) and the Python charm library environments correctly. Please try to keep the Python charm library up to date. 
+Most cryptography schemes are implemented via the Python programming language. Please deploy the Python (3.x) and the Python charm library environments correctly. Please try to keep the Python charm library up to date. 
 
 A possible Python charm environment configuration tutorial in Chinese can be viewed at [https://blog.csdn.net/weixin_45726033/article/details/144254189](https://blog.csdn.net/weixin_45726033/article/details/144254189) if necessary. If you are a Chinese beginner, [https://blog.csdn.net/weixin_45726033/article/details/144822018](https://blog.csdn.net/weixin_45726033/article/details/144822018) may be helpful. 
 
@@ -46,6 +54,10 @@ The following command lines can be useful for executing one-stop testing.
 To enhance the robustness, type checks will be performed in each scheme procedure whether or not they are explicitly required in the paper. Scheme procedures will be surrounded by the ``try--except`` structure. 
 
 For Linux users who wish to search a specified string throughout the whole repository or category in a local clone, the Linux command ``find . -mindepth 2 -type f -name "*.py" ! -name "generateSchemeLaTeX.py" -exec grep -H --color=always -E "${stringsToBeSearched}" {} \;`` after switching to the specified directory should be fine. Using the ``sed`` or other Linux commands equipped with ``find`` and its ``--exec`` is also helpful. 
+
+Due to historical reasons, some cryptography schemes are implemented via the Java programming language. We are currently gathering these cryptography schemes and converting them into Python. If there are Python implementations, please consider them in first. 
+
+As the JPBC library can be called without installation, we have gathered the necessary JPBC library files under the ``lib`` directory. You can directly use the commmand ``java -cp ../lib/jpbc-api-2.0.0.jar:../lib/jpbc-plaf-2.0.0.jar Scheme*.java`` to run the ``Scheme*.java`` file. 
 
 ### 1.2 Computation details
 

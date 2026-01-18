@@ -251,7 +251,7 @@ class SchemeAAIBME:
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
 	def Dec(self:object, dkIDBSPrime:tuple, IDB:tuple, IDA:tuple, cipherText:tuple) -> Element|bool: # $\textbf{Dec}(\textit{dk}_{\textit{ID}_B}(S'), \textit{ID}_B, \textit{ID}_A, \textit{CT}) \rightarrow M$
-		# Check #
+		'''# Check #
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
@@ -274,14 +274,36 @@ class SchemeAAIBME:
 			S_B, P_B = tuple(self.__group.random(ZR) for _ in range(self.__n)), tuple(self.__group.random(ZR) for _ in range(self.__n))
 			print("Dec: Each of the variables $ID_A$, $P_A$, $S_B$, and $P_B$ should be a tuple containing 4 elements of $\\mathbb{Z}_r$ but at least one of them is not, all of which have been generated randomly. ")
 			dk_SBPA = self.DKGen(S_B, P_A)
-			print("Dec: The variable $\\textit{dk}_{S_B, P_A}$ has been generated accordingly. ")
+			print("Dec: The variable $\\textit{dk}_{S_B, P_A}$ has been generated accordingly. ")'''
+		if isinstance(IDB, tuple) and len(IDB) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in IDB): # hybrid check
+			ID_B = IDB
+			if isinstance(dkIDBSPrime, tuple) and len(dkIDBSPrime) == self.__d and all(isinstance(ele[0], tuple) and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in dkIDBSPrime): # hybrid check
+				dk_ID_B_S_Prime = dkIDBSPrime
+			else:
+				dk_ID_B_S_Prime = self.DKGen(ID_B)
+				print("Dec: The variable $\\textit{dk}_{\\textit{ID}_B}(S)'$ should be a tuple containing $d$ tuples but it is not, which has been generated accordingly. ")
+		else:
+			ID_B = tuple(self.__group.random(ZR) for _ in range(self.__n))
+			print("Dec: The variable $\\textit{ID}_A$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
+			dk_ID_B_S_Prime = self.DKGen(ID_B)
+			print("Dec: The variable $\\textit{dk}_{\\textit{ID}_B}(S)'$ has been generated accordingly. ")
+		if isinstance(IDA, tuple) and len(IDA) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in IDA): # hybrid check
+			ID_A = IDA
+		else:
+			ID_A = tuple(self.__group.random(ZR) for _ in range(self.__n))
+			print("Dec: The variable $\\textit{ID}_A$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
 		if isinstance(cipherText, tuple) and len(cipherText) == 10 and all(isinstance(ele, Element) for ele in cipherText[:5]) and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in cipherText[5:]): # hybrid check
 			CT = cipherText
 		else:
-			CT = self.Enc(self.EKGen(ID_A), ID_A, P_B, self.__group.random(GT))
+			S = list(range(self.__n))
+			shuffle(S)
+			S = tuple(sorted(S[:self.__d]))
+			CT = self.Enc(self.EKGen(ID_A, S), ID_A, ID_B, S, self.__group.random(GT))
+			del S
 			print("Dec: The variable $\\textit{CT}$ should be a tuple containing 5 elements and 5 tuples but it is not, which has been generated randomly. ")
 		
 		# Unpack #
+		C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec = CT[2], CT[3], CT[4], CT[5], CT[6], CT[7], CT[8], CT[9]
 		
 		# Scheme #
 		CTVec = tuple(																																\
@@ -530,17 +552,17 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(r > 0 for r in result[qvLength:length])) for result in results) else EXIT_FAILURE
+	errorLevel = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(r > 0 for r in result[qvLength:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
-			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))
+			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, errorLevel))
 			sleep(sleepingTime)
 		else:
-			print("Please press the enter key to exit ({0}). ".format(iRet))
+			print("Please press the enter key to exit ({0}). ".format(errorLevel))
 			input()
 	except:
 		print()
-	return iRet
+	return errorLevel
 
 
 

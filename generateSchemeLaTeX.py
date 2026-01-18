@@ -434,15 +434,15 @@ def main() -> int:
 						totalCount += 1
 						print(filePath)
 						successCount += int(generateSchemeTxt(filePath))
-	iRet = EXIT_SUCCESS if totalCount and successCount == totalCount else EXIT_FAILURE
+	errorLevel = EXIT_SUCCESS if totalCount and successCount == totalCount else EXIT_FAILURE
 	print("\n")
 	print("Successfully handled {0} / {1} {2} with a success rate of {3:.2f}%. ".format(successCount, totalCount, "items" if successCount > 1 else "item", successCount * 100 / totalCount) if totalCount else "Nothing was handled. ")
-	print("Please press the enter key to exit ({0}). ".format(iRet))
+	print("Please press the enter key to exit ({0}). ".format(errorLevel))
 	try:
 		input()
 	except:
 		print()
-	return iRet
+	return errorLevel
 
 
 

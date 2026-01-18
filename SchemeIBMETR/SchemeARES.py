@@ -400,17 +400,17 @@ def main() -> int:
 		print("The results are empty. ")
 	
 	# End #
-	iRet = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:6]) + tuple(r > 0 for r in result[6:length])) for result in results) else EXIT_FAILURE
+	errorLevel = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[3:6]) + tuple(r > 0 for r in result[6:length])) for result in results) else EXIT_FAILURE
 	try:
 		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
-			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, iRet))
+			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, errorLevel))
 			sleep(sleepingTime)
 		else:
-			print("Please press the enter key to exit ({0}). ".format(iRet))
+			print("Please press the enter key to exit ({0}). ".format(errorLevel))
 			input()
 	except:
 		print()
-	return iRet
+	return errorLevel
 
 
 
