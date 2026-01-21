@@ -173,9 +173,9 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"Is the system valid? No. The parameters $m$, $n$, and $d$ should be three positive integers. ", "Is the system valid? Yes. ", 						\
 				"Is the tracing verified? {0}. YesNo", "Original:", "Please press the enter key to exit ({0}). ", "Please press the enter key to exit. ", 				\
 				"Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \\\"Ctrl + C\\\" ({1}). \\n", 					\
-				"Results: \\n{0}\\n", "Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
-				"Results: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 								\
-				"Results: \\n{0}\\n\\nThe overwriting is canceled by users. ", 																			\
+				"Saver: \\n{0}\\n", "Saver: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
+				"Saver: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 								\
+				"Saver: \\n{0}\\n\\nThe overwriting is canceled by users. ", 																			\
 				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Space:", 									\
 				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", "Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 		\
 				"The environment of the Python ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 								\

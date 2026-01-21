@@ -49,13 +49,13 @@ class Parser:
 		print("Options (not case-sensitive): ")
 		print("\t{0} [utf-8|utf-16|...]\t\tSpecify the encoding mode for CSV and TXT outputs. The default value is {1}. ".format(self.__formatOption(self.__optionE), self.__defaultE))
 		print("\t{0}\t\tPrint this help document. ".format(self.__formatOption(self.__optionH)))
-		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(	\
-			self.__formatOption(self.__optionO), self.__schemeName, self.__defaultO										\
+		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(		\
+			self.__formatOption(self.__optionO), self.__schemeName, self.__defaultO																				\
 		))
 		print("\t{0} [1|2|5|10|20|50|100|...]\t\tSpecify the round count, which must be a positive integer. The default value is {1}. ".format(self.__formatOption(self.__optionR), self.__defaultR))
-		print(																				\
-			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(self.__optionT))	\
-			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)		\
+		print(																																						\
+			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(self.__optionT))		\
+			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)			\
 		)
 		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
 	def handlePath(self:object, path:str) -> str:
@@ -136,7 +136,14 @@ class Parser:
 			for buffer in buffers:
 				print(buffer)
 		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
-	def handleFolder(self:object, fd:str) -> bool:
+
+class Saver:
+	def __init__(self:object, outputFilePath:str = ".", columns:tuple|list|None = None, floatFormat:str = "%.9f", encoding:str = "utf-8") -> object:
+		self.__outputFilePath = outputFilePath if isinstance(outputFilePath, str) else "."
+		self.__columns = tuple(column for column in columns if isinstance(column, str)) if isinstance(columns, (tuple, list)) else None
+		self.__floatFormat = floatFormat if isinstance(floatFormat, str) else "%.9f"
+		self.__encoding = encoding if isinstance(encoding, str) else "utf-8"
+	def __handleFolder(self:object, fd:str) -> bool:
 		try:
 			folder = str(fd)
 		except:
@@ -151,6 +158,52 @@ class Parser:
 				return True
 			except:
 				return False
+	def initialize(self:object) -> bool:
+		return self.__handleFolder(os.path.dirname(self.__outputFilePath))
+	def save(self:object, results:tuple|list) -> bool:
+		if isinstance(results, (tuple, list)) and results:
+			if self.__outputFilePath in ("", "."):
+				try:
+					print("Saver: \n{0}\n".format(results))
+					return True
+				except BaseException as e:
+					print("Saver: Results are not printable. Exceptions are as follows. \n\t{0}".format(e))
+					return False
+			else:
+				while True:
+					try:
+						df = __import__("pandas").DataFrame(results, columns = self.__columns)
+						if os.path.splitext(self.__outputFilePath)[1] == ".xlsx":
+							df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
+						else:
+							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = encoding)
+						print("Saver: Successfully saved the results to \"{0}\" in the three-line table format. ".format(self.__outputFilePath))
+						return True
+					except KeyboardInterrupt:
+						continue
+					except BaseException:
+						try:
+							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
+								for column in self.__columns[:-1]:
+									f.write(column + "\t")
+								for column in self.__columns[-1:]:
+									f.write(column)
+								for result in results:
+									f.write("\n")
+									for r in result[:-1]:
+										f.write("{0}\t".format(r))
+									for r in result[-1:]:
+										f.write("{0}".format(r))
+							print("Saver: Successfully saved the results to \"{0}\" in the plain text format. ".format(self.__outputFilePath))
+							return True
+						except KeyboardInterrupt:
+							continue
+						except BaseException as e:
+							print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, self.__outputFilePath, e))
+							return False
+		else:
+			print("Saver: The results are empty. ")
+			return False
 
 class SchemeAAIBME:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
@@ -604,22 +657,23 @@ def main() -> int:
 					outputFilePath = parser.handlePath(input("Please specify a new output file path or leave it empty for console output: "))
 				except:
 					print()
-		if parser.handleFolder(os.path.dirname(outputFilePath)):
-			del parser
-			
-			# Parameters #
-			curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-			queries = ["curveType", "secparam", "n", "d", "roundCount"]
-			validators = ["isSystemValid", "isSchemeCorrect"]
-			metrics = [									\
-				"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 		\
-				"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 		\
-				"mpk (B)", "msk (B)", "ek_ID_A_S (B)", "dk_ID_B_SPrime (B)", "CT (B)"	\
-			]
-			
-			# Scheme #
-			qLength, columns, results = len(queries), queries + validators + metrics, []
-			length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
+		del parser
+		
+		# Parameters #
+		curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+		queries = ("curveType", "secparam", "n", "d", "roundCount")
+		validators = ("isSystemValid", "isSchemeCorrect")
+		metrics = (									\
+			"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 		\
+			"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 		\
+			"mpk (B)", "msk (B)", "ek_ID_A_S (B)", "dk_ID_B_SPrime (B)", "CT (B)"	\
+		)
+		
+		# Scheme #
+		columns, qLength, results = queries + validators + metrics, len(queries), []
+		length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
+		saver = Saver(outputFilePath, columns)
+		if saver.initialize():
 			try:
 				for curveType in curveTypes:
 					for n in range(10, 31, 5):
@@ -635,41 +689,7 @@ def main() -> int:
 							for idx in range(qvLength, length):
 								average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
 							results.append(average)
-							if results:
-								if outputFilePath in ("", "."):
-									print("Results: \n{0}\n".format(results))
-								else:
-									while True:
-										try:
-											df = __import__("pandas").DataFrame(results, columns = columns)
-											if os.path.splitext(outputFilePath)[1] == ".xlsx":
-												df.to_excel(outputFilePath, index = False, float_format = "%.9f")
-											else:
-												df.to_csv(outputFilePath, index = False, float_format = "%.9f", encoding = encoding)
-											print("Results: Successfully saved the results to \"{0}\" in the three-line table format. ".format(outputFilePath))
-										except KeyboardInterrupt:
-											continue
-										except BaseException:
-											try:
-												with open(outputFilePath, "wt", encoding = encoding) as f:
-													for column in columns[:-1]:
-														f.write(column + "\t")
-													for column in columns[-1:]:
-														f.write(column)
-													for result in results:
-														f.write("\n")
-														for r in result[:-1]:
-															f.write("{0}\t".format(r))
-														for r in result[-1:]:
-															f.write("{0}".format(r))
-												print("Results: Successfully saved the results to \"{0}\" in the plain text format. ".format(outputFilePath))
-											except KeyboardInterrupt:
-												continue
-											except BaseException as e:
-												print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, outputFilePath, e))
-										break
-							else:
-								print("Results: The results are empty. ")
+							saver.save(results)
 			except KeyboardInterrupt:
 				print("\nThe experiments were interrupted by users. Saved results are retained. ")
 			except BaseException as e:
@@ -682,8 +702,6 @@ def main() -> int:
 		errorLevel = flag
 	else:
 		errorLevel = EOF
-	
-	# Exit #
 	try:
 		if isinstance(waitingTime, float) and 0 <= waitingTime < float("inf"):
 			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(waitingTime, errorLevel))

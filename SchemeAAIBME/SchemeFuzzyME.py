@@ -137,7 +137,14 @@ class Parser:
 			for buffer in buffers:
 				print(buffer)
 		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
-	def handleFolder(self:object, fd:str) -> bool:
+
+class Saver:
+	def __init__(self:object, outputFilePath:str = ".", columns:tuple|list|None = None, floatFormat:str = "%.9f", encoding:str = "utf-8") -> object:
+		self.__outputFilePath = outputFilePath if isinstance(outputFilePath, str) else "."
+		self.__columns = tuple(column for column in columns if isinstance(column, str)) if isinstance(columns, (tuple, list)) else None
+		self.__floatFormat = floatFormat if isinstance(floatFormat, str) else "%.9f"
+		self.__encoding = encoding if isinstance(encoding, str) else "utf-8"
+	def __handleFolder(self:object, fd:str) -> bool:
 		try:
 			folder = str(fd)
 		except:
@@ -152,6 +159,52 @@ class Parser:
 				return True
 			except:
 				return False
+	def initialize(self:object) -> bool:
+		return self.__handleFolder(os.path.dirname(self.__outputFilePath))
+	def save(self:object, results:tuple|list) -> bool:
+		if isinstance(results, (tuple, list)) and results:
+			if self.__outputFilePath in ("", "."):
+				try:
+					print("Saver: \n{0}\n".format(results))
+					return True
+				except BaseException as e:
+					print("Saver: Results are not printable. Exceptions are as follows. \n\t{0}".format(e))
+					return False
+			else:
+				while True:
+					try:
+						df = __import__("pandas").DataFrame(results, columns = self.__columns)
+						if os.path.splitext(self.__outputFilePath)[1] == ".xlsx":
+							df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
+						else:
+							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = encoding)
+						print("Saver: Successfully saved the results to \"{0}\" in the three-line table format. ".format(self.__outputFilePath))
+						return True
+					except KeyboardInterrupt:
+						continue
+					except BaseException:
+						try:
+							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
+								for column in self.__columns[:-1]:
+									f.write(column + "\t")
+								for column in self.__columns[-1:]:
+									f.write(column)
+								for result in results:
+									f.write("\n")
+									for r in result[:-1]:
+										f.write("{0}\t".format(r))
+									for r in result[-1:]:
+										f.write("{0}".format(r))
+							print("Saver: Successfully saved the results to \"{0}\" in the plain text format. ".format(self.__outputFilePath))
+							return True
+						except KeyboardInterrupt:
+							continue
+						except BaseException as e:
+							print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, self.__outputFilePath, e))
+							return False
+		else:
+			print("Saver: The results are empty. ")
+			return False
 
 class SchemeFuzzyME:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 

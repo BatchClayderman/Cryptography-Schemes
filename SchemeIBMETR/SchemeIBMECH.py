@@ -136,7 +136,14 @@ class Parser:
 			for buffer in buffers:
 				print(buffer)
 		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
-	def handleFolder(self:object, fd:str) -> bool:
+
+class Saver:
+	def __init__(self:object, outputFilePath:str = ".", columns:tuple|list|None = None, floatFormat:str = "%.9f", encoding:str = "utf-8") -> object:
+		self.__outputFilePath = outputFilePath if isinstance(outputFilePath, str) else "."
+		self.__columns = tuple(column for column in columns if isinstance(column, str)) if isinstance(columns, (tuple, list)) else None
+		self.__floatFormat = floatFormat if isinstance(floatFormat, str) else "%.9f"
+		self.__encoding = encoding if isinstance(encoding, str) else "utf-8"
+	def __handleFolder(self:object, fd:str) -> bool:
 		try:
 			folder = str(fd)
 		except:
@@ -151,6 +158,52 @@ class Parser:
 				return True
 			except:
 				return False
+	def initialize(self:object) -> bool:
+		return self.__handleFolder(os.path.dirname(self.__outputFilePath))
+	def save(self:object, results:tuple|list) -> bool:
+		if isinstance(results, (tuple, list)) and results:
+			if self.__outputFilePath in ("", "."):
+				try:
+					print("Saver: \n{0}\n".format(results))
+					return True
+				except BaseException as e:
+					print("Saver: Results are not printable. Exceptions are as follows. \n\t{0}".format(e))
+					return False
+			else:
+				while True:
+					try:
+						df = __import__("pandas").DataFrame(results, columns = self.__columns)
+						if os.path.splitext(self.__outputFilePath)[1] == ".xlsx":
+							df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
+						else:
+							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = encoding)
+						print("Saver: Successfully saved the results to \"{0}\" in the three-line table format. ".format(self.__outputFilePath))
+						return True
+					except KeyboardInterrupt:
+						continue
+					except BaseException:
+						try:
+							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
+								for column in self.__columns[:-1]:
+									f.write(column + "\t")
+								for column in self.__columns[-1:]:
+									f.write(column)
+								for result in results:
+									f.write("\n")
+									for r in result[:-1]:
+										f.write("{0}\t".format(r))
+									for r in result[-1:]:
+										f.write("{0}".format(r))
+							print("Saver: Successfully saved the results to \"{0}\" in the plain text format. ".format(self.__outputFilePath))
+							return True
+						except KeyboardInterrupt:
+							continue
+						except BaseException as e:
+							print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, self.__outputFilePath, e))
+							return False
+		else:
+			print("Saver: The results are empty. ")
+			return False
 
 class SchemeIBMECH:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
@@ -398,45 +451,33 @@ def conductScheme(curveType:tuple|list|str, round:int|None = None) -> list:
 	print()
 	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
-def parseCL(vec:list) -> tuple:
-	owOption, sleepingTime = 0, None
-	for arg in vec:
-		if isinstance(arg, str):
-			if arg.upper() in ("Y", "YES", "TRUE", "2"):
-				owOption = 2
-			elif arg.upper() in ("N", "NO", "FALSE"):
-				owOption = 1
-			elif arg.upper() in ("C", "CANCEL"):
-				owOption = -1
-			elif arg.upper() in ("Q", "QUESTION", "A", "ASK", "NONE"):
-				owOption = 0
-			else:
-				try:
-					sleepingTime = float(arg)
-				except:
-					pass
-	return (owOption, sleepingTime)
-
-def handleFolder(fd:str) -> bool:
-	folder = str(fd)
-	if not folder:
-		return True
-	elif os.path.exists(folder):
-		return os.path.isdir(folder)
-	else:
-		try:
-			os.makedirs(folder)
-			return True
-		except:
-			return False
 
 def main() -> int:
-	# Begin #
+	parser = Parser(argv)
+	flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = parser.parse()
+	if flag > EXIT_SUCCESS and flag > EOF:
+		while outputFilePath not in ("", ".") and os.path.isfile(outputFilePath):
+			if not overwritingConfirmed:
+				try:
+					overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
+				except:
+					print()
+			if overwritingConfirmed:
+				break
+			else:
+				try:
+					outputFilePath = parser.handlePath(input("Please specify a new output file path or leave it empty for console output: "))
+				except:
+					print()
+		if parser.handleFolder(os.path.dirname(outputFilePath)):
+			del parser
+			
+	# Parameters #
 	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 100, "SchemeIBMECH.xlsx"
 	queries = ["curveType", "secparam", "roundCount"]
 	validators = ["isSystemValid", "isSchemeCorrect"]
-	metrics = 	[																\
+	metrics = [																\
 		"Setup (s)", "SKGen (s)", "RKGen (s)", "Enc (s)", "Dec (s)", 					\
 		"elementOfZR (B)", "elementOfG1 (B)", "elementOfG2 (B)", "elementOfGT (B)", 	\
 		"mpk (B)", "msk (B)", "ek_sigma (B)", "dk_rho (B)", "CT (B)"					\
@@ -468,7 +509,7 @@ def main() -> int:
 	print()
 	if results:
 		if -1 == owOption:
-			print("Results: \n{0}\n".format(results))
+			print("Saver: \n{0}\n".format(results))
 		elif handleFolder(os.path.split(filePath)[0]):
 			# Writing Preparation #
 			if os.path.isfile(filePath):
@@ -500,11 +541,11 @@ def main() -> int:
 							f.write(str(columns) + "\n" + str(results))
 						print("Successfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
 					except BaseException as e:
-						print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, filePath, e))
+						print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, filePath, e))
 			else:
-				print("Results: \n{0}\n\nThe overwriting is canceled by users. ".format(results))
+				print("Saver: \n{0}\n\nThe overwriting is canceled by users. ".format(results))
 		else:
-			print("Results: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
+			print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
 	else:
 		print("The results are empty. ")
 	
