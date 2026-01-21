@@ -19,6 +19,139 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
+class Parser:
+	def __init__(self:object, arguments:tuple|list) -> object:
+		self.__arguments = tuple(argument for argument in arguments if isinstance(argument, str)) if isinstance(arguments, (tuple, list)) else ()
+		self.__schemeName = "SchemeIBBME" # os.path.splitext(os.path.basename(__file__))[0]
+		self.__outputExtension = ".xlsx"
+		self.__optionE = ("e", "/e", "-e", "encoding", "/encoding", "--encoding")
+		self.__defaultE = "utf-8"
+		self.__optionH = ("h", "/h", "-h", "help", "/help", "--help")
+		self.__optionO = ("o", "/o", "-o", "output", "/output", "--output")
+		self.__defaultO = "./{0}{1}".format(self.__schemeName, self.__outputExtension)
+		self.__optionR = ("r", "/r", "-r", "round", "/round", "--round")
+		self.__defaultR = 100
+		self.__optionT = ("t", "/t", "-t", "time", "/time", "--time")
+		self.__defaultT = float("inf")
+		self.__optionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
+	def __escape(self:object, string) -> str:
+		return string.replace("\\", "\\\\").replace("\"", "\\\"").replace("\a", "\\\a").replace("\b", "\\\b").replace("\n", "\\\n").replace("\r", "\\r").replace("\t", "\\\t").replace("\v", "\\\v")
+	def __formatOption(self:object, option:tuple, pre:str = "[", sep:str = "|", suf:str = "]") -> str:
+		if isinstance(option, tuple) and all(isinstance(op, str) for op in option):
+			prefix = pre if isinstance(pre, str) else "["
+			separator = sep if isinstance(sep, str) else "|"
+			suffix = suf if isinstance(suf, str) else "]"
+			return prefix + separator.join(option) + suffix
+		else:
+			return ""
+	def __printHelp(self:object) -> None:
+		print("This is a possible implementation of the IBBME cryptography scheme in Python programming language based on the Python charm library. \n")
+		print("Options (not case-sensitive): ")
+		print("\t{0} [utf-8|utf-16|...]\t\tSpecify the encoding mode for CSV and TXT outputs. The default value is {1}. ".format(self.__formatOption(self.__optionE), self.__defaultE))
+		print("\t{0}\t\tPrint this help document. ".format(self.__formatOption(self.__optionH)))
+		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(	\
+			self.__formatOption(self.__optionO), self.__schemeName, self.__defaultO										\
+		))
+		print("\t{0} [1|2|5|10|20|50|100|...]\t\tSpecify the round count, which must be a positive integer. The default value is {1}. ".format(self.__formatOption(self.__optionR), self.__defaultR))
+		print(																				\
+			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(self.__optionT))	\
+			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)		\
+		)
+		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
+	def handlePath(self:object, path:str) -> str:
+		if isinstance(path, str):
+			return os.path.join(path, self.__schemeName + self.__outputExtension) if path.endswith("/") else path
+		else:
+			return self.__defaultO
+	def parse(self:object) -> tuple:
+		flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = max(EXIT_SUCCESS, EOF) + 1, self.__defaultE, self.__defaultO, self.__defaultR, self.__defaultT, False
+		index, argumentCount, buffers = 1, len(self.__arguments), []
+		while index < argumentCount:
+			argument = self.__arguments[index].lower()
+			if argument in self.__optionE:
+				index += 1
+				if index < argumentCount:
+					try:
+						__import__("codecs").lookup(self.__arguments[index])
+						encoding = self.__arguments[index]
+					except:
+						flag = EOF
+						buffers.append("CL: The value [0] = \"{1}\" for the encoding option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the encoding option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionH:
+				self.__printHelp()
+				flag = EXIT_SUCCESS
+				break
+			elif argument in self.__optionO:
+				index += 1
+				if index < argumentCount:
+					outputFilePath = self.handlePath(self.__arguments[index])
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the output file path option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionR:
+				index += 1
+				if index < argumentCount:
+					try:
+						r = int(self.__arguments[index])
+						if r >= 1:
+							roundCount = r
+						else:
+							flag = EOF
+							buffers.append("CL: The value [{0}] = {1} for the round count option should be a positive integer. ".format(index, r))
+					except:
+						flag = EOF
+						buffers.append("CL: The type of the value [{0}] = \"{1}\" for the round count option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the round count option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionT:
+				index += 1
+				if index < argumentCount:
+					if self.__arguments[index].lower() in ("n", "nan", "none"):
+						waitingTime = None
+					else:
+						try:
+							t = float(self.__arguments[index])
+							if t >= 0:
+								waitingTime = t
+							else:
+								flag = EOF
+								buffers.append("CL: The value [{0}] = {1} for the waiting time option should be a non-negative value. ".format(index, t))
+						except:
+							flag = EOF
+							buffers.append("CL: The type of the value [{0}] = \"{1}\" for the waiting time option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the waiting time option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionY:
+				overwritingConfirmed = True
+			else:
+				flag = EOF
+				buffers.append("CL: The option [{0}] = \"{1}\" is unknown. ".format(index, self.__escape(self.__arguments[index])))
+			index += 1
+		if EOF == flag:
+			for buffer in buffers:
+				print(buffer)
+		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
+	def handleFolder(self:object, fd:str) -> bool:
+		try:
+			folder = str(fd)
+		except:
+			return False
+		if not folder:
+			return True
+		elif os.path.exists(folder):
+			return os.path.isdir(folder)
+		else:
+			try:
+				os.makedirs(folder)
+				return True
+			except:
+				return False
+
 class SchemeIBBME:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is applicable to symmetric and asymmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
@@ -271,7 +404,7 @@ class SchemeIBBME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, l:int = 30, n:int = 10, _seed:int|None = None, round:int|None = None) -> list:
+def conductScheme(curveType:tuple|list|str, l:int = 30, n:int = 10, _seed:int|None = None, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(n, int) and 0 < n <= l: # no need to check the parameters for curve types here
 		try:
@@ -375,7 +508,7 @@ def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
 	for arg in vec:
 		if isinstance(arg, str):
-			if arg.upper() in ("Y", "YES", "TRUE"):
+			if arg.upper() in ("Y", "YES", "TRUE", "2"):
 				owOption = 2
 			elif arg.upper() in ("N", "NO", "FALSE"):
 				owOption = 1
@@ -422,9 +555,9 @@ def main() -> int:
 		for curveType in curveTypes:
 			for l in range(5, 31, 5):
 				for n in range(5, l + 1, 5):
-					average = Scheme(curveType, l = l, n = n, round = 0)
+					average = conductScheme(curveType, l = l, n = n, round = 0)
 					for round in range(1, roundCount):
-						result = Scheme(curveType, l = l, n = n, round = round)
+						result = conductScheme(curveType, l = l, n = n, round = round)
 						for idx in range(qLength, qvLength):
 							average[idx] += result[idx]
 						for idx in range(qvLength, length):

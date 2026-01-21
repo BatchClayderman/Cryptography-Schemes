@@ -8,7 +8,7 @@ This is the official implementation of the IBPRME cryptography scheme in Python 
 
 ### ``SchemeIBME.py`` (soft link)
 
-This is the implementation of the IBME cryptography scheme (``Match me if you can: Matchmaking encryption and its applications``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
+This is a possible implementation of the IBME cryptography scheme (``Match me if you can: Matchmaking encryption and its applications``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
 
 ```
 @inproceedings{ateniese2019match,
@@ -23,7 +23,7 @@ This is the implementation of the IBME cryptography scheme (``Match me if you ca
 
 ### ``SchemeIBMECH.py`` (soft link)
 
-This is the implementation of the IBMECH cryptography scheme (``Identity-Based Matchmaking Encryption from Standard Assumptions``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py](https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py). 
+This is a possible implementation of the IBMECH cryptography scheme (``Identity-Based Matchmaking Encryption from Standard Assumptions``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py](https://github.com/xuehuan-yang/PSME/blob/main/src/02_ibmech/02_ibmech_v2.py). 
 
 ```
 @inproceedings{chen2022identity,

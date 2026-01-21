@@ -8,6 +8,12 @@ This category is still under development.
 
 This is the official implementation of the AA-IB-ME cryptography scheme in Python programming language based on the Python charm library. 
 
+#### ``SchemeAAIBME.java``
+
+This is the official implementation of the AA-IB-ME cryptography scheme in Java programming language based on the JPBC library. 
+
+As this is an early implementation, please consider using ``SchemeAAIBME.py`` instead. 
+
 ### ``SchemeFuzzyIBME.py``
 
 This is a possible implementation of the Fuzzy-IB-ME cryptography scheme in Python programming language based on the Python charm library. 

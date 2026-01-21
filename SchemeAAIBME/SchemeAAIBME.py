@@ -19,6 +19,139 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
+class Parser:
+	def __init__(self:object, arguments:tuple|list) -> object:
+		self.__arguments = tuple(argument for argument in arguments if isinstance(argument, str)) if isinstance(arguments, (tuple, list)) else ()
+		self.__schemeName = "SchemeAAIBME" # os.path.splitext(os.path.basename(__file__))[0]
+		self.__outputExtension = ".xlsx"
+		self.__optionE = ("e", "/e", "-e", "encoding", "/encoding", "--encoding")
+		self.__defaultE = "utf-8"
+		self.__optionH = ("h", "/h", "-h", "help", "/help", "--help")
+		self.__optionO = ("o", "/o", "-o", "output", "/output", "--output")
+		self.__defaultO = "./{0}{1}".format(self.__schemeName, self.__outputExtension)
+		self.__optionR = ("r", "/r", "-r", "round", "/round", "--round")
+		self.__defaultR = 100
+		self.__optionT = ("t", "/t", "-t", "time", "/time", "--time")
+		self.__defaultT = float("inf")
+		self.__optionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
+	def __escape(self:object, string) -> str:
+		return string.replace("\\", "\\\\").replace("\"", "\\\"").replace("\a", "\\\a").replace("\b", "\\\b").replace("\n", "\\\n").replace("\r", "\\r").replace("\t", "\\\t").replace("\v", "\\\v")
+	def __formatOption(self:object, option:tuple, pre:str = "[", sep:str = "|", suf:str = "]") -> str:
+		if isinstance(option, tuple) and all(isinstance(op, str) for op in option):
+			prefix = pre if isinstance(pre, str) else "["
+			separator = sep if isinstance(sep, str) else "|"
+			suffix = suf if isinstance(suf, str) else "]"
+			return prefix + separator.join(option) + suffix
+		else:
+			return ""
+	def __printHelp(self:object) -> None:
+		print("This is the official implementation of the AA-IB-ME cryptography scheme in Python programming language based on the Python charm library. \n")
+		print("Options (not case-sensitive): ")
+		print("\t{0} [utf-8|utf-16|...]\t\tSpecify the encoding mode for CSV and TXT outputs. The default value is {1}. ".format(self.__formatOption(self.__optionE), self.__defaultE))
+		print("\t{0}\t\tPrint this help document. ".format(self.__formatOption(self.__optionH)))
+		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(	\
+			self.__formatOption(self.__optionO), self.__schemeName, self.__defaultO										\
+		))
+		print("\t{0} [1|2|5|10|20|50|100|...]\t\tSpecify the round count, which must be a positive integer. The default value is {1}. ".format(self.__formatOption(self.__optionR), self.__defaultR))
+		print(																				\
+			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(self.__optionT))	\
+			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)		\
+		)
+		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
+	def handlePath(self:object, path:str) -> str:
+		if isinstance(path, str):
+			return os.path.join(path, self.__schemeName + self.__outputExtension) if path.endswith("/") else path
+		else:
+			return self.__defaultO
+	def parse(self:object) -> tuple:
+		flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = max(EXIT_SUCCESS, EOF) + 1, self.__defaultE, self.__defaultO, self.__defaultR, self.__defaultT, False
+		index, argumentCount, buffers = 1, len(self.__arguments), []
+		while index < argumentCount:
+			argument = self.__arguments[index].lower()
+			if argument in self.__optionE:
+				index += 1
+				if index < argumentCount:
+					try:
+						__import__("codecs").lookup(self.__arguments[index])
+						encoding = self.__arguments[index]
+					except:
+						flag = EOF
+						buffers.append("CL: The value [0] = \"{1}\" for the encoding option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the encoding option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionH:
+				self.__printHelp()
+				flag = EXIT_SUCCESS
+				break
+			elif argument in self.__optionO:
+				index += 1
+				if index < argumentCount:
+					outputFilePath = self.handlePath(self.__arguments[index])
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the output file path option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionR:
+				index += 1
+				if index < argumentCount:
+					try:
+						r = int(self.__arguments[index])
+						if r >= 1:
+							roundCount = r
+						else:
+							flag = EOF
+							buffers.append("CL: The value [{0}] = {1} for the round count option should be a positive integer. ".format(index, r))
+					except:
+						flag = EOF
+						buffers.append("CL: The type of the value [{0}] = \"{1}\" for the round count option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the round count option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionT:
+				index += 1
+				if index < argumentCount:
+					if self.__arguments[index].lower() in ("n", "nan", "none"):
+						waitingTime = None
+					else:
+						try:
+							t = float(self.__arguments[index])
+							if t >= 0:
+								waitingTime = t
+							else:
+								flag = EOF
+								buffers.append("CL: The value [{0}] = {1} for the waiting time option should be a non-negative value. ".format(index, t))
+						except:
+							flag = EOF
+							buffers.append("CL: The type of the value [{0}] = \"{1}\" for the waiting time option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the waiting time option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionY:
+				overwritingConfirmed = True
+			else:
+				flag = EOF
+				buffers.append("CL: The option [{0}] = \"{1}\" is unknown. ".format(index, self.__escape(self.__arguments[index])))
+			index += 1
+		if EOF == flag:
+			for buffer in buffers:
+				print(buffer)
+		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
+	def handleFolder(self:object, fd:str) -> bool:
+		try:
+			folder = str(fd)
+		except:
+			return False
+		if not folder:
+			return True
+		elif os.path.exists(folder):
+			return os.path.isdir(folder)
+		else:
+			try:
+				os.makedirs(folder)
+				return True
+			except:
+				return False
+
 class SchemeAAIBME:
 	def __init__(self, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
@@ -39,9 +172,9 @@ class SchemeAAIBME:
 		else:
 			return self.__group.init(ZR, 1)
 	def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
-		if isinstance(coefficients, (tuple, list)) and coefficients and (															\
-			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)	\
-			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
+		if isinstance(coefficients, (tuple, list)) and coefficients and (										\
+			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)		\
+			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)				\
 		):
 			n, eleResult = len(coefficients) - 1, coefficients[0]
 			for i in range(1, n):
@@ -123,8 +256,8 @@ class SchemeAAIBME:
 		rVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r} = (r_1, r_2, \cdots, r_n) \in \mathbb{Z}_r^n$ randomly
 		coefficients = (beta, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - 2)) + (self.__group.init(ZR, 1), )
 		q = lambda x:self.__computePolynomial(x, coefficients) # generate a $(d - 1)$ degree polynominal $q(x)$ s.t. $q(0) = \beta$ randomly
-		ek_ID_A = tuple(																					\
-			(g3 ** q(self.__group.init(ZR, i)) * (H(uVec, ID_A) * TVec[i]) ** rVec[i], g ** rVec[i]) for i in range(self.__n)	\
+		ek_ID_A = tuple(																\
+			(g3 ** q(self.__group.init(ZR, i)) * (H(uVec, ID_A) * TVec[i]) ** rVec[i], g ** rVec[i]) for i in range(self.__n)			\
 		) # $\textit{ek}_{\textit{ID}_{A_i}} \gets (g_3^{q(i)} [H(\bm{u}', \textit{ID}_A)T'_i]^{r_i}, g^{r_i}), \forall i \in \{1, 2, \cdots, n\}$
 		ek_ID_A_S = tuple(ek_ID_A[i] for i in S) # generate $\textit{ek}_{\textit{ID}_A}(S) \subset \textit{ek}_{\textit{ID}_A}$ s.t. $\|\textit{ek}_{\textit{ID}_A}(S)\| = d$ randomly
 		
@@ -246,7 +379,9 @@ class SchemeAAIBME:
 				IStar.append(I.pop())
 			IStar.sort()
 			IStar = tuple(IStar)
-		CT = (SPrimePrime, IStar, C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec, C8Vec) # $\textit{CT} \gets (S'', I^*, C, \vec{C}_1, \vec{C}_2, \vec{C}_3, \vec{C}_4, \vec{C}_5, \vec{C}_6, \vec{C}_7, \vec{C}_8)$
+		CT = (											\
+			SPrimePrime, IStar, C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec, C8Vec	\
+		) # $\textit{CT} \gets (S'', I^*, C, \vec{C}_1, \vec{C}_2, \vec{C}_3, \vec{C}_4, \vec{C}_5, \vec{C}_6, \vec{C}_7, \vec{C}_8)$
 		
 		# Return #
 		return CT # \textbf{return} $\textit{CT}$
@@ -255,15 +390,15 @@ class SchemeAAIBME:
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if (																																	\
+		if (																					\
 			isinstance(SA, tuple) and isinstance(PA, tuple) and isinstance(SB, tuple) and isinstance(PB, tuple) and len(SA) == len(PA) == len(SA) == len(SB) == self.__n	\
-			and all(isinstance(ele, Element) and ele.type == ZR for ele in SA) and all(isinstance(ele, Element) and ele.type == ZR for ele in PA)						\
-			and all(isinstance(ele, Element) and ele.type == ZR for ele in SB) and all(isinstance(ele, Element) and ele.type == ZR for ele in PB)						\
+			and all(isinstance(ele, Element) and ele.type == ZR for ele in SA) and all(isinstance(ele, Element) and ele.type == ZR for ele in PA)				\
+			and all(isinstance(ele, Element) and ele.type == ZR for ele in SB) and all(isinstance(ele, Element) and ele.type == ZR for ele in PB)				\
 		): # hybrid check
 			ID_A, P_A, S_B, P_B = SA, PA, SB, PB
-			if (																																		\
+			if (																					\
 				isinstance(dkSBPA, tuple) and len(dkSBPA) == 2 and isinstance(dkSBPA[0], tuple) and isinstance(dkSBPA[1], tuple) and len(dkSBPA[0]) == len(dkSBPA[1]) == 5	\
-				and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in dkSBPA[0]) and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in dkSBPA[1])				\
+				and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in dkSBPA[0]) and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in dkSBPA[1])	\
 			): # hybrid check
 				dk_SBPA = dkSBPA
 			else:
@@ -277,7 +412,10 @@ class SchemeAAIBME:
 			print("Dec: The variable $\\textit{dk}_{S_B, P_A}$ has been generated accordingly. ")'''
 		if isinstance(IDB, tuple) and len(IDB) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in IDB): # hybrid check
 			ID_B = IDB
-			if isinstance(dkIDBSPrime, tuple) and len(dkIDBSPrime) == self.__d and all(isinstance(ele[0], tuple) and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in dkIDBSPrime): # hybrid check
+			if (														\
+				isinstance(dkIDBSPrime, tuple) and len(dkIDBSPrime) == self.__d and all(isinstance(ele[0], tuple)	\
+				and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in dkIDBSPrime)		\
+			): # hybrid check
 				dk_ID_B_S_Prime = dkIDBSPrime
 			else:
 				dk_ID_B_S_Prime = self.DKGen(ID_B)
@@ -292,7 +430,10 @@ class SchemeAAIBME:
 		else:
 			ID_A = tuple(self.__group.random(ZR) for _ in range(self.__n))
 			print("Dec: The variable $\\textit{ID}_A$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if isinstance(cipherText, tuple) and len(cipherText) == 10 and all(isinstance(ele, Element) for ele in cipherText[:5]) and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in cipherText[5:]): # hybrid check
+		if (																\
+			isinstance(cipherText, tuple) and len(cipherText) == 10 and all(isinstance(ele, Element) for ele in cipherText[:5])	\
+			and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in cipherText[5:])					\
+		): # hybrid check
 			CT = cipherText
 		else:
 			S = list(range(self.__n))
@@ -306,15 +447,18 @@ class SchemeAAIBME:
 		C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec = CT[2], CT[3], CT[4], CT[5], CT[6], CT[7], CT[8], CT[9]
 		
 		# Scheme #
-		CTVec = tuple(																																\
-			self.__group.serialize(C) + self.__group.serialize(C1Vec[i]) + self.__group.serialize(C2Vec[i]) + self.__group.serialize(C3Vec[i]) + self.__group.serialize(C4Vec[i])		\
-			+ self.__group.serialize(C5Vec[i]) + self.__group.serialize(C6Vec[i]) + self.__group.serialize(C7Vec[i]) for i in range(self.__n)									\
+		CTVec = tuple(																					\
+			self.__group.serialize(C) + self.__group.serialize(C1Vec[i]) + self.__group.serialize(C2Vec[i]) + self.__group.serialize(C3Vec[i]) + self.__group.serialize(C4Vec[i])	\
+			+ self.__group.serialize(C5Vec[i]) + self.__group.serialize(C6Vec[i]) + self.__group.serialize(C7Vec[i]) for i in range(self.__n)					\
 		) # $\textit{CT}_i \gets C || C_{1, i} || C_{2, i} || C_{3, i} || C_{4, i} || C_{5, i} || C_{6, i} || C{7, i}, \forall i \in \{1, 2, \cdots, n\}$
 		KlPrime = self.__product(
 			tuple((pair(C8Vec[i], g) / (pair(H(uPrimeVec, ID_A) * TPrime[i], C7Vec[i]) *pair(H1(CTVec[i]), C6Vec[i]))) ** Delta(i, I, 0) for i in IStar)
 		) # $K'_l \gets \prod\limits_{i \in I^*} \left(\frac{e(C_{8, i}, g)}{e([H(\bm{u}', \textit{ID}_A) T'_i] e(H_1(\textit{CT}_i), C_{6, i})}\right)^{\Delta(i, I, 0)}$
-		KsPrime = self.__product(
-			tuple(((pair(C1Vec[i], dk_ID_B_SPrime[i][0]) * pair(C2Vec[i], dk_ID_B_SPrime[i][1]) * pair(C3Vec[i], dk_ID_B_SPrime[i][2])) / (pair(C4Vec[i], dk_ID_B_SPrime[i][3]) * pair(C5Vec[i], dk_ID_B_SPrime[i][4]))) ** Delta(i, I, 0) for i in I)
+		KsPrime = self.__product(														\
+			tuple((																\
+				(pair(C1Vec[i], dk_ID_B_SPrime[i][0]) * pair(C2Vec[i], dk_ID_B_SPrime[i][1]) * pair(C3Vec[i], dk_ID_B_SPrime[i][2]))	\
+				/ (pair(C4Vec[i], dk_ID_B_SPrime[i][3]) * pair(C5Vec[i], dk_ID_B_SPrime[i][4]))						\
+			) ** Delta(i, I, 0) for i in I)													\
 		) # $K'_s \gets \prod\limits_{i \in I} \left(\right)^{\Delta(i, j, 0)}$
 		SPrimePrimeSet = set(SPrimePrime)
 		if SPrimePrimeSet.intersection(S) >= self.__d and SPrimePrimeSet.intersection(SPrime) >= self.__d: # \textbf{if} $|S \cap S'| \leqslant d \land |S' \cap S''| \leqslant d$ \textbf{then}
@@ -339,7 +483,7 @@ class SchemeAAIBME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = None) -> list:
+def conductScheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(n, int) and isinstance(d, int) and n >= 1 and d >= 2: # no need to check the parameters for curve types here
 		try:
@@ -365,15 +509,19 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 			if isinstance(round, int) and round >= 0:
 				print("round =", round)
 			print("Is the system valid? No. \n\t{0}".format(e))
-			return (																																													\
-				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])	\
-				+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13																			\
+			return (																		\
+				([curveType[0], curveType[1]] if (														\
+					isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int)	\
+				) else [curveType if isinstance(curveType, str) else None, None])										\
+				+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13	\
 			)
 	else:
 		print("Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than $2$. ")
-		return (																																														\
-			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 13																	\
+		return (																				\
+			([curveType[0], curveType[1]] if (																\
+				isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int)			\
+			) else [curveType if isinstance(curveType, str) else None, None])												\
+			+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 13	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
@@ -425,10 +573,10 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 	
 	# End #
 	booleans = [True, not isinstance(M, bool) and message == M]
-	spaceRecords = [																														\
+	spaceRecords = [																\
 		schemeAAIBME.getLengthOf(group.random(ZR)), schemeAAIBME.getLengthOf(group.random(G1)), schemeAAIBME.getLengthOf(group.random(GT)), 	\
-		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(ek_ID_A_S), 								\
-		schemeAAIBME.getLengthOf(dk_ID_B_SPrime), schemeAAIBME.getLengthOf(CT)															\
+		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(ek_ID_A_S), 					\
+		schemeAAIBME.getLengthOf(dk_ID_B_SPrime), schemeAAIBME.getLengthOf(CT)									\
 	]
 	del schemeAAIBME
 	print("Original:", message)
@@ -439,124 +587,107 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 	print()
 	return [group.groupType(), group.secparam, n, d, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
-def parseCL(vec:list) -> tuple:
-	owOption, sleepingTime = 0, None
-	for arg in vec:
-		if isinstance(arg, str):
-			if arg.upper() in ("Y", "YES", "TRUE"):
-				owOption = 2
-			elif arg.upper() in ("N", "NO", "FALSE"):
-				owOption = 1
-			elif arg.upper() in ("C", "CANCEL"):
-				owOption = -1
-			elif arg.upper() in ("Q", "QUESTION", "A", "ASK", "NONE"):
-				owOption = 0
-			else:
-				try:
-					sleepingTime = float(arg)
-				except:
-					pass
-	return (owOption, sleepingTime)
-
-def handleFolder(fd:str) -> bool:
-	folder = str(fd)
-	if not folder:
-		return True
-	elif os.path.exists(folder):
-		return os.path.isdir(folder)
-	else:
-		try:
-			os.makedirs(folder)
-			return True
-		except:
-			return False
-
 def main() -> int:
-	# Begin #
-	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 100, "SchemeAAIBME.xlsx"
-	queries = ["curveType", "secparam", "n", "d", "roundCount"]
-	validators = ["isSystemValid", "isSchemeCorrect"]
-	metrics = 	[															\
-		"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 				\
-		"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 			\
-		"mpk (B)", "msk (B)", "ek_ID_A_S (B)", "dk_ID_B_SPrime (B)", "CT (B)"	\
-	]
-	
-	# Scheme #
-	qLength, columns, results = len(queries), queries + validators + metrics, []
-	length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
-	try:
-		for curveType in curveTypes:
-			for n in range(10, 31, 5):
-				for d in range(5, n, 5):
-					average = Scheme(curveType, n = n, d = d, round = 0)
-					for round in range(1, roundCount):
-						result = Scheme(curveType, n = n, d = d, round = round)
-						for idx in range(qLength, qvLength):
-							average[idx] += result[idx]
-						for idx in range(qvLength, length):
-							average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-					average[avgIndex] = roundCount
-					for idx in range(qvLength, length):
-						average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
-					results.append(average)
-	except KeyboardInterrupt:
-		print("\nThe experiments were interrupted by users. The program will try to save the results collected. ")
-	#except BaseException as e:
-		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
-	
-	# Output #
-	owOption, sleepingTime = parseCL(argv[1:])
-	print()
-	if results:
-		if -1 == owOption:
-			print("Results: \n{0}\n".format(results))
-		elif handleFolder(os.path.split(filePath)[0]):
-			# Writing Preparation #
-			if os.path.isfile(filePath):
-				if 1 == owOption:
-					flag = False # write to the file or not
-				elif 2 == owOption:
-					flag = True
-				else:
-					try:
-						flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(filePath)).upper() in ("Y", "YES", "TRUE", "1")
-					except:
-						flag = False
-						print()
-			else:
-				flag = True
-			
-			# Writing Handling #
-			if flag:
+	parser = Parser(argv)
+	flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = parser.parse()
+	if flag > EXIT_SUCCESS and flag > EOF:
+		while outputFilePath not in ("", ".") and os.path.isfile(outputFilePath):
+			if not overwritingConfirmed:
 				try:
-					df = __import__("pandas").DataFrame(results, columns = columns)
-					if os.path.splitext(filePath)[1].lower() == ".csv":
-						df.to_csv(filePath, index = False, float_format = "%.9f")
-					else:
-						df.to_excel(filePath, index = False, float_format = "%.9f")
-					print("Successfully saved the results to \"{0}\" in the three-line table form. ".format(filePath))
+					overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
 				except:
-					try:
-						with open(filePath, "w", encoding = "utf-8") as f:
-							f.write(str(columns) + "\n" + str(results))
-						print("Successfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
-					except BaseException as e:
-						print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, filePath, e))
+					print()
+			if overwritingConfirmed:
+				break
 			else:
-				print("Results: \n{0}\n\nThe overwriting is canceled by users. ".format(results))
+				try:
+					outputFilePath = parser.handlePath(input("Please specify a new output file path or leave it empty for console output: "))
+				except:
+					print()
+		if parser.handleFolder(os.path.dirname(outputFilePath)):
+			del parser
+			
+			# Parameters #
+			curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
+			queries = ["curveType", "secparam", "n", "d", "roundCount"]
+			validators = ["isSystemValid", "isSchemeCorrect"]
+			metrics = [									\
+				"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 		\
+				"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 		\
+				"mpk (B)", "msk (B)", "ek_ID_A_S (B)", "dk_ID_B_SPrime (B)", "CT (B)"	\
+			]
+			
+			# Scheme #
+			qLength, columns, results = len(queries), queries + validators + metrics, []
+			length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
+			try:
+				for curveType in curveTypes:
+					for n in range(10, 31, 5):
+						for d in range(5, n, 5):
+							average = conductScheme(curveType, n = n, d = d, round = 0)
+							for round in range(1, roundCount):
+								result = conductScheme(curveType, n = n, d = d, round = round)
+								for idx in range(qLength, qvLength):
+									average[idx] += result[idx]
+								for idx in range(qvLength, length):
+									average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
+							average[avgIndex] = roundCount
+							for idx in range(qvLength, length):
+								average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
+							results.append(average)
+							if results:
+								if outputFilePath in ("", "."):
+									print("Results: \n{0}\n".format(results))
+								else:
+									while True:
+										try:
+											df = __import__("pandas").DataFrame(results, columns = columns)
+											if os.path.splitext(outputFilePath)[1] == ".xlsx":
+												df.to_excel(outputFilePath, index = False, float_format = "%.9f")
+											else:
+												df.to_csv(outputFilePath, index = False, float_format = "%.9f", encoding = encoding)
+											print("Results: Successfully saved the results to \"{0}\" in the three-line table format. ".format(outputFilePath))
+										except KeyboardInterrupt:
+											continue
+										except BaseException:
+											try:
+												with open(outputFilePath, "wt", encoding = encoding) as f:
+													for column in columns[:-1]:
+														f.write(column + "\t")
+													for column in columns[-1:]:
+														f.write(column)
+													for result in results:
+														f.write("\n")
+														for r in result[:-1]:
+															f.write("{0}\t".format(r))
+														for r in result[-1:]:
+															f.write("{0}".format(r))
+												print("Results: Successfully saved the results to \"{0}\" in the plain text format. ".format(outputFilePath))
+											except KeyboardInterrupt:
+												continue
+											except BaseException as e:
+												print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, outputFilePath, e))
+										break
+							else:
+								print("Results: The results are empty. ")
+			except KeyboardInterrupt:
+				print("\nThe experiments were interrupted by users. Saved results are retained. ")
+			except BaseException as e:
+				print("The experiments were interrupted by the following exceptions. Saved results are retained. \n\t{0}".format(e))
+			errorLevel = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(r > 0 for r in result[qvLength:length])) for result in results) else EXIT_FAILURE
 		else:
-			print("Results: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
+			print("Failed to initialize the directory for the output file path \"{0}\". ".format(outputFilePath))
+			errorLevel = EOF
+	elif EXIT_SUCCESS == flag:
+		errorLevel = flag
 	else:
-		print("The results are empty. ")
+		errorLevel = EOF
 	
-	# End #
-	errorLevel = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(r > 0 for r in result[qvLength:length])) for result in results) else EXIT_FAILURE
+	# Exit #
 	try:
-		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
-			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, errorLevel))
-			sleep(sleepingTime)
+		if isinstance(waitingTime, float) and 0 <= waitingTime < float("inf"):
+			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(waitingTime, errorLevel))
+			sleep(waitingTime)
 		else:
 			print("Please press the enter key to exit ({0}). ".format(errorLevel))
 			input()

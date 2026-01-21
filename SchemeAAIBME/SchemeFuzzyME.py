@@ -20,6 +20,139 @@ EXIT_FAILURE = 1
 EOF = (-1)
 
 
+class Parser:
+	def __init__(self:object, arguments:tuple|list) -> object:
+		self.__arguments = tuple(argument for argument in arguments if isinstance(argument, str)) if isinstance(arguments, (tuple, list)) else ()
+		self.__schemeName = "SchemeFuzzyME" # os.path.splitext(os.path.basename(__file__))[0]
+		self.__outputExtension = ".xlsx"
+		self.__optionE = ("e", "/e", "-e", "encoding", "/encoding", "--encoding")
+		self.__defaultE = "utf-8"
+		self.__optionH = ("h", "/h", "-h", "help", "/help", "--help")
+		self.__optionO = ("o", "/o", "-o", "output", "/output", "--output")
+		self.__defaultO = "./{0}{1}".format(self.__schemeName, self.__outputExtension)
+		self.__optionR = ("r", "/r", "-r", "round", "/round", "--round")
+		self.__defaultR = 100
+		self.__optionT = ("t", "/t", "-t", "time", "/time", "--time")
+		self.__defaultT = float("inf")
+		self.__optionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
+	def __escape(self:object, string) -> str:
+		return string.replace("\\", "\\\\").replace("\"", "\\\"").replace("\a", "\\\a").replace("\b", "\\\b").replace("\n", "\\\n").replace("\r", "\\r").replace("\t", "\\\t").replace("\v", "\\\v")
+	def __formatOption(self:object, option:tuple, pre:str = "[", sep:str = "|", suf:str = "]") -> str:
+		if isinstance(option, tuple) and all(isinstance(op, str) for op in option):
+			prefix = pre if isinstance(pre, str) else "["
+			separator = sep if isinstance(sep, str) else "|"
+			suffix = suf if isinstance(suf, str) else "]"
+			return prefix + separator.join(option) + suffix
+		else:
+			return ""
+	def __printHelp(self:object) -> None:
+		print("This is a possible implementation of the Fuzzy-ME cryptography scheme in Python programming language based on the Python charm library. \n")
+		print("Options (not case-sensitive): ")
+		print("\t{0} [utf-8|utf-16|...]\t\tSpecify the encoding mode for CSV and TXT outputs. The default value is {1}. ".format(self.__formatOption(self.__optionE), self.__defaultE))
+		print("\t{0}\t\tPrint this help document. ".format(self.__formatOption(self.__optionH)))
+		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(	\
+			self.__formatOption(self.__optionO), self.__schemeName, self.__defaultO										\
+		))
+		print("\t{0} [1|2|5|10|20|50|100|...]\t\tSpecify the round count, which must be a positive integer. The default value is {1}. ".format(self.__formatOption(self.__optionR), self.__defaultR))
+		print(																				\
+			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(self.__optionT))	\
+			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)		\
+		)
+		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
+	def handlePath(self:object, path:str) -> str:
+		if isinstance(path, str):
+			return os.path.join(path, self.__schemeName + self.__outputExtension) if path.endswith("/") else path
+		else:
+			return self.__defaultO
+	def parse(self:object) -> tuple:
+		flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = max(EXIT_SUCCESS, EOF) + 1, self.__defaultE, self.__defaultO, self.__defaultR, self.__defaultT, False
+		index, argumentCount, buffers = 1, len(self.__arguments), []
+		while index < argumentCount:
+			argument = self.__arguments[index].lower()
+			if argument in self.__optionE:
+				index += 1
+				if index < argumentCount:
+					try:
+						__import__("codecs").lookup(self.__arguments[index])
+						encoding = self.__arguments[index]
+					except:
+						flag = EOF
+						buffers.append("CL: The value [0] = \"{1}\" for the encoding option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the encoding option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionH:
+				self.__printHelp()
+				flag = EXIT_SUCCESS
+				break
+			elif argument in self.__optionO:
+				index += 1
+				if index < argumentCount:
+					outputFilePath = self.handlePath(self.__arguments[index])
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the output file path option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionR:
+				index += 1
+				if index < argumentCount:
+					try:
+						r = int(self.__arguments[index])
+						if r >= 1:
+							roundCount = r
+						else:
+							flag = EOF
+							buffers.append("CL: The value [{0}] = {1} for the round count option should be a positive integer. ".format(index, r))
+					except:
+						flag = EOF
+						buffers.append("CL: The type of the value [{0}] = \"{1}\" for the round count option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the round count option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionT:
+				index += 1
+				if index < argumentCount:
+					if self.__arguments[index].lower() in ("n", "nan", "none"):
+						waitingTime = None
+					else:
+						try:
+							t = float(self.__arguments[index])
+							if t >= 0:
+								waitingTime = t
+							else:
+								flag = EOF
+								buffers.append("CL: The value [{0}] = {1} for the waiting time option should be a non-negative value. ".format(index, t))
+						except:
+							flag = EOF
+							buffers.append("CL: The type of the value [{0}] = \"{1}\" for the waiting time option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("CL: The value for the waiting time option is missing at [{0}]. ".format(index))
+			elif argument in self.__optionY:
+				overwritingConfirmed = True
+			else:
+				flag = EOF
+				buffers.append("CL: The option [{0}] = \"{1}\" is unknown. ".format(index, self.__escape(self.__arguments[index])))
+			index += 1
+		if EOF == flag:
+			for buffer in buffers:
+				print(buffer)
+		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
+	def handleFolder(self:object, fd:str) -> bool:
+		try:
+			folder = str(fd)
+		except:
+			return False
+		if not folder:
+			return True
+		elif os.path.exists(folder):
+			return os.path.isdir(folder)
+		else:
+			try:
+				os.makedirs(folder)
+				return True
+			except:
+				return False
+
 class SchemeFuzzyME:
 	def __init__(self:object, group:None|PairingGroup = None) -> object: # This scheme is only applicable to symmetric groups of prime orders. 
 		self.__group = group if isinstance(group, PairingGroup) else PairingGroup("SS512", secparam = 512)
@@ -333,7 +466,7 @@ class SchemeFuzzyME:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = None) -> list:
+def conductScheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(n, int) and isinstance(d, int) and n >= 1 and d >= 2: # no need to check the parameters for curve types here
 		try:
@@ -441,10 +574,10 @@ def Scheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|None = No
 	return [group.groupType(), group.secparam, n, d, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
 def parseCL(vec:list) -> tuple:
-	owOption, sleepingTime = 0, None
+	owOption, waitingTime = 0, None
 	for arg in vec:
 		if isinstance(arg, str):
-			if arg.upper() in ("Y", "YES", "TRUE"):
+			if arg.upper() in ("Y", "YES", "TRUE", "2"):
 				owOption = 2
 			elif arg.upper() in ("N", "NO", "FALSE"):
 				owOption = 1
@@ -454,10 +587,10 @@ def parseCL(vec:list) -> tuple:
 				owOption = 0
 			else:
 				try:
-					sleepingTime = float(arg)
+					waitingTime = float(arg)
 				except:
 					pass
-	return (owOption, sleepingTime)
+	return (owOption, waitingTime)
 
 def handleFolder(fd:str) -> bool:
 	folder = str(fd)
@@ -475,7 +608,7 @@ def handleFolder(fd:str) -> bool:
 def main() -> int:
 	# Begin #
 	curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
-	roundCount, filePath = 100, "SchemeFuzzyME.xlsx"
+	roundCount, outputFilePath = 100, "SchemeFuzzyME.xlsx"
 	queries = ["curveType", "secparam", "n", "d", "roundCount"]
 	validators = ["isSystemValid", "isSchemeCorrect"]
 	metrics = 	[															\
@@ -491,9 +624,9 @@ def main() -> int:
 		for curveType in curveTypes:
 			for n in range(10, 31, 5):
 				for d in range(5, n, 5):
-					average = Scheme(curveType, n = n, d = d, round = 0)
+					average = conductScheme(curveType, n = n, d = d, round = 0)
 					for round in range(1, roundCount):
-						result = Scheme(curveType, n = n, d = d, round = round)
+						result = conductScheme(curveType, n = n, d = d, round = round)
 						for idx in range(qLength, qvLength):
 							average[idx] += result[idx]
 						for idx in range(qvLength, length):
@@ -508,21 +641,21 @@ def main() -> int:
 		print("The experiments were interrupted by the following exceptions. The program will try to save the results collected. \n\t{0}".format(e))
 	
 	# Output #
-	owOption, sleepingTime = parseCL(argv[1:])
+	owOption, waitingTime = parseCL(argv[1:])
 	print()
 	if results:
 		if -1 == owOption:
 			print("Results: \n{0}\n".format(results))
-		elif handleFolder(os.path.split(filePath)[0]):
+		elif handleFolder(os.path.split(outputFilePath)[0]):
 			# Writing Preparation #
-			if os.path.isfile(filePath):
+			if os.path.isfile(outputFilePath):
 				if 1 == owOption:
 					flag = False # write to the file or not
 				elif 2 == owOption:
 					flag = True
 				else:
 					try:
-						flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(filePath)).upper() in ("Y", "YES", "TRUE", "1")
+						flag = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "TRUE", "1")
 					except:
 						flag = False
 						print()
@@ -533,31 +666,31 @@ def main() -> int:
 			if flag:
 				try:
 					df = __import__("pandas").DataFrame(results, columns = columns)
-					if os.path.splitext(filePath)[1].lower() == ".csv":
-						df.to_csv(filePath, index = False, float_format = "%.9f")
+					if os.path.splitext(outputFilePath)[1].lower() == ".csv":
+						df.to_csv(outputFilePath, index = False, float_format = "%.9f")
 					else:
-						df.to_excel(filePath, index = False, float_format = "%.9f")
-					print("Successfully saved the results to \"{0}\" in the three-line table form. ".format(filePath))
+						df.to_excel(outputFilePath, index = False, float_format = "%.9f")
+					print("Successfully saved the results to \"{0}\" in the three-line table form. ".format(outputFilePath))
 				except:
 					try:
-						with open(filePath, "w", encoding = "utf-8") as f:
+						with open(outputFilePath, "w", encoding = "utf-8") as f:
 							f.write(str(columns) + "\n" + str(results))
-						print("Successfully saved the results to \"{0}\" in the plain text form. ".format(filePath))
+						print("Successfully saved the results to \"{0}\" in the plain text form. ".format(outputFilePath))
 					except BaseException as e:
-						print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, filePath, e))
+						print("Results: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, outputFilePath, e))
 			else:
 				print("Results: \n{0}\n\nThe overwriting is canceled by users. ".format(results))
 		else:
-			print("Results: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, filePath))
+			print("Results: \n{0}\n\nFailed to save the results to \"{1}\" since the parent folder was not created successfully. ".format(results, outputFilePath))
 	else:
 		print("The results are empty. ")
 	
 	# End #
 	errorLevel = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(r > 0 for r in result[qvLength:length])) for result in results) else EXIT_FAILURE
 	try:
-		if isinstance(sleepingTime, float) and 0 <= sleepingTime < float("inf"):
-			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(sleepingTime, errorLevel))
-			sleep(sleepingTime)
+		if isinstance(waitingTime, float) and 0 <= waitingTime < float("inf"):
+			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(waitingTime, errorLevel))
+			sleep(waitingTime)
 		else:
 			print("Please press the enter key to exit ({0}). ".format(errorLevel))
 			input()

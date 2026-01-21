@@ -6,9 +6,9 @@ This is the category of the proposed IBMEMR cryptography scheme, which outperfor
 
 This is the official implementation of the IBMEMR cryptography scheme in Python programming language based on the Python charm library. 
 
-### ``SchemeIBME.py``
+### ``SchemeIBME.py`` (soft link)
 
-This is the implementation of the IBME cryptography scheme (``Match me if you can: Matchmaking encryption and its applications``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
+This is a possible implementation of the IBME cryptography scheme (``Match me if you can: Matchmaking encryption and its applications``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/04_ibme/04_ibme.py). 
 
 ```
 @inproceedings{ateniese2019match,
@@ -23,7 +23,7 @@ This is the implementation of the IBME cryptography scheme (``Match me if you ca
 
 ### ``SchemeIBBME.py``
 
-This is the implementation of the IBBME cryptography scheme (``Privacy-Aware and Security-Enhanced Efficient Matchmaking Encryption``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/00_aibbme/00_aibbme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/00_aibbme/00_aibbme.py). 
+This is a possible implementation of the IBBME cryptography scheme (``Privacy-Aware and Security-Enhanced Efficient Matchmaking Encryption``) in Python programming language based on the Python charm library, referring to the official implementation from [https://github.com/xuehuan-yang/PSME/blob/main/src/00_aibbme/00_aibbme.py](https://github.com/xuehuan-yang/PSME/blob/main/src/00_aibbme/00_aibbme.py). 
 
 ```
 @article{sun2023privacy,

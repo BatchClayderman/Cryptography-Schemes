@@ -256,7 +256,7 @@ class SchemeVLPSICA:
 			return -1
 
 
-def Scheme(curveType:tuple|list|str, m:int = 10, n:int = 10, d:int = 10, round:int|None = None) -> list:
+def conductScheme(curveType:tuple|list|str, m:int = 10, n:int = 10, d:int = 10, round:int|None = None) -> list:
 	# Begin #
 	if isinstance(m, int) and isinstance(n, int) and isinstance(d, int) and m >= 1 and n >= 1 and d >= 1:
 		try:
@@ -363,7 +363,7 @@ def parseCL(vec:list) -> tuple:
 	owOption, sleepingTime = 0, None
 	for arg in vec:
 		if isinstance(arg, str):
-			if arg.upper() in ("Y", "YES", "TRUE"):
+			if arg.upper() in ("Y", "YES", "TRUE", "2"):
 				owOption = 2
 			elif arg.upper() in ("N", "NO", "FALSE"):
 				owOption = 1
@@ -411,9 +411,9 @@ def main() -> int:
 			for m in range(5, 31, 5):
 				for n in range(5, 31, 5):
 					for d in range(5, 31, 5):
-						average = Scheme(curveType, m = m, n = n, d = d, round = 0)
+						average = conductScheme(curveType, m = m, n = n, d = d, round = 0)
 						for round in range(1, roundCount):
-							result = Scheme(curveType, m = m, n = n, d = d, round = round)
+							result = conductScheme(curveType, m = m, n = n, d = d, round = round)
 							for idx in range(qLength, qvLength):
 								average[idx] += result[idx]
 							for idx in range(qvLength, length):

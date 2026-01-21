@@ -52,8 +52,8 @@ def convertEscaped(string:str) -> str:
 if PLATFORM == "WINDOWS":
 	def checkFile(filePath:str, lines:tuple|list|set, sleepingTime:int = 3) -> bool:
 		patterns = (																															\
-			" = Scheme\\(curveType[A-Za-z, ]+\\)", " = sum\\(.*^(start = ).*\\)", "\\$\\\\textbf{return", "\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\S.*$", "^def Scheme\\(.+round\\)", 	\
-			"^def Scheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", 								\
+			" = Scheme\\(curveType[A-Za-z, ]+\\)", " = sum\\(.*^(start = ).*\\)", "\\$\\\\textbf{return", "\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\S.*$", "^def conductScheme\\(.+round\\)", 	\
+			"^def conductScheme\\(curveType:tuple\\|list\\|str, [A-Za-z:\\|, _]+round:int\\|None = None\\)", "cipher:.+\\\\textit{ct}.+\\\\rightarrow", 								\
 			"cipherText:.+ (?:c|C)(?:\\, |\\)).+\\\\rightarrow", "def Setup\\(self:object, [A-Za-z:\\|, _]+\\)", "for idx in range\\([0-9]+, [A-Za-z]+\\)", "len.+# type check"		\
 		)
 		if isinstance(filePath, str) and isinstance(lines, (tuple, list, set)):
@@ -84,8 +84,8 @@ else:
 	def checkFile(filePath:str, lines:None = None, sleepingTime:int = 3) -> int:
 		patterns = (																						\
 			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)", "\\\\\\$\\\\\\\\textbf{return", 				\
-			"\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\\\S.*\\$", "^def Scheme\\\\(.+round\\\\)", 									\
-			"^def Scheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 					\
+			"\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\\\S.*\\$", "^def conductScheme\\\\(.+round\\\\)", 									\
+			"^def conductScheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 					\
 			"cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 					\
 			"def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", "len.+# type check"		\
 		)
