@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ${{ github.event.inputs.pythonVersion }}
+        python-version: [${{ github.event.inputs.pythonVersion }}]
     
     steps:
     - name: Checkout code
