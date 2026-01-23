@@ -529,10 +529,9 @@ def main() -> int:
 					outputFilePath = parser.handlePath(input("Please specify a new output file path or leave it empty for console output: "))
 				except:
 					print()
-		if parser.handleFolder(os.path.dirname(outputFilePath)):
-			del parser
-			
-	# Parameters #
+		del parser
+		
+		# Parameters #
 	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 100, "SchemeAnonymousME.xlsx"
 	queries = ["curveType", "secparam", "l", "k", "roundCount"]

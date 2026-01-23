@@ -518,40 +518,26 @@ def conductScheme(curveType:tuple|list|str, n:int = 30, k:int = 10, round:int|No
 	print()
 	return [group.groupType(), group.secparam, l, k, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
 
-def parseCL(vec:list) -> tuple:
-	owOption, sleepingTime = 0, None
-	for arg in vec:
-		if isinstance(arg, str):
-			if arg.upper() in ("Y", "YES", "TRUE", "2"):
-				owOption = 2
-			elif arg.upper() in ("N", "NO", "FALSE"):
-				owOption = 1
-			elif arg.upper() in ("C", "CANCEL"):
-				owOption = -1
-			elif arg.upper() in ("Q", "QUESTION", "A", "ASK", "NONE"):
-				owOption = 0
+def main() -> int:
+	parser = Parser(argv)
+	flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = parser.parse()
+	if flag > EXIT_SUCCESS and flag > EOF:
+		while outputFilePath not in ("", ".") and os.path.isfile(outputFilePath):
+			if not overwritingConfirmed:
+				try:
+					overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
+				except:
+					print()
+			if overwritingConfirmed:
+				break
 			else:
 				try:
-					sleepingTime = float(arg)
+					outputFilePath = parser.handlePath(input("Please specify a new output file path or leave it empty for console output: "))
 				except:
-					pass
-	return (owOption, sleepingTime)
-
-def handleFolder(fd:str) -> bool:
-	folder = str(fd)
-	if not folder:
-		return True
-	elif os.path.exists(folder):
-		return os.path.isdir(folder)
-	else:
-		try:
-			os.makedirs(folder)
-			return True
-		except:
-			return False
-
-def main() -> int:
-	# Begin #
+					print()
+		del parser
+		
+		# Parameters #
 	curveTypes = ("MNT159", "MNT201", "MNT224", "BN254", ("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 	roundCount, filePath = 100, "SchemeCANIFPPCT.xlsx"
 	queries = ["curveType", "secparam", "l", "k", "roundCount"]
