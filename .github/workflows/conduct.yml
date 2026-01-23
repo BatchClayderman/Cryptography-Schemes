@@ -27,7 +27,6 @@ on:
           - './SchemeIBMETR/SchemeIBMECH.py'
           - './SchemeHIBME/SchemeAnonymousME.py'
           - './SchemeHIBME/SchemeHIBME.py'
-          - './generateSchemeLaTeX.py'
       pythonVersion:
         description: 'Specify the Python version.'
         required: true
@@ -53,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ${{ github.event.inputs.pythonVersion }}
     
     steps:
     - name: Checkout code
