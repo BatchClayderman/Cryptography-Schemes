@@ -48,7 +48,7 @@ on:
         type: number
 
 jobs:
-  configure:
+  - configure:
     runs-on: ubuntu-latest
     
     steps:
@@ -94,7 +94,7 @@ jobs:
         make -j$(nproc)
         sudo make install
         
-  conduct:
+  - conduct:
     - name: Run the specific cryptography scheme
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
