@@ -28,7 +28,7 @@ on:
           - './SchemeHIBME/SchemeAnonymousME.py'
           - './SchemeHIBME/SchemeHIBME.py'
           - './generateSchemeLaTeX.py'
-      python_version:
+      pythonVersion:
         description: 'Specify the Python version.'
         required: true
         default: '3.12'
@@ -53,23 +53,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Set up Python ${{ github.event.inputs.python_version }}
+    - name: Set up Python ${{ github.event.inputs.pythonVersion }}
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ github.event.inputs.python_version }}
+        python-version: ${{ github.event.inputs.pythonVersion }}
     
     - name: Display the selected scheme and Python version
       run: |
         echo "Selected scheme: ${{ github.event.inputs.scheme }}"
         echo "Python version: ${{ matrix.python-version }}"
         echo "Round count: ${{ github.event.inputs.roundCount }}"
-
+    
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -81,7 +81,7 @@ jobs:
           libssl-dev \
           wget \
           build-essential
-
+    
     - name: Build and install PBC library
       run: |
         wget https://crypto.stanford.edu/pbc/files/pbc-1.0.0.tar.gz
@@ -91,17 +91,17 @@ jobs:
         make -j$(nproc)
         sudo make install
         sudo ldconfig
-
+    
     - name: Build Charm
       run: |
         ./configure.sh
         make -j$(nproc)
-
+    
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pyparsing hypothesis
-
+    
     - name: Run specific scheme test
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
