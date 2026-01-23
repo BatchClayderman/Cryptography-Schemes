@@ -48,7 +48,7 @@ on:
         type: number
 
 jobs:
-  configure:
+  conduct:
     runs-on: ubuntu-latest
     
     steps:
@@ -93,22 +93,16 @@ jobs:
         ./configure.sh
         make -j$(nproc)
         sudo make install
-        
-  conduct:
-    needs: configure
-    runs-on: ubuntu-latest
     
-    steps:
     - name: Run the specific cryptography scheme
       run: |
-        export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-        echo "Run: python \"${{ github.event.inputs.scheme }}\" -o . -r ${{ github.event.inputs.roundCount }} -t 0"
         cd "${{ github.workspace }}"
+        echo "The current the directory \"$(pwd)\". "
+        echo "\\$ python \"${{ github.event.inputs.scheme }}\" -o . -r ${{ github.event.inputs.roundCount }} -t 0"
         if [[ -f "${{ github.event.inputs.scheme }}" ]]; then
           python "${{ github.event.inputs.scheme }}" -o . -r ${{ github.event.inputs.roundCount }} -t 0
         else
           echo "Could not execute the scheme file \"${{ github.event.inputs.scheme }}\"."
-          echo "Current directory: $(pwd)"
           echo "File listing:"
           ls -la
           exit 1
