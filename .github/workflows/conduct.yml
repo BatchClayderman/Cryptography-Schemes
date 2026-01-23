@@ -48,7 +48,7 @@ on:
         type: number
 
 jobs:
-  conduct:
+  configure:
     runs-on: ubuntu-latest
     
     steps:
@@ -69,14 +69,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          flex \
-          bison \
-          libfl-dev \
-          libgmp-dev \
-          libssl-dev \
-          wget \
-          build-essential
+        sudo apt-get install -y bison build-essential flex get libfl-dev libgmp-dev libssl-dev wget
     
     - name: Build and install the PBC library
       run: |
@@ -88,7 +81,12 @@ jobs:
         sudo make install
         sudo ldconfig
     
-    - name: Build and install the Python Charm library
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install setuptools
+    
+    - name: Build and install the Python charm library
       run: |
         git clone https://github.com/JHUISI/charm.git
         cd charm
@@ -96,16 +94,11 @@ jobs:
         make -j$(nproc)
         sudo make install
         
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pyparsing hypothesis
-    
-    - name: Run specific scheme test
+  conduct:
+    - name: Run the specific cryptography scheme
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-        echo "Testing scheme: ${{ github.event.inputs.scheme }}"
-        echo "Round count: ${{ github.event.inputs.roundCount }}"
+        echo "Run: python \"${{ github.event.inputs.scheme }}\" -o . -r ${{ github.event.inputs.roundCount }} -t 0"
         cd "${{ github.workspace }}"
         if [[ -f "${{ github.event.inputs.scheme }}" ]]; then
           python "${{ github.event.inputs.scheme }}" -o . -r ${{ github.event.inputs.roundCount }} -t 0
