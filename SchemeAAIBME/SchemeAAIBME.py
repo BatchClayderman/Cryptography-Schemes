@@ -30,7 +30,7 @@ class Parser:
 		self.__optionO = ("o", "/o", "-o", "output", "/output", "--output")
 		self.__defaultO = "./{0}{1}".format(self.__schemeName, self.__outputExtension)
 		self.__optionR = ("r", "/r", "-r", "round", "/round", "--round")
-		self.__defaultR = 100
+		self.__defaultR = 10
 		self.__optionT = ("t", "/t", "-t", "time", "/time", "--time")
 		self.__defaultT = float("inf")
 		self.__optionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
@@ -58,7 +58,7 @@ class Parser:
 			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)			\
 		)
 		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
-	def handlePath(self:object, path:str) -> str:
+	def __handlePath(self:object, path:str) -> str:
 		if isinstance(path, str):
 			return os.path.join(path, self.__schemeName + self.__outputExtension) if path.endswith("/") else path
 		else:
@@ -76,10 +76,10 @@ class Parser:
 						encoding = self.__arguments[index]
 					except:
 						flag = EOF
-						buffers.append("CL: The value [0] = \"{1}\" for the encoding option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+						buffers.append("Parser: The value [0] = \"{1}\" for the encoding option is invalid. ".format(index, self.__escape(self.__arguments[index])))
 				else:
 					flag = EOF
-					buffers.append("CL: The value for the encoding option is missing at [{0}]. ".format(index))
+					buffers.append("Parser: The value for the encoding option is missing at [{0}]. ".format(index))
 			elif argument in self.__optionH:
 				self.__printHelp()
 				flag = EXIT_SUCCESS
@@ -87,10 +87,10 @@ class Parser:
 			elif argument in self.__optionO:
 				index += 1
 				if index < argumentCount:
-					outputFilePath = self.handlePath(self.__arguments[index])
+					outputFilePath = self.__handlePath(self.__arguments[index])
 				else:
 					flag = EOF
-					buffers.append("CL: The value for the output file path option is missing at [{0}]. ".format(index))
+					buffers.append("Parser: The value for the output file path option is missing at [{0}]. ".format(index))
 			elif argument in self.__optionR:
 				index += 1
 				if index < argumentCount:
@@ -100,13 +100,13 @@ class Parser:
 							roundCount = r
 						else:
 							flag = EOF
-							buffers.append("CL: The value [{0}] = {1} for the round count option should be a positive integer. ".format(index, r))
+							buffers.append("Parser: The value [{0}] = {1} for the round count option should be a positive integer. ".format(index, r))
 					except:
 						flag = EOF
-						buffers.append("CL: The type of the value [{0}] = \"{1}\" for the round count option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+						buffers.append("Parser: The type of the value [{0}] = \"{1}\" for the round count option is invalid. ".format(index, self.__escape(self.__arguments[index])))
 				else:
 					flag = EOF
-					buffers.append("CL: The value for the round count option is missing at [{0}]. ".format(index))
+					buffers.append("Parser: The value for the round count option is missing at [{0}]. ".format(index))
 			elif argument in self.__optionT:
 				index += 1
 				if index < argumentCount:
@@ -116,26 +116,45 @@ class Parser:
 						try:
 							t = float(self.__arguments[index])
 							if t >= 0:
-								waitingTime = t
+								waitingTime = int(t) if t.is_integer() else t
 							else:
 								flag = EOF
-								buffers.append("CL: The value [{0}] = {1} for the waiting time option should be a non-negative value. ".format(index, t))
+								buffers.append("Parser: The value [{0}] = {1} for the waiting time option should be a non-negative value. ".format(index, t))
 						except:
 							flag = EOF
-							buffers.append("CL: The type of the value [{0}] = \"{1}\" for the waiting time option is invalid. ".format(index, self.__escape(self.__arguments[index])))
+							buffers.append("Parser: The type of the value [{0}] = \"{1}\" for the waiting time option is invalid. ".format(index, self.__escape(self.__arguments[index])))
 				else:
 					flag = EOF
-					buffers.append("CL: The value for the waiting time option is missing at [{0}]. ".format(index))
+					buffers.append("Parser: The value for the waiting time option is missing at [{0}]. ".format(index))
 			elif argument in self.__optionY:
 				overwritingConfirmed = True
 			else:
 				flag = EOF
-				buffers.append("CL: The option [{0}] = \"{1}\" is unknown. ".format(index, self.__escape(self.__arguments[index])))
+				buffers.append("Parser: The option [{0}] = \"{1}\" is unknown. ".format(index, self.__escape(self.__arguments[index])))
 			index += 1
 		if EOF == flag:
 			for buffer in buffers:
 				print(buffer)
 		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
+	def checkOverwriting(self:object, outputFP:str, overwriting:bool) -> tuple:
+		if isinstance(outputFP, str) and isinstance(overwriting, bool):
+			outputFilePath, overwritingConfirmed = outputFP, overwriting
+			while outputFilePath not in ("", ".") and os.path.isfile(outputFilePath):
+				if not overwritingConfirmed:
+					try:
+						overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
+					except:
+						print()
+				if overwritingConfirmed:
+					break
+				else:
+					try:
+						outputFilePath = self.__handlePath(input("Please specify a new output file path or leave it empty for console output: "))
+					except:
+						print()
+			return (outputFilePath, overwritingConfirmed)
+		else:
+			return (outputFP, overwriting)
 
 class Saver:
 	def __init__(self:object, outputFilePath:str = ".", columns:tuple|list|None = None, floatFormat:str = "%.9f", encoding:str = "utf-8") -> object:
@@ -176,7 +195,7 @@ class Saver:
 						if os.path.splitext(self.__outputFilePath)[1] == ".xlsx":
 							df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
 						else:
-							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = encoding)
+							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = self.__encoding)
 						print("Saver: Successfully saved the results to \"{0}\" in the three-line table format. ".format(self.__outputFilePath))
 						return True
 					except KeyboardInterrupt:
@@ -225,9 +244,9 @@ class SchemeAAIBME:
 		else:
 			return self.__group.init(ZR, 1)
 	def __computePolynomial(self:object, x:Element|int|float, coefficients:tuple|list) -> Element|int|float|None:
-		if isinstance(coefficients, (tuple, list)) and coefficients and (										\
+		if isinstance(coefficients, (tuple, list)) and coefficients and (																		\
 			isinstance(x, Element) and all(isinstance(coefficient, Element) and coefficient.type == x.type for coefficient in coefficients)		\
-			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)				\
+			or isinstance(x, (int, float)) and all(isinstance(coefficient, (int, float)) for coefficient in coefficients)						\
 		):
 			n, eleResult = len(coefficients) - 1, coefficients[0]
 			for i in range(1, n):
@@ -303,13 +322,13 @@ class SchemeAAIBME:
 		
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
-		H = lambda vec, ID:vec[0] * self.__product(		\
+		H = lambda vec, ID:vec[0] * self.__product(			\
 			vec[j + 1] ** ID[j] for j in range(self.__n)	\
 		) # $H: (\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n)) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
 		rVec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{r} = (r_1, r_2, \cdots, r_n) \in \mathbb{Z}_r^n$ randomly
 		coefficients = (beta, ) + tuple(self.__group.random(ZR) for _ in range(self.__d - 2)) + (self.__group.init(ZR, 1), )
 		q = lambda x:self.__computePolynomial(x, coefficients) # generate a $(d - 1)$ degree polynominal $q(x)$ s.t. $q(0) = \beta$ randomly
-		ek_ID_A = tuple(																\
+		ek_ID_A = tuple(																												\
 			(g3 ** q(self.__group.init(ZR, i)) * (H(uVec, ID_A) * TVec[i]) ** rVec[i], g ** rVec[i]) for i in range(self.__n)			\
 		) # $\textit{ek}_{\textit{ID}_{A_i}} \gets (g_3^{q(i)} [H(\bm{u}', \textit{ID}_A)T'_i]^{r_i}, g^{r_i}), \forall i \in \{1, 2, \cdots, n\}$
 		ek_ID_A_S = tuple(ek_ID_A[i] for i in S) # generate $\textit{ek}_{\textit{ID}_A}(S) \subset \textit{ek}_{\textit{ID}_A}$ s.t. $\|\textit{ek}_{\textit{ID}_A}(S)\| = d$ randomly
@@ -392,7 +411,7 @@ class SchemeAAIBME:
 		
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
-		H = lambda vec, ID:vec[0] * self.__product(		\
+		H = lambda vec, ID:vec[0] * self.__product(			\
 			vec[j + 1] ** ID[j] for j in range(self.__n)	\
 		) # $H: (\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n)) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
 		SPrimePrime = list(range(self.__n))
@@ -644,19 +663,7 @@ def main() -> int:
 	parser = Parser(argv)
 	flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = parser.parse()
 	if flag > EXIT_SUCCESS and flag > EOF:
-		while outputFilePath not in ("", ".") and os.path.isfile(outputFilePath):
-			if not overwritingConfirmed:
-				try:
-					overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
-				except:
-					print()
-			if overwritingConfirmed:
-				break
-			else:
-				try:
-					outputFilePath = parser.handlePath(input("Please specify a new output file path or leave it empty for console output: "))
-				except:
-					print()
+		outputFilePath, overwritingConfirmed = parser.checkOverwriting(outputFilePath, overwritingConfirmed)
 		del parser
 		
 		# Parameters #
@@ -678,17 +685,18 @@ def main() -> int:
 				for curveType in curveTypes:
 					for n in range(10, 31, 5):
 						for d in range(5, n, 5):
-							average = conductScheme(curveType, n = n, d = d, round = 0)
+							averages = conductScheme(curveType, n = n, d = d, round = 0)
 							for round in range(1, roundCount):
 								result = conductScheme(curveType, n = n, d = d, round = round)
 								for idx in range(qLength, qvLength):
-									average[idx] += result[idx]
+									averages[idx] += result[idx]
 								for idx in range(qvLength, length):
-									average[idx] = -1 if average[idx] < 0 or result[idx] < 0 else average[idx] + result[idx]
-							average[avgIndex] = roundCount
+									averages[idx] = -1 if averages[idx] < 0 or result[idx] < 0 else averages[idx] + result[idx]
+							averages[avgIndex] = roundCount
 							for idx in range(qvLength, length):
-								average[idx] = -1 if average[idx] <= 0 else average[idx] / roundCount
-							results.append(average)
+								averages[idx] = -1 if averages[idx] <= 0 else averages[idx] / roundCount
+								averages[idx] = int(averages[idx]) if averages[idx].is_integer() else averages[idx]
+							results.append(averages)
 							saver.save(results)
 			except KeyboardInterrupt:
 				print("\nThe experiments were interrupted by users. Saved results are retained. ")
@@ -703,14 +711,17 @@ def main() -> int:
 	else:
 		errorLevel = EOF
 	try:
-		if isinstance(waitingTime, float) and 0 <= waitingTime < float("inf"):
-			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). \n".format(waitingTime, errorLevel))
+		if 0 == waitingTime:
+			print("The execution of the Python script has finished ({0}). ".format(errorLevel))
+		elif isinstance(waitingTime, (float, int)) and 0 < waitingTime < float("inf"):
+			print("Please wait for the countdown ({0} second(s)) to end, or exit the program manually like pressing the \"Ctrl + C\" ({1}). ".format(waitingTime, errorLevel))
 			sleep(waitingTime)
 		else:
 			print("Please press the enter key to exit ({0}). ".format(errorLevel))
 			input()
 	except:
 		print()
+	print()
 	return errorLevel
 
 
