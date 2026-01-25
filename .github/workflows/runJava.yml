@@ -1,0 +1,41 @@
+name: Run Java
+
+# Thanks to [https://github.com/JHUISI/charm/blob/dev/.github/workflows/ci.yml](https://github.com/JHUISI/charm/blob/dev/.github/workflows/ci.yml). 
+
+on:
+  workflow_dispatch:
+    inputs:
+      cryptographyScheme:
+        description: 'Cryptography scheme'
+        required: true
+        default: './SchemeAAIBME/SchemeAAIBME.java'
+        type: choice
+        options:
+          - './SchemeAAIBME/SchemeAAIBME.java'
+
+jobs:
+  runJava:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy Java
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y default-jre
+    
+    - name: Run Java
+      run: |
+        cd "${{ github.workspace }}"
+        echo "The current working directory is \"$(pwd)\". "
+        if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
+        then
+          echo "\$ java -cp lib/jpbc-api-2.0.0.jar:lib/jpbc-plaf-2.0.0.jar \"${{ github.event.inputs.cryptographyScheme }}\""
+          java -cp lib/jpbc-api-2.0.0.jar:lib/jpbc-plaf-2.0.0.jar "${{ github.event.inputs.cryptographyScheme }}"
+        else
+          echo "Could not execute the cryptography scheme file \"${{ github.event.inputs.cryptographyScheme }}\" via Java. "
+          tree
+          exit 1
+        fi
