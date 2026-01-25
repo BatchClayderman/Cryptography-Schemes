@@ -8,25 +8,25 @@ on:
       cryptographyScheme:
         description: 'Cryptography scheme'
         required: true
-        default: './SchemeIBMETR/SchemeIBMETR.py'
+        default: 'SchemeIBMETR/SchemeIBMETR.py'
         type: choice
         options:
-          - './SchemeAAIBME/SchemeAAIBME.py'
-          - './SchemeAAIBME/SchemeFuzzyME.py'
-          - './SchemeCANIFPPCT/SchemeCANIFPPCT.py'
-          - './SchemeHIBME/SchemeAnonymousME.py'
-          - './SchemeHIBME/SchemeHIBME.py'
-          - './SchemeIBMEMR/SchemeIBBME.py'
-          - './SchemeIBMEMR/SchemeIBMEMR.py'
-          - './SchemeIBMETR/SchemeAIBE.py'
-          - './SchemeIBMETR/SchemeARES.py'
-          - './SchemeIBMETR/SchemeIBME.py'
-          - './SchemeIBMETR/SchemeIBMECH.py'
-          - './SchemeIBMETR/SchemeIBMETR.py'
-          - './SchemeIBPRME/SchemeIBPME.py'
-          - './SchemeIBPRME/SchemeIBPRME.py'
-          - './SchemeIBPRME/SchemePBAC.py'
-          - './SchemeVLPSICA/SchemeVLPSICA.py'
+          - 'SchemeAAIBME/SchemeAAIBME.py'
+          - 'SchemeAAIBME/SchemeFuzzyME.py'
+          - 'SchemeCANIFPPCT/SchemeCANIFPPCT.py'
+          - 'SchemeHIBME/SchemeAnonymousME.py'
+          - 'SchemeHIBME/SchemeHIBME.py'
+          - 'SchemeIBMEMR/SchemeIBBME.py'
+          - 'SchemeIBMEMR/SchemeIBMEMR.py'
+          - 'SchemeIBMETR/SchemeAIBE.py'
+          - 'SchemeIBMETR/SchemeARES.py'
+          - 'SchemeIBMETR/SchemeIBME.py'
+          - 'SchemeIBMETR/SchemeIBMECH.py'
+          - 'SchemeIBMETR/SchemeIBMETR.py'
+          - 'SchemeIBPRME/SchemeIBPME.py'
+          - 'SchemeIBPRME/SchemeIBPRME.py'
+          - 'SchemeIBPRME/SchemePBAC.py'
+          - 'SchemeVLPSICA/SchemeVLPSICA.py'
       outputFormat:
         description: 'Cryptography scheme'
         required: true
@@ -120,7 +120,7 @@ jobs:
         echo "The current working directory is \"$(pwd)\". "
         if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
         then
-          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}\" -r ${{ github.event.inputs.roundCount }} -t 0"
+          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}\" -r ${{ github.event.inputs.roundCount }} -t 0 -y"
           python "${{ github.event.inputs.cryptographyScheme }}" -o . -r ${{ github.event.inputs.roundCount }} -t 0
         else
           echo "Could not execute the scheme file \"${{ github.event.inputs.cryptographyScheme }}\". "
@@ -134,5 +134,5 @@ jobs:
     - name: Upload results
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.event.inputs.outputFormat }}
+        name: ${{ github.event.inputs.cryptographyScheme.split('/')[-1] }}
         path: ${{ github.workspace }}/${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}
