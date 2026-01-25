@@ -108,11 +108,12 @@ jobs:
     - name: Get ready to run
       id: ready
       run: |
+        cd "${{ github.workspace }}"
         echo "Cryptography scheme: ${{ github.event.inputs.cryptographyScheme }}"
         echo "Output format: ${{ github.event.inputs.outputFormat }}"
         echo "Python version: ${{ github.event.inputs.pythonVersion }}"
         echo "Round count: ${{ github.event.inputs.roundCount }}"
-        inputFilePath="${{ github.workspace }}/${{ github.event.inputs.cryptographyScheme }}"
+        inputFilePath="${{ github.event.inputs.cryptographyScheme }}"
         outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/${{ github.event.inputs.outputFormat }}/g")"
         outputFileName="$(basename "${outputFilePath}")"
         echo "outputFilePath=\"${outputFilePath}\"" >> ${GITHUB_OUTPUT}
@@ -128,10 +129,10 @@ jobs:
           python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFilePath }}" -r ${{ github.event.inputs.roundCount }} -t 0 y
         else
           echo "Could not execute the scheme file \"${{ github.event.inputs.cryptographyScheme }}\". "
-          echo "\$ ls -la"
-          ls -la
+          tree
           exit 1
         fi
+        tree
       env:
         PYTHONPATH: ${{ github.workspace }}
     
@@ -139,4 +140,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.ready.outputs.outputFileName }}
-        path: ${{ steps.ready.outputs.outputFilePath }}
+        path: ${{ github.workspace }}/${{ steps.ready.outputs.outputFilePath }}
