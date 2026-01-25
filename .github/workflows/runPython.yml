@@ -1,14 +1,14 @@
-name: Conduct a cryptography scheme
+name: Run Python
 
 # Thanks to [https://github.com/JHUISI/charm/blob/dev/.github/workflows/ci.yml](https://github.com/JHUISI/charm/blob/dev/.github/workflows/ci.yml). 
 
 on:
   workflow_dispatch:
     inputs:
-      scheme:
-        description: 'Cryptography scheme implementation script'
+      cryptographyScheme:
+        description: 'Cryptography scheme'
         required: true
-        default: './SchemeHIBME/SchemeAnonymousME.py'
+        default: './SchemeIBMETR/SchemeIBMETR.py'
         type: choice
         options:
           - './SchemeAAIBME/SchemeAAIBME.py'
@@ -27,8 +27,18 @@ on:
           - './SchemeIBPRME/SchemeIBPRME.py'
           - './SchemeIBPRME/SchemePBAC.py'
           - './SchemeVLPSICA/SchemeVLPSICA.py'
+      outputFormat:
+        description: 'Cryptography scheme'
+        required: true
+        default: '.xlsx'
+        type: choice
+        options:
+          - .xlsx
+          - .csv
+          - .txt
+          - Console
       pythonVersion:
-        description: 'Python version (if a Python script is specified)'
+        description: 'Python version'
         required: true
         default: '3.x'
         type: choice
@@ -69,8 +79,8 @@ jobs:
     
     - name: Display inputs
       run: |
-        echo "Selected scheme: ${{ github.event.inputs.scheme }}"
-        if [[ "${{ github.event.inputs.scheme }}" == *.py ]];
+        echo "Selected scheme: ${{ github.event.inputs.cryptographyScheme }}"
+        if [[ "${{ github.event.inputs.cryptographyScheme }}" == *.py ]];
         then
           echo "Python version: ${{ github.event.inputs.pythonVersion }}"
         fi
@@ -108,15 +118,21 @@ jobs:
       run: |
         cd "${{ github.workspace }}"
         echo "The current working directory is \"$(pwd)\". "
-        if [[ -f "${{ github.event.inputs.scheme }}" ]];
+        if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
         then
-          echo "\$ python \"${{ github.event.inputs.scheme }}\" -o . -r ${{ github.event.inputs.roundCount }} -t 0"
-          python "${{ github.event.inputs.scheme }}" -o . -r ${{ github.event.inputs.roundCount }} -t 0
+          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}\" -r ${{ github.event.inputs.roundCount }} -t 0"
+          python "${{ github.event.inputs.cryptographyScheme }}" -o . -r ${{ github.event.inputs.roundCount }} -t 0
         else
-          echo "Could not execute the scheme file \"${{ github.event.inputs.scheme }}\". "
+          echo "Could not execute the scheme file \"${{ github.event.inputs.cryptographyScheme }}\". "
           echo "\$ ls -la"
           ls -la
           exit 1
         fi
       env:
         PYTHONPATH: ${{ github.workspace }}
+    
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.inputs.outputFormat }}
+        path: ${{ github.workspace }}/${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}

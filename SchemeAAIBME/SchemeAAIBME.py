@@ -352,7 +352,7 @@ class SchemeAAIBME:
 		
 		# Scheme #
 		g = self.__group.init(G1, 1) # $g \gets 1_{\mathbb{G}_1}$
-		H = lambda vec, ID:vec[0] * self.__product(		\
+		H = lambda vec, ID:vec[0] * self.__product(			\
 			vec[j + 1] ** ID[j] for j in range(self.__n)	\
 		) # $H: (\bm{u} \gets (\bm{u}_0, \bm{u}_1, \cdots, \bm{u}_n), \textit{ID} \gets (\textit{ID}_1, \textit{ID}_2, \cdots, \textit{ID}_n)) \rightarrow \bm{u}_0\prod\limits_{j \in [1, n]} \bm{u}_j^{\textit{ID}_j}$
 		k1Vec = tuple(self.__group.random(ZR) for _ in range(self.__n)) # generate $\vec{k}_1 = (k_{1, 1}, k_{1, 2}, \cdots, k_{1, n}) \in \mathbb{Z}_r^n$ randomly
@@ -451,7 +451,7 @@ class SchemeAAIBME:
 				IStar.append(I.pop())
 			IStar.sort()
 			IStar = tuple(IStar)
-		CT = (											\
+		CT = (																				\
 			SPrimePrime, IStar, C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec, C8Vec	\
 		) # $\textit{CT} \gets (S'', I^*, C, \vec{C}_1, \vec{C}_2, \vec{C}_3, \vec{C}_4, \vec{C}_5, \vec{C}_6, \vec{C}_7, \vec{C}_8)$
 		
@@ -462,13 +462,13 @@ class SchemeAAIBME:
 		if not self.__flag:
 			print("Dec: The ``Setup`` procedure has not been called yet. The program will call the ``Setup`` first and finish the ``Dec`` subsequently. ")
 			self.Setup()
-		if (																					\
+		if (																																								\
 			isinstance(SA, tuple) and isinstance(PA, tuple) and isinstance(SB, tuple) and isinstance(PB, tuple) and len(SA) == len(PA) == len(SA) == len(SB) == self.__n	\
-			and all(isinstance(ele, Element) and ele.type == ZR for ele in SA) and all(isinstance(ele, Element) and ele.type == ZR for ele in PA)				\
-			and all(isinstance(ele, Element) and ele.type == ZR for ele in SB) and all(isinstance(ele, Element) and ele.type == ZR for ele in PB)				\
+			and all(isinstance(ele, Element) and ele.type == ZR for ele in SA) and all(isinstance(ele, Element) and ele.type == ZR for ele in PA)							\
+			and all(isinstance(ele, Element) and ele.type == ZR for ele in SB) and all(isinstance(ele, Element) and ele.type == ZR for ele in PB)							\
 		): # hybrid check
 			ID_A, P_A, S_B, P_B = SA, PA, SB, PB
-			if (																					\
+			if (																																							\
 				isinstance(dkSBPA, tuple) and len(dkSBPA) == 2 and isinstance(dkSBPA[0], tuple) and isinstance(dkSBPA[1], tuple) and len(dkSBPA[0]) == len(dkSBPA[1]) == 5	\
 				and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in dkSBPA[0]) and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in dkSBPA[1])	\
 			): # hybrid check
@@ -484,9 +484,9 @@ class SchemeAAIBME:
 			print("Dec: The variable $\\textit{dk}_{S_B, P_A}$ has been generated accordingly. ")'''
 		if isinstance(IDB, tuple) and len(IDB) == self.__n and all(isinstance(ele, Element) and ele.type == ZR for ele in IDB): # hybrid check
 			ID_B = IDB
-			if (														\
+			if (																									\
 				isinstance(dkIDBSPrime, tuple) and len(dkIDBSPrime) == self.__d and all(isinstance(ele[0], tuple)	\
-				and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in dkIDBSPrime)		\
+				and isinstance(ele[1], tuple) and len(ele[0]) == len(ele[1]) == 2 for ele in dkIDBSPrime)			\
 			): # hybrid check
 				dk_ID_B_S_Prime = dkIDBSPrime
 			else:
@@ -502,9 +502,9 @@ class SchemeAAIBME:
 		else:
 			ID_A = tuple(self.__group.random(ZR) for _ in range(self.__n))
 			print("Dec: The variable $\\textit{ID}_A$ should be a tuple containing $n$ elements of $\\mathbb{Z}_r$ but it is not, which has been generated randomly. ")
-		if (																\
+		if (																													\
 			isinstance(cipherText, tuple) and len(cipherText) == 10 and all(isinstance(ele, Element) for ele in cipherText[:5])	\
-			and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in cipherText[5:])					\
+			and all(isinstance(ele, tuple) and len(ele) == self.__n for ele in cipherText[5:])									\
 		): # hybrid check
 			CT = cipherText
 		else:
@@ -519,18 +519,18 @@ class SchemeAAIBME:
 		C, C1Vec, C2Vec, C3Vec, C4Vec, C5Vec, C6Vec, C7Vec = CT[2], CT[3], CT[4], CT[5], CT[6], CT[7], CT[8], CT[9]
 		
 		# Scheme #
-		CTVec = tuple(																					\
+		CTVec = tuple(																																								\
 			self.__group.serialize(C) + self.__group.serialize(C1Vec[i]) + self.__group.serialize(C2Vec[i]) + self.__group.serialize(C3Vec[i]) + self.__group.serialize(C4Vec[i])	\
-			+ self.__group.serialize(C5Vec[i]) + self.__group.serialize(C6Vec[i]) + self.__group.serialize(C7Vec[i]) for i in range(self.__n)					\
+			+ self.__group.serialize(C5Vec[i]) + self.__group.serialize(C6Vec[i]) + self.__group.serialize(C7Vec[i]) for i in range(self.__n)										\
 		) # $\textit{CT}_i \gets C || C_{1, i} || C_{2, i} || C_{3, i} || C_{4, i} || C_{5, i} || C_{6, i} || C{7, i}, \forall i \in \{1, 2, \cdots, n\}$
 		KlPrime = self.__product(
 			tuple((pair(C8Vec[i], g) / (pair(H(uPrimeVec, ID_A) * TPrime[i], C7Vec[i]) *pair(H1(CTVec[i]), C6Vec[i]))) ** Delta(i, I, 0) for i in IStar)
 		) # $K'_l \gets \prod\limits_{i \in I^*} \left(\frac{e(C_{8, i}, g)}{e([H(\bm{u}', \textit{ID}_A) T'_i] e(H_1(\textit{CT}_i), C_{6, i})}\right)^{\Delta(i, I, 0)}$
-		KsPrime = self.__product(														\
-			tuple((																\
+		KsPrime = self.__product(																										\
+			tuple((																														\
 				(pair(C1Vec[i], dk_ID_B_SPrime[i][0]) * pair(C2Vec[i], dk_ID_B_SPrime[i][1]) * pair(C3Vec[i], dk_ID_B_SPrime[i][2]))	\
-				/ (pair(C4Vec[i], dk_ID_B_SPrime[i][3]) * pair(C5Vec[i], dk_ID_B_SPrime[i][4]))						\
-			) ** Delta(i, I, 0) for i in I)													\
+				/ (pair(C4Vec[i], dk_ID_B_SPrime[i][3]) * pair(C5Vec[i], dk_ID_B_SPrime[i][4]))											\
+			) ** Delta(i, I, 0) for i in I)																								\
 		) # $K'_s \gets \prod\limits_{i \in I} \left(\right)^{\Delta(i, j, 0)}$
 		SPrimePrimeSet = set(SPrimePrime)
 		if SPrimePrimeSet.intersection(S) >= self.__d and SPrimePrimeSet.intersection(SPrime) >= self.__d: # \textbf{if} $|S \cap S'| \leqslant d \land |S' \cap S''| \leqslant d$ \textbf{then}
@@ -581,18 +581,18 @@ def conductScheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|No
 			if isinstance(round, int) and round >= 0:
 				print("round =", round)
 			print("Is the system valid? No. \n\t{0}".format(e))
-			return (																		\
-				([curveType[0], curveType[1]] if (														\
-					isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int)	\
-				) else [curveType if isinstance(curveType, str) else None, None])										\
+			return (																																			\
+				([curveType[0], curveType[1]] if (																												\
+					isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int)			\
+				) else [curveType if isinstance(curveType, str) else None, None])																				\
 				+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) else None] + [False] * 2 + [-1] * 13	\
 			)
 	else:
 		print("Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than $2$. ")
-		return (																				\
-			([curveType[0], curveType[1]] if (																\
-				isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int)			\
-			) else [curveType if isinstance(curveType, str) else None, None])												\
+		return (																																							\
+			([curveType[0], curveType[1]] if (																																\
+				isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int)							\
+			) else [curveType if isinstance(curveType, str) else None, None])																								\
 			+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 2 + [-1] * 13	\
 		)
 	print("curveType =", group.groupType())
@@ -645,10 +645,10 @@ def conductScheme(curveType:tuple|list|str, n:int = 30, d:int = 10, round:int|No
 	
 	# End #
 	booleans = [True, not isinstance(M, bool) and message == M]
-	spaceRecords = [																\
+	spaceRecords = [																															\
 		schemeAAIBME.getLengthOf(group.random(ZR)), schemeAAIBME.getLengthOf(group.random(G1)), schemeAAIBME.getLengthOf(group.random(GT)), 	\
-		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(ek_ID_A_S), 					\
-		schemeAAIBME.getLengthOf(dk_ID_B_SPrime), schemeAAIBME.getLengthOf(CT)									\
+		schemeAAIBME.getLengthOf(mpk), schemeAAIBME.getLengthOf(msk), schemeAAIBME.getLengthOf(ek_ID_A_S), 										\
+		schemeAAIBME.getLengthOf(dk_ID_B_SPrime), schemeAAIBME.getLengthOf(CT)																	\
 	]
 	del schemeAAIBME
 	print("Original:", message)
@@ -670,9 +670,9 @@ def main() -> int:
 		curveTypes = (("SS512", 128), ("SS512", 160), ("SS512", 224), ("SS512", 256), ("SS512", 384), ("SS512", 512))
 		queries = ("curveType", "secparam", "n", "d", "roundCount")
 		validators = ("isSystemValid", "isSchemeCorrect")
-		metrics = (									\
-			"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 		\
-			"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 		\
+		metrics = (																	\
+			"Setup (s)", "EKGen (s)", "DKGen (s)", "Enc (s)", "Dec (s)", 			\
+			"elementOfZR (B)", "elementOfG1G2 (B)", "elementOfGT (B)", 				\
 			"mpk (B)", "msk (B)", "ek_ID_A_S (B)", "dk_ID_B_SPrime (B)", "CT (B)"	\
 		)
 		

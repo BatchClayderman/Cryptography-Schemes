@@ -82,11 +82,11 @@ if PLATFORM == "WINDOWS":
 			return len(patterns)
 else:
 	def checkFile(filePath:str, lines:None = None, sleepingTime:int = 3) -> int:
-		patterns = (																						\
+		patterns = (																													\
 			" = Scheme\\\\(curveType[A-Za-z, ]+\\\\)", " = sum\\\\(.*^(start = ).*\\\\)", "\\\\\\$\\\\\\\\textbf{return", 				\
 			"\\\\vec{.+} = .+ \\\\gets .+ ", "^ +\\\\S.*\\$", "^def conductScheme\\\\(.+round\\\\)", 									\
-			"^def conductScheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 					\
-			"cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 					\
+			"^def conductScheme\\\\(curveType:tuple\\\\|list\\\\|str, [A-Za-z:\\\\|, ]+round:int\\\\|None = None\\\\)", 				\
+			"cipher:.+\\\\\\\\textit{ct}.+\\\\\\\\rightarrow", "cipherText:.+ (c|C)(\\\\, |\\\\)).+\\\\\\\\rightarrow", 				\
 			"def Setup\\\\(self:object, [A-Za-z:\\|, _]+\\\\)", "for idx in range\\\\([0-9]+, [A-Za-z]+\\\\)", "len.+# type check"		\
 		)
 		if isinstance(filePath, str):
