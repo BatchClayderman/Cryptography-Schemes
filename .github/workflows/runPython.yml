@@ -116,8 +116,8 @@ jobs:
         inputFilePath="${{ github.event.inputs.cryptographyScheme }}"
         outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/${{ github.event.inputs.outputFormat }}/g")"
         outputFileName="$(basename "${outputFilePath}")"
-        echo "outputFilePath=\"${outputFilePath}\"" >> ${GITHUB_OUTPUT}
-        echo "outputFileName=\"${outputFileName}\"" >> ${GITHUB_OUTPUT}
+        echo "outputFilePath=${outputFilePath}" >> ${GITHUB_OUTPUT}
+        echo "outputFileName=${outputFileName}" >> ${GITHUB_OUTPUT}
     
     - name: Run the specific cryptography scheme
       run: |
@@ -132,7 +132,6 @@ jobs:
           tree
           exit 1
         fi
-        tree
       env:
         PYTHONPATH: ${{ github.workspace }}
     
