@@ -28,7 +28,7 @@ on:
           - 'SchemeIBPRME/SchemePBAC.py'
           - 'SchemeVLPSICA/SchemeVLPSICA.py'
       outputFormat:
-        description: 'Cryptography scheme'
+        description: 'Output format'
         required: true
         default: '.xlsx'
         type: choice
@@ -65,7 +65,7 @@ on:
         type: number
 
 jobs:
-  conduct:
+  runPython:
     runs-on: ubuntu-latest
     
     steps:
@@ -76,15 +76,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ github.event.inputs.pythonVersion }}
-    
-    - name: Display inputs
-      run: |
-        echo "Selected scheme: ${{ github.event.inputs.cryptographyScheme }}"
-        if [[ "${{ github.event.inputs.cryptographyScheme }}" == *.py ]];
-        then
-          echo "Python version: ${{ github.event.inputs.pythonVersion }}"
-        fi
-        echo "Round count: ${{ github.event.inputs.roundCount }}"
     
     - name: Install system dependencies
       run: |
@@ -114,14 +105,27 @@ jobs:
         make -j$(nproc)
         sudo make install
     
+    - name: Get ready to run
+      id: ready
+      run: |
+        echo "Cryptography scheme: ${{ github.event.inputs.cryptographyScheme }}"
+        echo "Output format: ${{ github.event.inputs.outputFormat }}"
+        echo "Python version: ${{ github.event.inputs.pythonVersion }}"
+        echo "Round count: ${{ github.event.inputs.roundCount }}"
+        inputFilePath="${{ github.workspace }}/${{ github.event.inputs.cryptographyScheme }}"
+        outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/${{ github.event.inputs.outputFormat }}/g")"
+        outputFileName="$(basename "${outputFilePath}")"
+        echo "outputFilePath=\"${outputFilePath}\"" >> ${GITHUB_OUTPUT}
+        echo "outputFileName=\"${outputFileName}\"" >> ${GITHUB_OUTPUT}
+    
     - name: Run the specific cryptography scheme
       run: |
         cd "${{ github.workspace }}"
         echo "The current working directory is \"$(pwd)\". "
         if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
         then
-          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}\" -r ${{ github.event.inputs.roundCount }} -t 0 -y"
-          python "${{ github.event.inputs.cryptographyScheme }}" -o . -r ${{ github.event.inputs.roundCount }} -t 0
+          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ steps.ready.outputs.outputFilePath }}\" -r ${{ github.event.inputs.roundCount }} -t 0 -y"
+          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFilePath }}" -r ${{ github.event.inputs.roundCount }} -t 0 y
         else
           echo "Could not execute the scheme file \"${{ github.event.inputs.cryptographyScheme }}\". "
           echo "\$ ls -la"
@@ -134,5 +138,5 @@ jobs:
     - name: Upload results
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.event.inputs.cryptographyScheme.split('/')[-1] }}
-        path: ${{ github.workspace }}/${{ github.event.inputs.cryptographyScheme }}${{ github.event.inputs.outputFormat }}
+        name: ${{ steps.ready.outputs.outputFileName }}
+        path: ${{ steps.ready.outputs.outputFilePath }}
