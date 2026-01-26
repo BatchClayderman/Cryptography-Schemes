@@ -656,7 +656,7 @@ class SchemeHIBME:
 			return -1
 
 
-def conductScheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, round:int|None = None) -> list:
+def conductScheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, run:int|None = None) -> list:
 	# Begin #
 	if isinstance(l, int) and isinstance(m, int) and isinstance(n, int) and 2 <= m < l and 2 <= n < l: # no need to check the parameters for curve types here
 		try:
@@ -679,26 +679,26 @@ def conductScheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, 
 			print("l =", l)
 			print("m =", m)
 			print("n =", n)
-			if isinstance(round, int) and round >= 0:
-				print("round =", round)
+			if isinstance(run, int) and run >= 1:
+				print("run =", run)
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																														\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-				+ [l, m, n, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 18																												\
+				+ [l, m, n, run if isinstance(run, int) and run >= 1 else None] + [False] * 3 + [-1] * 18																												\
 			)
 	else:
 		print("Is the system valid? No. The parameters $l$, $m$, and $n$ should be three positive integers satisfying $2 \\leqslant m < l \\land 2 \\leqslant n < l$. ")
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [l if isinstance(l, int) else None, m if isinstance(m, int) else None, n if isinstance(n, int) else None, round if isinstance(round, int) and round >= 0 else None] + [False] * 3 + [-1] * 18											\
+			+ [l if isinstance(l, int) else None, m if isinstance(m, int) else None, n if isinstance(n, int) else None, run if isinstance(run, int) and run >= 1 else None] + [False] * 3 + [-1] * 18											\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
 	print("l =", l)
 	print("m =", m)
 	print("n =", n)
-	if isinstance(round, int) and round >= 0:
-		print("round =", round)
+	if isinstance(run, int) and run >= 1:
+		print("run =", run)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -770,7 +770,7 @@ def conductScheme(curveType:tuple|list|str, l:int = 30, m:int = 20, n:int = 10, 
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, l, m, n, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, l, m, n, run if isinstance(run, int) else None] + booleans + timeRecords + spaceRecords
 
 
 def main() -> int:
@@ -801,7 +801,7 @@ def main() -> int:
 						for m in range(5, l, 5):
 							for n in range(5, l, 5):
 								averages = conductScheme(curveType, l = l, m = m, n = n, round = 0)
-								for round in range(1, roundCount):
+								for run in range(2, roundCount + 1):
 									result = conductScheme(curveType, l = l, m = m, n = n, round = round)
 									for idx in range(qLength, qvLength):
 										averages[idx] += result[idx]

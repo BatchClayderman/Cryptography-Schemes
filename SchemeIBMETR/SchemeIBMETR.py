@@ -475,7 +475,7 @@ class SchemeIBMETR:
 			return -1
 
 
-def conductScheme(curveType:tuple|list|str, round:int|None = None) -> list:
+def conductScheme(curveType:tuple|list|str, run:int|None = None) -> list:
 	# Begin #
 	try:
 		if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int):
@@ -495,17 +495,17 @@ def conductScheme(curveType:tuple|list|str, round:int|None = None) -> list:
 			print("curveType =", curveType)
 		else:
 			print("curveType = Unknown")
-		if isinstance(round, int) and round >= 0:
-			print("round =", round)
+		if isinstance(run, int) and run >= 1:
+			print("run =", run)
 		print("Is the system valid? No. \n\t{0}".format(e))
 		return (																																														\
 			([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])		\
-			+ [round if isinstance(round, int) else None] + [False] * 3 + [-1] * 16																																	\
+			+ [run if isinstance(run, int) else None] + [False] * 3 + [-1] * 16																																	\
 		)
 	print("curveType =", group.groupType())
 	print("secparam =", group.secparam)
-	if isinstance(round, int) and round >= 0:
-		print("round =", round)
+	if isinstance(run, int) and run >= 1:
+		print("run =", run)
 	print("Is the system valid? Yes. ")
 	
 	# Initialization #
@@ -571,7 +571,7 @@ def conductScheme(curveType:tuple|list|str, round:int|None = None) -> list:
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, round if isinstance(round, int) else None] + booleans + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, run if isinstance(run, int) else None] + booleans + timeRecords + spaceRecords
 
 
 def main() -> int:
@@ -599,7 +599,7 @@ def main() -> int:
 			try:
 				for curveType in curveTypes:
 					averages = conductScheme(curveType, round = 0)
-					for round in range(1, roundCount):
+					for run in range(2, roundCount + 1):
 						result = conductScheme(curveType, round = round)
 						for idx in range(qLength, qvLength):
 							averages[idx] += result[idx]
