@@ -495,9 +495,9 @@ def main() -> int:
 		if saver.initialize():
 			try:
 				for curveType in curveTypes:
-					averages = conductScheme(curveType, round = 0)
+					averages = conductScheme(curveType, run = 0)
 					for run in range(2, roundCount + 1):
-						result = conductScheme(curveType, round = round)
+						result = conductScheme(curveType, run = run)
 						for idx in range(qLength, qvLength):
 							averages[idx] += result[idx]
 						for idx in range(qvLength, length):
