@@ -35,6 +35,8 @@ on:
         options:
           - .xlsx
           - .csv
+          - .py
+          - .tex
           - .txt
       pythonVersion:
         description: 'Python version'
@@ -105,10 +107,12 @@ jobs:
         echo "Python version: ${{ github.event.inputs.pythonVersion }}"
         echo "Round count: ${{ github.event.inputs.roundCount }}"
         inputFilePath="${{ github.event.inputs.cryptographyScheme }}"
-        outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/${{ github.event.inputs.outputFormat }}/g")"
+        outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/-Python${{ github.event.inputs.pythonVersion }}-HKT$(date '+%Y%m%d%H%M%S')-${{ github.event.inputs.outputFormat }}/g")"
         outputFileName="$(basename "${outputFilePath}")"
         echo "outputFilePath=${outputFilePath}" >> ${GITHUB_OUTPUT}
         echo "outputFileName=${outputFileName}" >> ${GITHUB_OUTPUT}
+      env:
+        TZ: 'Asia/Hong_Kong'
     
     - name: Run the specific cryptography scheme
       run: |

@@ -35,7 +35,7 @@ class Parser:
 		self.__defaultT = float("inf")
 		self.__optionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
 	def __escape(self:object, string) -> str:
-		return string.replace("\\", "\\\\").replace("\"", "\\\"").replace("\a", "\\\a").replace("\b", "\\\b").replace("\n", "\\\n").replace("\r", "\\r").replace("\t", "\\\t").replace("\v", "\\\v")
+		return string.replace("\\", "\\\\").replace("\"", "\\\"").replace("\a", "\\a").replace("\b", "\\b").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace("\v", "\\v")
 	def __formatOption(self:object, option:tuple, pre:str = "[", sep:str = "|", suf:str = "]") -> str:
 		if isinstance(option, tuple) and all(isinstance(op, str) for op in option):
 			prefix = pre if isinstance(pre, str) else "["
@@ -60,7 +60,8 @@ class Parser:
 		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
 	def __handlePath(self:object, path:str) -> str:
 		if isinstance(path, str):
-			return os.path.join(path, self.__schemeName + self.__outputExtension) if path.endswith("/") else path
+			filePath = path.replace("\\", "/").replace("\"", "").replace("\a", "").replace("\b", "").replace("\n", "").replace("\r", "").replace("\t", "").replace("\v", "")
+			return os.path.join(filePath, self.__schemeName + self.__outputExtension) if filePath.endswith("/") else filePath
 		else:
 			return self.__defaultO
 	def parse(self:object) -> tuple:
@@ -180,48 +181,75 @@ class Saver:
 	def initialize(self:object) -> bool:
 		return self.__handleFolder(os.path.dirname(self.__outputFilePath))
 	def save(self:object, results:tuple|list) -> bool:
-		if isinstance(results, (tuple, list)) and results:
+		if isinstance(results, (tuple, list)) and all(isinstance(result, (tuple, list)) and all(isinstance(r, (None, float, int, str)) for r in result) for result in results):
 			if self.__outputFilePath in ("", "."):
-				try:
-					print("Saver: \n{0}\n".format(results))
-					return True
-				except BaseException as e:
-					print("Saver: Results are not printable. Exceptions are as follows. \n\t{0}".format(e))
-					return False
+				print("Saver: {0}".format({"columns":self.__columns, "results":results}))
+				return True
 			else:
-				while True:
-					try:
-						df = __import__("pandas").DataFrame(results, columns = self.__columns)
-						if os.path.splitext(self.__outputFilePath)[1] == ".xlsx":
-							df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
-						else:
-							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = self.__encoding)
-						print("Saver: Successfully saved the results to \"{0}\" in the three-line table format. ".format(self.__outputFilePath))
-						return True
-					except KeyboardInterrupt:
-						continue
-					except BaseException:
+				flag, extension = True, self.__outputFilePath.split(".")[-1]
+				extensionUpper = extension.upper()
+				while True: # try our best to avoid ``KeyboardInterrupt`` when writing the output file
+					if flag and extensionUpper in ("CSV", "XLSX"):
 						try:
-							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
-								for column in self.__columns[:-1]:
-									f.write(column + "\t")
-								for column in self.__columns[-1:]:
-									f.write(column)
-								for result in results:
-									f.write("\n")
-									for r in result[:-1]:
-										f.write("{0}\t".format(r))
-									for r in result[-1:]:
-										f.write("{0}".format(r))
-							print("Saver: Successfully saved the results to \"{0}\" in the plain text format. ".format(self.__outputFilePath))
+							df = __import__("pandas").DataFrame(results, columns = self.__columns)
+							if "xlsx" == extension: # ``to_excel`` only supports the lower-case ``.xlsx`` extension
+								df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
+							else:
+								df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = self.__encoding)
+							print("Saver: Successfully saved the results to \"{0}\" in the {1} format. ".format(self.__outputFilePath, extensionUpper))
 							return True
 						except KeyboardInterrupt:
 							continue
 						except BaseException as e:
-							print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, self.__outputFilePath, e))
+							flag = False
+							print("Saver: Failed to save the results to \"{0}\" in the {1} format. Exceptions are as follows. \n\t{2}".format(	\
+								self.__outputFilePath, extensionUpper, e									\
+							))
+					else:
+						try:
+							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
+								if "PY" == extensionUpper:
+									f.write(str({"columns":self.__columns, "results":results}))
+								elif "TEX" == extensionUpper:
+									maxLength = max(len(self.__columns) if isinstance(self.__columns, (tuple, list)) else 0, max(len(result) for result in results))
+									f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{booktabs}\n\n\\begin{document}\n\n")
+									f.write("\\begin{table}\n\t\\caption{The comparison results. }\n\t\\begin{tabular}{")
+									f.write("c" * maxLength)
+									f.write("}\n\t\t\\toprule\n\t\t\t")
+									if isinstance(self.__columns, (tuple, list)) and self.__columns:
+										f.write(" & ".join("\\textbf{{{0}}}".format(column) for column in self.__columns))
+										if len(columns) < maxLength:
+											f.write(" & \\textbf{~}" * (maxLength - len(result)))
+									else:
+										f.write(" & ".join(("\\textbf{~}", ) * maxLength))
+									f.write(" \\\\\n\t\t\\midrule\n")
+									for result in results:
+										if result:
+											f.write("\t\t\t")
+											f.write(" & ".join(result))
+											if len(result) < maxLength:
+												f.write(" & ~" * (maxLength - len(result)))
+											f.write(" \\\\\n")
+									f.write("\t\t\\bottomrule\n\t\\end{tabular}\n\\end{table}\n\n\\end{document}")
+								else:
+									if isinstance(self.__columns, (tuple, list)) and self.__columns:
+										f.write("\t".join(self.__columns))
+										if results:
+											f.write("\n")
+									f.write("\n".join("\t".join(str(r) for r in result)) for result in results if result)
+							print("Saver: Successfully saved the results to \"{0}\" in the {1} format. ".format(self.__outputFilePath, extensionUpper))
+							return True
+						except KeyboardInterrupt:
+							continue
+						except BaseException as e:
+							if flag:
+								print("Saver: Failed to save the results to \"{0}\" due to the following exception(s). \n\t{1}".format(self.__outputFilePath, e))
+							else:
+								print("\t{0}".format(e))
+							print("Saver: {0}".format({"columns":self.__columns, "results":results}))
 							return False
 		else:
-			print("Saver: The results are empty. ")
+			print("Saver: The results are invalid. ")
 			return False
 
 class SchemeAAIBME:
