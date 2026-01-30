@@ -1,5 +1,6 @@
 import os
 from sys import argv, exit
+from codecs import lookup
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 from random import shuffle
 from time import perf_counter, sleep
@@ -7,10 +8,14 @@ try:
 	from charm.toolbox.pairinggroup import PairingGroup, G1, GT, ZR, pair, pc_element as Element
 except:
 	print("The environment of the Python ``charm`` library is not handled correctly. ")
-	print("See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ")
-	print("Please press the enter key to exit. ")
-	input()
-	exit(-1)
+	print("Please refer to https://github.com/JHUISI/charm if necessary.  ")
+	print("Please press the enter key to exit (-2). ")
+	try:
+		input()
+	except:
+		print()
+	print()
+	exit(-2)
 try:
 	os.chdir(os.path.abspath(os.path.dirname(__file__)))
 except:
@@ -21,20 +26,21 @@ EOF = (-1)
 
 
 class Parser:
+	__SchemeName = "SchemeFuzzyME" # os.path.splitext(os.path.basename(__file__))[0]
+	__OptionE = ("e", "/e", "-e", "encoding", "/encoding", "--encoding")
+	__DefaultE = "utf-8"
+	__OptionH = ("h", "/h", "-h", "help", "/help", "--help")
+	__OptionO = ("o", "/o", "-o", "output", "/output", "--output")
+	__DefaultO = __SchemeName + ".xlsx"
+	__OptionP = ("p", "/p", "-p", "precision", "/precision", "--precision")
+	__DefaultP = 9
+	__OptionR = ("r", "/r", "-r", "round", "/round", "--round")
+	__DefaultR = 10
+	__OptionT = ("t", "/t", "-t", "time", "/time", "--time")
+	__DefaultT = float("inf")
+	__OptionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
 	def __init__(self:object, arguments:tuple|list) -> object:
 		self.__arguments = tuple(argument for argument in arguments if isinstance(argument, str)) if isinstance(arguments, (tuple, list)) else ()
-		self.__schemeName = "SchemeFuzzyME" # os.path.splitext(os.path.basename(__file__))[0]
-		self.__outputExtension = ".xlsx"
-		self.__optionE = ("e", "/e", "-e", "encoding", "/encoding", "--encoding")
-		self.__defaultE = "utf-8"
-		self.__optionH = ("h", "/h", "-h", "help", "/help", "--help")
-		self.__optionO = ("o", "/o", "-o", "output", "/output", "--output")
-		self.__defaultO = "./{0}{1}".format(self.__schemeName, self.__outputExtension)
-		self.__optionR = ("r", "/r", "-r", "round", "/round", "--round")
-		self.__defaultR = 10
-		self.__optionT = ("t", "/t", "-t", "time", "/time", "--time")
-		self.__defaultT = float("inf")
-		self.__optionY = ("y", "/y", "-y", "yes", "/yes", "--yes")
 	def __escape(self:object, string) -> str:
 		return string.replace("\\", "\\\\").replace("\"", "\\\"").replace("\a", "\\\a").replace("\b", "\\\b").replace("\n", "\\\n").replace("\r", "\\r").replace("\t", "\\\t").replace("\v", "\\\v")
 	def __formatOption(self:object, option:tuple, pre:str = "[", sep:str = "|", suf:str = "]") -> str:
@@ -48,32 +54,38 @@ class Parser:
 	def __printHelp(self:object) -> None:
 		print("This is a possible implementation of the Fuzzy-ME cryptography scheme in Python programming language based on the Python charm library. \n")
 		print("Options (not case-sensitive): ")
-		print("\t{0} [utf-8|utf-16|...]\t\tSpecify the encoding mode for CSV and TXT outputs. The default value is {1}. ".format(self.__formatOption(self.__optionE), self.__defaultE))
-		print("\t{0}\t\tPrint this help document. ".format(self.__formatOption(self.__optionH)))
-		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(	\
-			self.__formatOption(self.__optionO), self.__schemeName, self.__defaultO										\
+		print("\t{0} [utf-8|utf-16|...]\t\tSpecify the encoding mode for CSV and TXT outputs. The default value is {1}. ".format(self.__formatOption(Parser.__OptionE), Parser.__DefaultE))
+		print("\t{0}\t\tPrint this help document. ".format(self.__formatOption(Parser.__OptionH)))
+		print("\t{0} [.|./{1}.xlsx|./{1}.csv|...]\t\tSpecify the output file path, leaving it empty for console output. The default value is {2}. ".format(		\
+			self.__formatOption(Parser.__OptionO), Parser.__SchemeName, Parser.__DefaultO																		\
 		))
-		print("\t{0} [1|2|5|10|20|50|100|...]\t\tSpecify the round count, which must be a positive integer. The default value is {1}. ".format(self.__formatOption(self.__optionR), self.__defaultR))
-		print(																				\
-			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(self.__optionT))	\
-			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(self.__defaultT)		\
+		print("\t{0} [s|ms|microsecond|ns|ps|0|3|6|9|12|...]\t\tSpecify the decimal precision, which should be a non-negative integer. The default value is {1}. ".format(	\
+			self.__formatOption(Parser.__OptionP), Parser.__DefaultP)																										\
 		)
-		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(self.__optionY)))
+		print("\t{0} [1|2|5|10|20|50|100|...]\t\tSpecify the round count, which must be a positive integer. The default value is {1}. ".format(self.__formatOption(Parser.__OptionR), Parser.__DefaultR))
+		print(																				\
+			"\t{0} [0|0.1|1|10|...|inf]\t\tSpecify the waiting time before exiting, which should be non-negative. ".format(self.__formatOption(Parser.__OptionT))	\
+			+ "Passing nan, None, or inf requires users to manually press the enter key before exiting. The default value is {0}. ".format(Parser.__DefaultT)		\
+		)
+		print("\t{0}\t\tIndicate to confirm the overwriting of the existing output file. \n".format(self.__formatOption(Parser.__OptionY)))
 	def __handlePath(self:object, path:str) -> str:
 		if isinstance(path, str):
-			return os.path.join(path, self.__schemeName + self.__outputExtension) if path.endswith("/") else path
+			filePath = path.replace("\\", "/").replace("\"", "").replace("\a", "").replace("\b", "").replace("\n", "").replace("\r", "").replace("\t", "").replace("\v", "")
+			return os.path.join(filePath, Parser.__DefaultO) if filePath.endswith("/") else filePath
 		else:
-			return self.__defaultO
+			return Parser.__DefaultO
 	def parse(self:object) -> tuple:
-		flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = max(EXIT_SUCCESS, EOF) + 1, self.__defaultE, self.__defaultO, self.__defaultR, self.__defaultT, False
+		flag, encoding, outputFilePath, decimalPrecision, roundCount, waitingTime, overwritingConfirmed = (										\
+			max(EXIT_SUCCESS, EOF) + 1, Parser.__DefaultE, Parser.__DefaultO, Parser.__DefaultP, Parser.__DefaultR, Parser.__DefaultT, False	\
+		)
 		index, argumentCount, buffers = 1, len(self.__arguments), []
 		while index < argumentCount:
 			argument = self.__arguments[index].lower()
-			if argument in self.__optionE:
+			if argument in Parser.__OptionE:
 				index += 1
 				if index < argumentCount:
 					try:
-						__import__("codecs").lookup(self.__arguments[index])
+						lookup(self.__arguments[index])
 						encoding = self.__arguments[index]
 					except:
 						flag = EOF
@@ -81,53 +93,76 @@ class Parser:
 				else:
 					flag = EOF
 					buffers.append("Parser: The value for the encoding option is missing at [{0}]. ".format(index))
-			elif argument in self.__optionH:
+			elif argument in Parser.__OptionH:
 				self.__printHelp()
 				flag = EXIT_SUCCESS
 				break
-			elif argument in self.__optionO:
+			elif argument in Parser.__OptionO:
 				index += 1
 				if index < argumentCount:
 					outputFilePath = self.__handlePath(self.__arguments[index])
 				else:
 					flag = EOF
 					buffers.append("Parser: The value for the output file path option is missing at [{0}]. ".format(index))
-			elif argument in self.__optionR:
+			elif argument in Parser.__OptionP:
+				index += 1
+				if index < argumentCount:
+					decimalPrecisionLower = self.__arguments[index].lower()
+					if decimalPrecisionLower in ("s", "second", "ms", "millisecond", "microsecond", "ns", "nanosecond", "ps", "picosecond"):
+						decimalPrecision = {"s":0, "second":0, "ms":3, "millisecond":3, "microsecond":6, "ns":9, "nanosecond":9, "ps":12, "picosecond":12}[decimalPrecisionLower]
+					else:
+						try:
+							p = int(self.__arguments[index], 0)
+							if p >= 0:
+								decimalPrecision = p
+							else:
+								flag = EOF
+								buffers.append("Parser: The value [{0}] = {1} for the decimal precision option should be a non-negative integer. ".format(index, p))
+							del p
+						except:
+							flag = EOF
+							buffers.append("Parser: The value [{0}] = \"{1}\" for the decimal precision option cannot be recognized. ".format(index, self.__escape(self.__arguments[index])))
+				else:
+					flag = EOF
+					buffers.append("Parser: The value for the output file path option is missing at [{0}]. ".format(index))
+			elif argument in Parser.__OptionR:
 				index += 1
 				if index < argumentCount:
 					try:
-						r = int(self.__arguments[index])
+						r = int(self.__arguments[index].replace("_", ""), 0)
 						if r >= 1:
 							roundCount = r
 						else:
 							flag = EOF
 							buffers.append("Parser: The value [{0}] = {1} for the round count option should be a positive integer. ".format(index, r))
+						del r
 					except:
 						flag = EOF
 						buffers.append("Parser: The type of the value [{0}] = \"{1}\" for the round count option is invalid. ".format(index, self.__escape(self.__arguments[index])))
 				else:
 					flag = EOF
 					buffers.append("Parser: The value for the round count option is missing at [{0}]. ".format(index))
-			elif argument in self.__optionT:
+			elif argument in Parser.__OptionT:
 				index += 1
 				if index < argumentCount:
-					if self.__arguments[index].lower() in ("n", "nan", "none"):
-						waitingTime = None
+					if self.__arguments[index].lower() in ("+inf", "inf", "n", "nan", "none"):
+						waitingTime = float("inf")
 					else:
 						try:
-							t = float(self.__arguments[index])
+							t = float(self.__arguments[index].replace("_", "")) if "." in self.__arguments[index] else int(self.__arguments[index].replace("_", ""), 0)
 							if t >= 0:
 								waitingTime = int(t) if t.is_integer() else t
 							else:
 								flag = EOF
 								buffers.append("Parser: The value [{0}] = {1} for the waiting time option should be a non-negative value. ".format(index, t))
+							del t
 						except:
 							flag = EOF
 							buffers.append("Parser: The type of the value [{0}] = \"{1}\" for the waiting time option is invalid. ".format(index, self.__escape(self.__arguments[index])))
 				else:
 					flag = EOF
 					buffers.append("Parser: The value for the waiting time option is missing at [{0}]. ".format(index))
-			elif argument in self.__optionY:
+			elif argument in Parser.__OptionY:
 				overwritingConfirmed = True
 			else:
 				flag = EOF
@@ -136,16 +171,19 @@ class Parser:
 		if EOF == flag:
 			for buffer in buffers:
 				print(buffer)
-		return (flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed)
+		return (flag, encoding, outputFilePath, decimalPrecision, roundCount, waitingTime, overwritingConfirmed)
 	def checkOverwriting(self:object, outputFP:str, overwriting:bool) -> tuple:
 		if isinstance(outputFP, str) and isinstance(overwriting, bool):
 			outputFilePath, overwritingConfirmed = outputFP, overwriting
-			while outputFilePath not in ("", ".") and os.path.isfile(outputFilePath):
-				if not overwritingConfirmed:
-					try:
-						overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
-					except:
-						print()
+			while outputFilePath not in ("", ".") and os.path.exists(outputFilePath):
+				if os.path.isfile(outputFilePath):
+					if not overwritingConfirmed:
+						try:
+							overwritingConfirmed = input("The file \"{0}\" exists. Overwrite the file or not [yN]? ".format(outputFilePath)).upper() in ("Y", "YES", "1", "T", "TRUE")
+						except:
+							print()
+				else:
+					print("The path \"{0}\" exists not to be a regular file. ")
 				if overwritingConfirmed:
 					break
 				else:
@@ -156,13 +194,22 @@ class Parser:
 			return (outputFilePath, overwritingConfirmed)
 		else:
 			return (outputFP, overwriting)
+	@staticmethod
+	def getDefaultO() -> str:
+		return Parser.__DefaultO
+	@staticmethod
+	def getDefaultP() -> int:
+		return Parser.__DefaultP
+	@staticmethod
+	def getDefaultE() -> str:
+		return Parser.__DefaultE
 
 class Saver:
-	def __init__(self:object, outputFilePath:str = ".", columns:tuple|list|None = None, floatFormat:str = "%.9f", encoding:str = "utf-8") -> object:
-		self.__outputFilePath = outputFilePath if isinstance(outputFilePath, str) else "."
+	def __init__(self:object, outputFilePath:str = Parser.getDefaultO(), columns:tuple|list|None = None, decimalPrecision:int = Parser.getDefaultP(), encoding:str = Parser.getDefaultE()) -> object:
+		self.__outputFilePath = outputFilePath if isinstance(outputFilePath, str) else Parser.getDefaultO()
 		self.__columns = tuple(column for column in columns if isinstance(column, str)) if isinstance(columns, (tuple, list)) else None
-		self.__floatFormat = floatFormat if isinstance(floatFormat, str) else "%.9f"
-		self.__encoding = encoding if isinstance(encoding, str) else "utf-8"
+		self.__decimalPrecision = decimalPrecision if isinstance(decimalPrecision, int) else Parser.getDefaultP()
+		self.__encoding = encoding if isinstance(encoding, str) else Parser.getDefaultE()
 	def __handleFolder(self:object, fd:str) -> bool:
 		try:
 			folder = str(fd)
@@ -178,51 +225,85 @@ class Saver:
 				return True
 			except:
 				return False
-	def initialize(self:object) -> bool:
-		return self.__handleFolder(os.path.dirname(self.__outputFilePath))
 	def save(self:object, results:tuple|list) -> bool:
-		if isinstance(results, (tuple, list)) and results:
+		if isinstance(results, (tuple, list)) and all(isinstance(result, (tuple, list)) and all(r is None or isinstance(r, (float, int, str)) for r in result) for result in results):
 			if self.__outputFilePath in ("", "."):
-				try:
-					print("Saver: \n{0}\n".format(results))
-					return True
-				except BaseException as e:
-					print("Saver: Results are not printable. Exceptions are as follows. \n\t{0}".format(e))
-					return False
-			else:
-				while True:
-					try:
-						df = __import__("pandas").DataFrame(results, columns = self.__columns)
-						if os.path.splitext(self.__outputFilePath)[1] == ".xlsx":
-							df.to_excel(self.__outputFilePath, index = False, float_format = self.__floatFormat)
-						else:
-							df.to_csv(self.__outputFilePath, index = False, float_format = self.__floatFormat, encoding = self.__encoding)
-						print("Saver: Successfully saved the results to \"{0}\" in the three-line table format. ".format(self.__outputFilePath))
-						return True
-					except KeyboardInterrupt:
-						continue
-					except BaseException:
+				print("Saver: {0}".format({"columns":self.__columns, "results":results}))
+				return True
+			elif self.__handleFolder(os.path.dirname(self.__outputFilePath)):
+				flag, extension = True, self.__outputFilePath.split(".")[-1]
+				extensionUpper = extension.upper()
+				while True: # try our best to avoid ``KeyboardInterrupt`` when writing the output file
+					if flag and extensionUpper in ("CSV", "XLSX"):
 						try:
-							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
-								for column in self.__columns[:-1]:
-									f.write(column + "\t")
-								for column in self.__columns[-1:]:
-									f.write(column)
-								for result in results:
-									f.write("\n")
-									for r in result[:-1]:
-										f.write("{0}\t".format(r))
-									for r in result[-1:]:
-										f.write("{0}".format(r))
-							print("Saver: Successfully saved the results to \"{0}\" in the plain text format. ".format(self.__outputFilePath))
+							df = __import__("pandas").DataFrame(results, columns = self.__columns)
+							if "xlsx" == extension: # ``to_excel`` only supports the lower-case ``.xlsx`` extension
+								df.to_excel(self.__outputFilePath, index = False, float_format = "%.{0}f".format(self.__decimalPrecision))
+							else:
+								df.to_csv(self.__outputFilePath, index = False, float_format = "%.{0}f".format(self.__decimalPrecision), encoding = self.__encoding)
+							print("Saver: Successfully saved the results to \"{0}\" in the {1} format. ".format(self.__outputFilePath, extensionUpper))
 							return True
 						except KeyboardInterrupt:
 							continue
 						except BaseException as e:
-							print("Saver: \n{0}\n\nFailed to save the results to \"{1}\" due to the following exception(s). \n\t{2}".format(results, self.__outputFilePath, e))
+							flag = False
+							print("Saver: Failed to save the results to \"{0}\" in the {1} format. Exceptions are as follows. \n\t{2}".format(	\
+								self.__outputFilePath, extensionUpper, e																		\
+							))
+					else:
+						try:
+							with open(self.__outputFilePath, "wt", encoding = self.__encoding) as f:
+								if "PY" == extensionUpper:
+									f.write(str({"columns":self.__columns, "results":results}))
+								elif "TEX" == extensionUpper:
+									maxLength = max(len(self.__columns) if isinstance(self.__columns, (tuple, list)) else 0, max(len(result) for result in results))
+									f.write("\\documentclass[a4paper]{article}\n\\setlength{\\parindent}{0pt}\n\\usepackage{graphicx}\n\\usepackage{booktabs}\n")
+									f.write("\\usepackage{rotating}\n\n\\begin{document}\n\n\\begin{sidewaystable}\n\t\\caption{The comparison results. }\n")
+									f.write("\t\\centering\n\t\\resizebox{\\textwidth}{!}{%\n\t\t\\begin{tabular}{")
+									f.write("c" * maxLength)
+									f.write("}\n\t\t\t\\toprule\n\t\t\t\t")
+									if isinstance(self.__columns, (tuple, list)) and self.__columns:
+										f.write(" & ".join("\\textbf{{{0}}}".format(column) for column in self.__columns))
+										if len(self.__columns) < maxLength:
+											f.write(" & \\textbf{~}" * (maxLength - len(result)))
+									else:
+										f.write(" & ".join(("\\textbf{~}", ) * maxLength))
+									f.write(" \\\\\n\t\t\t\\midrule\n")
+									for result in results:
+										if result:
+											f.write("\t\t\t\t")
+											f.write(" & ".join((																	\
+												"${0}$" if isinstance(r, int) else "${{0:.{0}f}}$".format(self.__decimalPrecision)	\
+											).format(r) if isinstance(r, (float, int)) else str(r) for r in result))
+											if len(result) < maxLength:
+												f.write(" & ~" * (maxLength - len(result)))
+											f.write(" \\\\\n")
+									f.write("\t\t\t\\bottomrule\n\t\t\\end{tabular}\n\t}\n\t\\label{tab:comparison}\n\\end{sidewaystable}\n\n\\end{document}")
+								else:
+									if isinstance(self.__columns, (tuple, list)) and self.__columns:
+										f.write("\t".join(self.__columns))
+										if results:
+											f.write("\n")
+									f.write("\n".join("\t".join(																						\
+										"${{0:.{0}f}}$".format(self.__decimalPrecision).format(r) if isinstance(r, float) else str(r) for r in result	\
+									) for result in results if result))
+							print("Saver: Successfully saved the results to \"{0}\" in the {1} format. ".format(self.__outputFilePath, extensionUpper))
+							return True
+						except KeyboardInterrupt:
+							continue
+						except BaseException as e:
+							if flag:
+								print("Saver: Failed to save the results to \"{0}\" due to the following exception(s). \n\t{1}".format(self.__outputFilePath, e))
+							else:
+								print("\t{0}".format(e))
+							print("Saver: {0}".format({"columns":self.__columns, "results":results}))
 							return False
+			else:
+				print("Saver: Failed to initialize the directory for the output file path \"{0}\". ".format(self.__outputFilePath))
+				print("Saver: {0}".format({"columns":self.__columns, "results":results}))
+				return False
 		else:
-			print("Saver: The results are empty. ")
+			print("Saver: The results are invalid. ")
 			return False
 
 class SchemeFuzzyME:
@@ -566,7 +647,7 @@ def conductScheme(curveType:tuple|list|str, n:int = 30, d:int = 10, run:int|None
 			print("Is the system valid? No. \n\t{0}".format(e))
 			return (																																													\
 				([curveType[0], curveType[1]] if isinstance(curveType, (tuple, list)) and len(curveType) == 2 and isinstance(curveType[0], str) and isinstance(curveType[1], int) else [curveType if isinstance(curveType, str) else None, None])	\
-				+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, run if isinstance(run, int) else None] + [False] * 2 + [-1] * 13																			\
+				+ [n if isinstance(n, int) else None, d if isinstance(d, int) else None, run if isinstance(run, int) and run >= 1 else None] + [False] * 2 + [-1] * 13																			\
 			)
 	else:
 		print("Is the system valid? No. The parameter $n$ should be a positive integer, and the parameter $d$ should be a positive integer not smaller than $2$. ")
@@ -643,11 +724,11 @@ def conductScheme(curveType:tuple|list|str, n:int = 30, d:int = 10, run:int|None
 	print("Time:", timeRecords)
 	print("Space:", spaceRecords)
 	print()
-	return [group.groupType(), group.secparam, n, d, run if isinstance(run, int) else None] + booleans + timeRecords + spaceRecords
+	return [group.groupType(), group.secparam, n, d, run if isinstance(run, int) and run >= 1 else None] + booleans + timeRecords + spaceRecords
 
 def main() -> int:
 	parser = Parser(argv)
-	flag, encoding, outputFilePath, roundCount, waitingTime, overwritingConfirmed = parser.parse()
+	flag, encoding, outputFilePath, decimalPrecision, roundCount, waitingTime, overwritingConfirmed = parser.parse()
 	if flag > EXIT_SUCCESS and flag > EOF:
 		outputFilePath, overwritingConfirmed = parser.checkOverwriting(outputFilePath, overwritingConfirmed)
 		del parser
@@ -665,33 +746,36 @@ def main() -> int:
 		# Scheme #
 		columns, qLength, results = queries + validators + metrics, len(queries), []
 		length, qvLength, avgIndex = len(columns), qLength + len(validators), qLength - 1
-		saver = Saver(outputFilePath, columns)
-		if saver.initialize():
-			try:
-				for curveType in curveTypes:
-					for n in range(10, 31, 5):
-						for d in range(5, n, 5):
-							averages = conductScheme(curveType, n = n, d = d, run = 1)
-							for run in range(2, roundCount + 1):
-								result = conductScheme(curveType, n = n, d = d, run = run)
-								for idx in range(qLength, qvLength):
-									averages[idx] += result[idx]
-								for idx in range(qvLength, length):
-									averages[idx] = -1 if averages[idx] < 0 or result[idx] < 0 else averages[idx] + result[idx]
-							averages[avgIndex] = roundCount
+		saver = Saver(outputFilePath, columns, decimalPrecision = decimalPrecision, encoding = encoding)
+		try:
+			for curveType in curveTypes:
+				for n in range(10, 31, 5):
+					for d in range(5, n, 5):
+						averages = conductScheme(curveType, n = n, d = d, run = 1)
+						for run in range(2, roundCount + 1):
+							result = conductScheme(curveType, n = n, d = d, run = run)
+							for idx in range(qLength, qvLength):
+								averages[idx] += result[idx]
 							for idx in range(qvLength, length):
-								averages[idx] = -1 if averages[idx] <= 0 else averages[idx] / roundCount
-								averages[idx] = int(averages[idx]) if averages[idx].is_integer() else averages[idx]
-							results.append(averages)
-							saver.save(results)
-			except KeyboardInterrupt:
-				print("\nThe experiments were interrupted by users. Saved results are retained. ")
-			except BaseException as e:
-				print("The experiments were interrupted by the following exceptions. Saved results are retained. \n\t{0}".format(e))
-			errorLevel = EXIT_SUCCESS if results and all(all(tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(r > 0 for r in result[qvLength:length])) for result in results) else EXIT_FAILURE
-		else:
-			print("Failed to initialize the directory for the output file path \"{0}\". ".format(outputFilePath))
-			errorLevel = EOF
+								averages[idx] = "N/A" if isinstance(averages[idx], str) or averages[idx] <= 0 or result[idx] <= 0 else averages[idx] + result[idx]
+						averages[avgIndex] = roundCount
+						for idx in range(qvLength, length):
+							averages[idx] = "N/A" if isinstance(averages[idx], str) or averages[idx] <= 0 else averages[idx] / roundCount
+							if isinstance(averages[idx], float):
+								averages[idx] = round(averages[idx], decimalPrecision)
+								if averages[idx] <= 0:
+									averages[idx] = "N/A"
+								elif averages[idx].is_integer():
+									averages[idx] = int(averages[idx])
+						results.append(averages)
+						saver.save(results)
+		except KeyboardInterrupt:
+			print("\nThe experiments were interrupted by users. Saved results are retained. ")
+		except BaseException as e:
+			print("The experiments were interrupted by the following exceptions. Saved results are retained. \n\t{0}".format(e))
+		errorLevel = EXIT_SUCCESS if results and all(all(																								\
+			tuple(r == roundCount for r in result[qLength:qvLength]) + tuple(isinstance(r, (float, int)) and r > 0 for r in result[qvLength:length])	\
+		) for result in results) else EXIT_FAILURE
 	elif EXIT_SUCCESS == flag:
 		errorLevel = flag
 	else:

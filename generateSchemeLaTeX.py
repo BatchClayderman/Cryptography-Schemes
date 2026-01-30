@@ -1,5 +1,6 @@
 import os
 from sys import argv, executable, exit
+from codecs import lookup
 from re import findall
 from subprocess import Popen, PIPE
 from time import sleep, time
@@ -176,7 +177,7 @@ def fetchPrompts(filePath:str, idx:int|str, s:str, className:str|None, functionN
 				"Saver: \\n{0}\\n", "Saver: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" due to the following exception(s). \\n\\t{2}", 						\
 				"Saver: \\n{0}\\n\\nFailed to save the results to \\\"{1}\\\" since the parent folder was not created successfully. ", 								\
 				"Saver: \\n{0}\\n\\nThe overwriting is canceled by users. ", 																			\
-				"See https://blog.csdn.net/weixin_45726033/article/details/144254189 in Chinese if necessary. ", "Space:", 									\
+				"Please refer to https://github.com/JHUISI/charm if necessary.  ", "Space:", 									\
 				"Successfully saved the results to \\\"{0}\\\" in the plain text form. ", "Successfully saved the results to \\\"{0}\\\" in the three-line table form. ", 		\
 				"The environment of the Python ``charm`` library is not handled correctly. ", "The results are empty. ", "Time:", 								\
 				"The experiments were interrupted by the following exceptions. The program will try to save the results collected. \\n\\t{0}", "Verify:", 				\
