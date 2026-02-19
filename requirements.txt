@@ -1,0 +1,7 @@
+# Python built-in standard libraries
+# charm
+openpyxl
+pandas
+setuptools
+xlwt
+yaml

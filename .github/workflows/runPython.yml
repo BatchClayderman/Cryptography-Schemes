@@ -33,11 +33,17 @@ on:
         default: '.xlsx'
         type: choice
         options:
-          - .xlsx
           - .csv
-          - .py
+          - .html
+          - .json
           - .tex
+          - .tsv
           - .txt
+          - .xls
+          - .xlsx
+          - .xml
+          - .yaml
+          - .yml
       pythonVersion:
         description: 'Python version'
         required: true
@@ -50,7 +56,7 @@ on:
           - '3.12'
           - '3.13'
           - '3.14'
-      roundCount:
+      runCount:
         description: 'Round count'
         required: true
         default: 10
@@ -90,7 +96,7 @@ jobs:
       run: |
         cd "${{ github.workspace }}"
         python -m pip install --upgrade pip
-        python -m pip install openpyxl pandas setuptools
+        python -m pip install -r requirements.txt
         git clone https://github.com/JHUISI/charm.git
         cd charm
         chmod +x ./configure.sh
@@ -105,7 +111,7 @@ jobs:
         echo "Cryptography scheme: ${{ github.event.inputs.cryptographyScheme }}"
         echo "Output format: ${{ github.event.inputs.outputFormat }}"
         echo "Python version: ${{ github.event.inputs.pythonVersion }}"
-        echo "Round count: ${{ github.event.inputs.roundCount }}"
+        echo "Round count: ${{ github.event.inputs.runCount }}"
         inputFilePath="${{ github.event.inputs.cryptographyScheme }}"
         outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/-Python${{ github.event.inputs.pythonVersion }}-HKT$(date '+%Y%m%d%H%M%S')${{ github.event.inputs.outputFormat }}/g")"
         outputFileName="$(basename "${outputFilePath}")"
@@ -120,8 +126,8 @@ jobs:
         echo "The current working directory is \"$(pwd)\". "
         if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
         then
-          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ steps.ready.outputs.outputFilePath }}\" -r ${{ github.event.inputs.roundCount }} -t 0 -y"
-          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFilePath }}" -r ${{ github.event.inputs.roundCount }} -t 0 y
+          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ steps.ready.outputs.outputFilePath }}\" -r ${{ github.event.inputs.runCount }} -t 0 -y"
+          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFilePath }}" -r ${{ github.event.inputs.runCount }} -t 0 y
         else
           echo "Could not execute the cryptography scheme file \"${{ github.event.inputs.cryptographyScheme }}\" via Python. "
           tree
