@@ -57,10 +57,32 @@ on:
           - '3.13'
           - '3.14'
       runCount:
-        description: 'Round count'
+        description: 'Run count'
         required: true
         default: 10
         type: number
+      decimalPrecision:
+        description: 'Decimal Precision'
+        required: true
+        default: '9'
+        type: choice
+        options:
+          - 0
+          - 3
+          - 6
+          - 9
+          - 12
+          - s
+          - second
+          - ms
+          - millisecond
+          - microsecond
+          - ns
+          - nanosecond
+          - ps
+          - picosecond
+          - fs
+          - femtosecond
 
 jobs:
   runPython:
@@ -111,9 +133,10 @@ jobs:
         echo "Cryptography scheme: ${{ github.event.inputs.cryptographyScheme }}"
         echo "Output format: ${{ github.event.inputs.outputFormat }}"
         echo "Python version: ${{ github.event.inputs.pythonVersion }}"
-        echo "Round count: ${{ github.event.inputs.runCount }}"
+        echo "Run count: ${{ github.event.inputs.runCount }}"
+        echo "Decimal precision: ${{ github.event.inputs.decimalPrecision }}"
         inputFilePath="${{ github.event.inputs.cryptographyScheme }}"
-        outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/-Python${{ github.event.inputs.pythonVersion }}-HKT$(date '+%Y%m%d%H%M%S')${{ github.event.inputs.outputFormat }}/g")"
+        outputFilePath="$(echo "${inputFilePath}" | sed "s/\.[^.]*\$/-Python${{ github.event.inputs.pythonVersion }}-r${{github.event.inputs.runCount}}-HKT$(date '+%Y%m%d%H%M%S')${{ github.event.inputs.outputFormat }}/g")"
         outputFileName="$(basename "${outputFilePath}")"
         echo "outputFilePath=${outputFilePath}" >> ${GITHUB_OUTPUT}
         echo "outputFileName=${outputFileName}" >> ${GITHUB_OUTPUT}
@@ -127,7 +150,7 @@ jobs:
         if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
         then
           echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ steps.ready.outputs.outputFilePath }}\" -r ${{ github.event.inputs.runCount }} -t 0 -y"
-          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFilePath }}" -r ${{ github.event.inputs.runCount }} -t 0 y
+          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFileName }}" -r ${{ github.event.inputs.runCount }} -t 0 y
         else
           echo "Could not execute the cryptography scheme file \"${{ github.event.inputs.cryptographyScheme }}\" via Python. "
           tree
