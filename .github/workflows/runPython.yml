@@ -149,8 +149,8 @@ jobs:
         echo "The current working directory is \"$(pwd)\". "
         if [[ -f "${{ github.event.inputs.cryptographyScheme }}" ]];
         then
-          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ steps.ready.outputs.outputFilePath }}\" -r ${{ github.event.inputs.runCount }} -t 0 -y"
-          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFileName }}" -r ${{ github.event.inputs.runCount }} -t 0 y
+          echo "\$ python \"${{ github.event.inputs.cryptographyScheme }}\" -o \"${{ steps.ready.outputs.outputFilePath }}\" -r ${{ github.event.inputs.runCount }} -p ${{ github.event.inputs.decimalPrecision }} -t 0 -y"
+          python "${{ github.event.inputs.cryptographyScheme }}" -o "${{ steps.ready.outputs.outputFileName }}" -r ${{ github.event.inputs.runCount }} -p ${{ github.event.inputs.decimalPrecision }} -t 0 y
         else
           echo "Could not execute the cryptography scheme file \"${{ github.event.inputs.cryptographyScheme }}\" via Python. "
           tree

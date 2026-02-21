@@ -37,7 +37,7 @@ class Parser:
 	__ProtectedExtensionNames = ("C", "CPP", "IPYNB", "JAR", "JAVA", "M", "PY")
 	__OptionPrecision = ("p", "/p", "-p", "precision", "/precision", "--precision")
 	__DefaultPrecision = 9
-	__PrecisionTranslations = {"s":0, "second":0, "ms":3, "millisecond":3, "microsecond":6, "ns":9, "nanosecond":9, "ps":12, "picosecond":12}
+	__PrecisionTranslations = {"s":0, "second":0, "ms":3, "millisecond":3, "microsecond":6, "ns":9, "nanosecond":9, "ps":12, "picosecond":12, "fs":15, "femtosecond":15}
 	__OptionRun = ("r", "/r", "-r", "run", "/run", "--run")
 	__DefaultRun = 10
 	__OptionTime = ("t", "/t", "-t", "time", "/time", "--time")
